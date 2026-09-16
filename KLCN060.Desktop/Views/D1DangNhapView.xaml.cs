@@ -12,11 +12,15 @@ public partial class D1LoginView : UserControl
 
     private async void LoginButton_Click(object sender, System.Windows.RoutedEventArgs e)
     {
-        if (DataContext is not LoginViewModel viewModel)
+        if (DataContext is not DangNhapViewModel viewModel)
             return;
 
         var matKhau = PasswordInput.Password;
         if (viewModel.LoginCommand.CanExecute(matKhau))
             await viewModel.LoginCommand.ExecuteAsync(matKhau);
     }
+}
+
+public class D1DangNhapView : D1LoginView
+{
 }

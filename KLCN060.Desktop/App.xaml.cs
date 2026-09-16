@@ -21,7 +21,7 @@ public partial class App : Application
 
         var mainWindow = new MainWindow
         {
-            DataContext = new LoginViewModel(new ApiClient(apiBaseUrl), AppSession.Current)
+            DataContext = new ManHinhChinhViewModel(new ApiClient(apiBaseUrl), AppSession.Current)
         };
 
         MainWindow = mainWindow;

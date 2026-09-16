@@ -6,10 +6,12 @@ using KLCN060.Desktop.Services;
 
 namespace KLCN060.Desktop.ViewModels;
 
-public partial class LoginViewModel : ObservableObject
+public partial class DangNhapViewModel : ObservableObject
 {
     private readonly ApiClient _apiClient;
     private readonly AppSession _appSession;
+
+    public event Action? LoginSucceeded;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
@@ -28,7 +30,7 @@ public partial class LoginViewModel : ObservableObject
     [ObservableProperty]
     private bool daDangNhap;
 
-    public LoginViewModel(ApiClient apiClient, AppSession appSession)
+    public DangNhapViewModel(ApiClient apiClient, AppSession appSession)
     {
         _apiClient = apiClient;
         _appSession = appSession;
@@ -54,9 +56,11 @@ public partial class LoginViewModel : ObservableObject
         {
             var result = await _apiClient.LoginAsync(TenDangNhap.Trim(), matKhau!);
             _appSession.Start(result.AccessToken, result.RefreshToken);
+            _apiClient.SetAccessToken(result.AccessToken);
             DaDangNhap = true;
+            LoginSucceeded?.Invoke();
         }
-        catch (ApiRequestException exception)
+        catch (LoiYeuCauApi exception)
         {
             ThongBao = exception.Message;
             LaTaiKhoanBiKhoa = exception.StatusCode == HttpStatusCode.Locked;

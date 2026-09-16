@@ -1,0 +1,1 @@
+using System.Windows.Controls; namespace KLCN060.Desktop.Views; public partial class D12PromotionView : UserControl { public D12PromotionView(){InitializeComponent();} } public class D12QuanLyKhuyenMaiView : D12PromotionView { }

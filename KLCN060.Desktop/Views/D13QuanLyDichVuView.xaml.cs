@@ -1,0 +1,1 @@
+using System.Windows.Controls; namespace KLCN060.Desktop.Views; public partial class D13ServiceCatalogView : UserControl { public D13ServiceCatalogView(){InitializeComponent();} } public class D13QuanLyDichVuView : D13ServiceCatalogView { }
