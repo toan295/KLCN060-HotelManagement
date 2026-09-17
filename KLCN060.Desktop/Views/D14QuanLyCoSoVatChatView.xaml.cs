@@ -1,0 +1,1 @@
+using System.Windows.Controls; namespace KLCN060.Desktop.Views; public partial class D14FacilityView : UserControl { public D14FacilityView(){InitializeComponent();} } public class D14QuanLyCoSoVatChatView : D14FacilityView { }
