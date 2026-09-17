@@ -11,8 +11,4 @@
     <Folder Include="Services\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\KLCN060.Infrastructure\KLCN060.Infrastructure.csproj" />
-  </ItemGroup>
-
 </Project>

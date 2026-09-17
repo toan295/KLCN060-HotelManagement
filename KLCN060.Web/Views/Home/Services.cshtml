@@ -1,0 +1,40 @@
+@using KLCN060.Web.Helpers
+@model List<KLCN060.Web.Models.Home.ServiceViewModel>
+@{
+    ViewData["Title"] = "Giới thiệu & Dịch vụ";
+}
+
+<h1 class="h3 mb-3">Giới thiệu về khách sạn</h1>
+<p class="text-muted">
+    KLCN060 Hotel tọa lạc tại vị trí trung tâm thuận tiện di chuyển, mang đến không gian nghỉ dưỡng tiện nghi
+    cùng dịch vụ chuyên nghiệp, tận tâm cho mọi kỳ nghỉ và chuyến công tác của quý khách.
+</p>
+
+<h2 class="h4 mt-5 mb-3">Bảng giá dịch vụ</h2>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Hiện chưa tải được danh sách dịch vụ. Vui lòng thử lại sau.</p>
+}
+else
+{
+    <table class="table table-striped table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Dịch vụ</th>
+                <th>Đơn giá</th>
+                <th>Đơn vị tính</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dichVu in Model)
+            {
+                <tr>
+                    <td>@dichVu.TenDV</td>
+                    <td>@dichVu.GiaDV.ToVnd()</td>
+                    <td>@dichVu.DonViTinh</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

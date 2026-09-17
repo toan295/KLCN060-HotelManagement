@@ -1,0 +1,118 @@
+@using KLCN060.Web.Helpers
+@model KLCN060.Web.Models.Home.SearchViewModel
+@{
+    ViewData["Title"] = "Kết quả tìm kiếm";
+}
+
+<h1 class="h3 mb-4">Kết quả tìm kiếm</h1>
+
+@if (Model.NgayNhan is not null && Model.NgayTra is not null)
+{
+    <p class="text-muted">
+        Nhận phòng: <strong>@Model.NgayNhan?.ToString("dd/MM/yyyy")</strong> —
+        Trả phòng: <strong>@Model.NgayTra?.ToString("dd/MM/yyyy")</strong> —
+        Số khách: <strong>@Model.SoKhach</strong>
+    </p>
+    <p class="text-muted small">
+        * Giai đoạn này website hiển thị toàn bộ loại phòng đang có; tính năng lọc chính xác theo ngày còn trống sẽ được cập nhật ở giai đoạn sau.
+    </p>
+}
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Bộ lọc</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">Loại phòng</label>
+                    <select id="filterLoaiPhong" class="form-select">
+                        <option value="">Tất cả</option>
+                        @foreach (var ten in Model.DanhSachLoaiPhong.Select(x => x.TenLoai).Distinct())
+                        {
+                            <option value="@ten">@ten</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mức giá/đêm</label>
+                    <select id="filterMucGia" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="0-500000">Dưới 500.000đ</option>
+                        <option value="500000-1000000">500.000đ - 1.000.000đ</option>
+                        <option value="1000000-999999999">Trên 1.000.000đ</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div id="ketQuaContainer">
+            @if (!Model.DanhSachLoaiPhong.Any())
+            {
+                <p class="text-muted">Hiện chưa tải được danh sách loại phòng. Vui lòng thử lại sau.</p>
+            }
+            else
+            {
+                @foreach (var loaiPhong in Model.DanhSachLoaiPhong)
+                {
+                    <div class="card mb-3 shadow-sm ket-qua-item" data-loai="@loaiPhong.TenLoai" data-gia="@loaiPhong.DonGia">
+                        <div class="row g-0">
+                            <div class="col-md-3 bg-light d-flex align-items-center justify-content-center text-muted" style="min-height:120px;">
+                                Ảnh phòng
+                            </div>
+                            <div class="col-md-9">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title mb-1">@loaiPhong.TenLoai</h5>
+                                        <span class="badge bg-success align-self-start">Còn phòng</span>
+                                    </div>
+                                    <p class="card-text text-muted mb-1">Sức chứa tiêu chuẩn: @loaiPhong.SoNguoiTieuChuan khách</p>
+                                    <p class="card-text fw-bold mb-2">@loaiPhong.DonGia.ToVnd() / đêm</p>
+                                    <a asp-controller="Home" asp-action="Detail" asp-route-maLoai="@loaiPhong.MaLoai" class="btn btn-primary btn-sm">Xem &amp; đặt phòng</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <p id="khongCoKetQua" class="text-muted d-none">Không tìm thấy loại phòng phù hợp với bộ lọc.</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Lọc PHÍA CLIENT trên danh sách đã tải, chưa cần gọi lại API mỗi lần đổi lọc (Mục 5).
+        (function () {
+            var filterLoaiPhong = document.getElementById('filterLoaiPhong');
+            var filterMucGia = document.getElementById('filterMucGia');
+            var items = document.querySelectorAll('.ket-qua-item');
+            var khongCoKetQua = document.getElementById('khongCoKetQua');
+
+            function apDungLoc() {
+                var loai = filterLoaiPhong.value;
+                var giaRange = filterMucGia.value.split('-');
+                var giaMin = giaRange.length === 2 ? parseFloat(giaRange[0]) : null;
+                var giaMax = giaRange.length === 2 ? parseFloat(giaRange[1]) : null;
+                var soHienThi = 0;
+
+                items.forEach(function (item) {
+                    var khopLoai = !loai || item.dataset.loai === loai;
+                    var gia = parseFloat(item.dataset.gia);
+                    var khopGia = giaMin === null || (gia >= giaMin && gia <= giaMax);
+                    var hienThi = khopLoai && khopGia;
+                    item.classList.toggle('d-none', !hienThi);
+                    if (hienThi) soHienThi++;
+                });
+
+                khongCoKetQua.classList.toggle('d-none', soHienThi !== 0);
+            }
+
+            filterLoaiPhong.addEventListener('change', apDungLoc);
+            filterMucGia.addEventListener('change', apDungLoc);
+        })();
+    </script>
+}

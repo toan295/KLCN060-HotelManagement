@@ -1,0 +1,61 @@
+@using KLCN060.Web.Helpers
+@model KLCN060.Web.Models.Home.RoomTypeViewModel
+@{
+    ViewData["Title"] = Model.TenLoai;
+    // Dữ liệu tĩnh minh họa (Mục 5): tiện nghi, chính sách đặt cọc/hủy phòng, ảnh.
+    // Bảng LoaiPhong chưa có cột lưu danh sách tiện nghi ở Giai đoạn 2 nên không lấy từ API.
+    var tienNghiTinh = new[] { "Wifi miễn phí", "Điều hòa", "TV màn hình phẳng", "Minibar", "Nước nóng" };
+}
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted mb-2" style="height:360px;">
+            Ảnh lớn @Model.TenLoai
+        </div>
+        <div class="row g-2">
+            @for (var i = 1; i <= 3; i++)
+            {
+                <div class="col-4">
+                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted" style="height:100px;">
+                        Ảnh @i
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <h1 class="h3">@Model.TenLoai</h1>
+        <p class="text-muted">Sức chứa tiêu chuẩn: @Model.SoNguoiTieuChuan khách</p>
+
+        <div class="mb-3">
+            @foreach (var tienNghi in tienNghiTinh)
+            {
+                <span class="badge rounded-pill bg-light text-dark border me-1 mb-1">@tienNghi</span>
+            }
+        </div>
+
+        <div class="card bg-light border-0 mb-3">
+            <div class="card-body">
+                <p class="fs-4 fw-bold mb-1">@Model.DonGia.ToVnd() <span class="fs-6 fw-normal text-muted">/ đêm</span></p>
+                @if (Model.PhuThu > 0)
+                {
+                    <p class="text-muted mb-0">Phụ thu: @Model.PhuThu.ToVnd()</p>
+                }
+            </div>
+        </div>
+
+        <h5>Chính sách đặt cọc &amp; hủy phòng</h5>
+        <p class="text-muted">Đặt cọc 50% giá trị đặt phòng. Hủy phòng trước 30 ngày sẽ được hoàn lại tiền cọc.</p>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="button" class="btn btn-primary" disabled title="Chức năng đang được hoàn thiện, vui lòng quay lại sau">
+                Đặt phòng cá nhân
+            </button>
+            <button type="button" class="btn btn-outline-primary" disabled title="Chức năng đang được hoàn thiện, vui lòng quay lại sau">
+                Đặt theo đoàn
+            </button>
+        </div>
+        <p class="text-muted small mt-2">Chức năng đặt phòng đang được hoàn thiện, vui lòng quay lại sau.</p>
+    </div>
+</div>
