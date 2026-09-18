@@ -9,7 +9,7 @@ html {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #93641f;
 }
 
 html {
@@ -17,6 +17,136 @@ html {
   min-height: 100%;
 }
 
+/* ============ KLCN060 Hotel — design tokens (khớp bản UI Prototype) ============ */
+:root {
+  --bg: #f5f6f0;
+  --surface: #ffffff;
+  --surface-2: #eaeee4;
+  --border: #d7ddce;
+  --ink: #16241d;
+  --ink-2: #3c4c40;
+  --ink-muted: #647a6c;
+  --brand: #1f4d3d;
+  --brand-strong: #123328;
+  --brand-weak: #e3ede7;
+  --accent: #c08a3e;
+  --accent-strong: #93641f;
+  --accent-weak: #f4e8cf;
+  --font-display: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-body: 'Be Vietnam Pro', system-ui, -apple-system, "Segoe UI", sans-serif;
+  --shadow: 0 1px 2px rgba(20, 30, 20, .07), 0 10px 28px -10px rgba(20, 30, 20, .18);
+}
+
 body {
   margin-bottom: 60px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, .display-6, .card-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+a {
+  color: var(--brand-strong);
+}
+
+/* ---- Navbar ---- */
+.navbar {
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.navbar-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--brand-strong) !important;
+}
+
+.navbar .nav-link {
+  font-weight: 600;
+  color: var(--ink-2) !important;
+}
+
+.navbar .nav-link:hover {
+  color: var(--brand-strong) !important;
+}
+
+/* ---- Buttons ----
+   This Bootstrap build hardcodes its own colors per state (hover/focus/active/disabled) with
+   selectors like ".btn-primary:disabled" (specificity 0,2,0), which beats a plain ".btn-primary"
+   override, so every state needs its own rule here too - not just the base one. */
+.btn-primary,
+.btn-primary:disabled,
+.btn-primary.disabled {
+  background-color: var(--brand) !important;
+  border-color: var(--brand) !important;
+}
+.btn-primary:hover,
+.btn-check:focus + .btn-primary, .btn-primary:focus,
+.btn-check:checked + .btn-primary, .btn-check:active + .btn-primary, .btn-primary:active, .btn-primary.active {
+  background-color: var(--brand-strong) !important;
+  border-color: var(--brand-strong) !important;
+}
+
+.btn-outline-primary,
+.btn-outline-primary:disabled,
+.btn-outline-primary.disabled {
+  color: var(--brand-strong) !important;
+  border-color: var(--border) !important;
+  background-color: transparent !important;
+}
+.btn-outline-primary:hover,
+.btn-check:focus + .btn-outline-primary, .btn-outline-primary:focus,
+.btn-check:checked + .btn-outline-primary, .btn-check:active + .btn-outline-primary, .btn-outline-primary:active, .btn-outline-primary.active {
+  background-color: var(--brand) !important;
+  border-color: var(--brand) !important;
+  color: #fff !important;
+}
+
+.btn-accent, a.btn-accent {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn-accent:hover, .btn-accent:focus {
+  background-color: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #fff;
+}
+
+/* ---- Cards ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+.card-footer {
+  border-top: 1px solid var(--border) !important;
+}
+
+.bg-light {
+  background-color: var(--surface-2) !important;
+}
+
+.text-muted {
+  color: var(--ink-muted) !important;
+}
+
+/* ---- Forms ---- */
+.form-control:focus {
+  border-color: var(--brand);
+}
+
+/* ---- Footer ---- */
+footer.footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border) !important;
+  color: var(--ink-muted) !important;
 }

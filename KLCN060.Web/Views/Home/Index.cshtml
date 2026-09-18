@@ -4,12 +4,12 @@
     ViewData["Title"] = "Trang chủ";
 }
 
-<div class="p-5 mb-4 bg-light rounded-3">
-    <div class="container-fluid py-3">
+<div class="mb-4 rounded-3 overflow-hidden" style="background:linear-gradient(150deg,var(--brand-weak),var(--accent-weak));">
+    <div class="container-fluid py-5 px-4 px-md-5">
         <h1 class="display-6">KLCN060 Hotel</h1>
-        <p class="lead">Đặt phòng nhanh chóng, tiện nghi và giá tốt nhất.</p>
+        <p class="lead" style="color:var(--ink-2);">Đặt phòng trực tiếp, nhanh chóng, tiện nghi và giá tốt nhất — không qua trung gian.</p>
 
-        <form asp-controller="Home" asp-action="Search" method="get" class="row g-2 align-items-end bg-white p-3 rounded-3 shadow-sm">
+        <form asp-controller="Home" asp-action="Search" method="get" class="row g-2 align-items-end bg-white p-3 rounded-3" style="box-shadow:var(--shadow);">
             <div class="col-md-3">
                 <label class="form-label">Ngày nhận phòng</label>
                 <input type="date" name="ngayNhan" class="form-control" />
@@ -23,7 +23,7 @@
                 <input type="number" name="soKhach" value="1" min="1" class="form-control" />
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100">Tìm phòng</button>
+                <button type="submit" class="btn btn-accent w-100">Tìm phòng trống</button>
             </div>
         </form>
     </div>

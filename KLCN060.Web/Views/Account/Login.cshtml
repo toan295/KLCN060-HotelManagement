@@ -6,44 +6,48 @@
 
 <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
-        <h1 class="h3 mb-4 text-center">Đăng nhập</h1>
+        <div class="card">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-4 text-center">Đăng nhập</h1>
 
-        @if (TempData["SuccessMessage"] is string successMessage)
-        {
-            <div class="alert alert-success">@successMessage</div>
-        }
-
-        @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
-        {
-            <div class="alert @(isLocked ? "alert-warning" : "alert-danger")">
-                @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                @if (TempData["SuccessMessage"] is string successMessage)
                 {
-                    <div>@error.ErrorMessage</div>
+                    <div class="alert alert-success">@successMessage</div>
                 }
+
+                @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+                {
+                    <div class="alert @(isLocked ? "alert-warning" : "alert-danger")">
+                        @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    </div>
+                }
+
+                <form asp-controller="Account" asp-action="Login" method="post">
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div class="mb-3">
+                        <label asp-for="TenDangNhap" class="form-label"></label>
+                        <input asp-for="TenDangNhap" class="form-control" autofocus />
+                        <span asp-validation-for="TenDangNhap" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MatKhau" class="form-label"></label>
+                        <input asp-for="MatKhau" class="form-control" />
+                        <span asp-validation-for="MatKhau" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+                </form>
+
+                <p class="text-center mt-3 mb-0">
+                    Chưa có tài khoản? <a asp-controller="Account" asp-action="Register">Đăng ký</a>
+                </p>
             </div>
-        }
-
-        <form asp-controller="Account" asp-action="Login" method="post">
-            <input type="hidden" asp-for="ReturnUrl" />
-
-            <div class="mb-3">
-                <label asp-for="TenDangNhap" class="form-label"></label>
-                <input asp-for="TenDangNhap" class="form-control" autofocus />
-                <span asp-validation-for="TenDangNhap" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="MatKhau" class="form-label"></label>
-                <input asp-for="MatKhau" class="form-control" />
-                <span asp-validation-for="MatKhau" class="text-danger"></span>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
-        </form>
-
-        <p class="text-center mt-3">
-            Chưa có tài khoản? <a asp-controller="Account" asp-action="Register">Đăng ký</a>
-        </p>
+        </div>
     </div>
 </div>
 

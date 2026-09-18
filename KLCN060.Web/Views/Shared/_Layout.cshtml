@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - KLCN060 Hotel</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/KLCN060.Web.styles.css" asp-append-version="true" />
@@ -13,7 +14,10 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">KLCN060 Hotel</a>
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <span style="display:inline-block;width:26px;height:26px;border-radius:7px;background:linear-gradient(160deg,var(--brand),var(--brand-strong));"></span>
+                    KLCN060 Hotel
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -22,6 +26,9 @@
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Search">Tìm phòng</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Home" asp-action="Services">Giới thiệu &amp; Dịch vụ</a>
@@ -57,8 +64,9 @@
     </div>
 
     <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - KLCN060 Hotel
+        <div class="container d-flex justify-content-between flex-wrap py-2" style="font-size:.85rem;">
+            <span>&copy; 2026 - KLCN060 Hotel</span>
+            <span>Hotline hỗ trợ: 1900 xxxx</span>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

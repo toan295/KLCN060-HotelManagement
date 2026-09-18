@@ -17,6 +17,7 @@ public class RegisterViewModel
     public string? Email { get; set; }
 
     [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+    [MinLength(8, ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự.")]
     [DataType(DataType.Password)]
     [Display(Name = "Mật khẩu")]
     public string MatKhau { get; set; } = null!;
