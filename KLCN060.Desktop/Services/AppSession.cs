@@ -26,6 +26,9 @@ public sealed class AppSession
         VaiTro = ReadClaim(payload.RootElement, "vaiTro");
     }
 
+    /// <summary>Cập nhật access token mới sau khi làm mới thành công (Mục 3: giữ trong bộ nhớ, không ghi xuống đĩa).</summary>
+    public void CapNhatAccessToken(string accessToken) => AccessToken = accessToken;
+
     public void Clear()
     {
         AccessToken = null;

@@ -1,1 +1,11 @@
-using System.Windows.Controls; namespace KLCN060.Desktop.Views; public partial class D11RoomCatalogView : UserControl { public D11RoomCatalogView(){InitializeComponent();} } public class D11QuanLyDanhMucPhongView : D11RoomCatalogView { }
+using System.Windows.Controls;
+
+namespace KLCN060.Desktop.Views;
+
+public partial class D11QuanLyDanhMucPhongView : UserControl
+{
+    public D11QuanLyDanhMucPhongView()
+    {
+        InitializeComponent();
+    }
+}

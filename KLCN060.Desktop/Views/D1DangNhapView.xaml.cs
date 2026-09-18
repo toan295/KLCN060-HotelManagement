@@ -3,9 +3,9 @@ using KLCN060.Desktop.ViewModels;
 
 namespace KLCN060.Desktop.Views;
 
-public partial class D1LoginView : UserControl
+public partial class D1DangNhapView : UserControl
 {
-    public D1LoginView()
+    public D1DangNhapView()
     {
         InitializeComponent();
     }
@@ -19,8 +19,4 @@ public partial class D1LoginView : UserControl
         if (viewModel.LoginCommand.CanExecute(matKhau))
             await viewModel.LoginCommand.ExecuteAsync(matKhau);
     }
-}
-
-public class D1DangNhapView : D1LoginView
-{
 }
