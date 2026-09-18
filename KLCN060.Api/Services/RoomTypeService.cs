@@ -45,7 +45,16 @@ public class RoomTypeService : IRoomTypeService
         };
 
         _context.LoaiPhongs.Add(loaiPhong);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Hiem gap: 2 request tao loai phong dong thoi sinh trung MaLoai (rang buoc PK bat o tang DB).
+            throw new ApiException(StatusCodes.Status409Conflict, "XUNG_DOT_DU_LIEU", "Có xung đột dữ liệu khi tạo loại phòng, vui lòng thử lại.");
+        }
 
         return ToDto(loaiPhong);
     }

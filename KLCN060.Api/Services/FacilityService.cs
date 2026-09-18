@@ -45,7 +45,15 @@ public class FacilityService : IFacilityService
         };
 
         _context.CoSoVatChats.Add(coSoVatChat);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            throw new ApiException(StatusCodes.Status409Conflict, "XUNG_DOT_DU_LIEU", "Có xung đột dữ liệu khi tạo cơ sở vật chất, vui lòng thử lại.");
+        }
 
         return ToDto(coSoVatChat);
     }

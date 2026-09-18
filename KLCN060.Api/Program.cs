@@ -3,6 +3,7 @@ using KLCN060.Api.Middlewares;
 using KLCN060.Api.Services;
 using KLCN060.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -45,6 +46,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+// Đảm bảo 401/403 do [Authorize] từ chối cũng trả đúng envelope { success:false, error:{...} } (Mục 4) -
+// mặc định ASP.NET Core ghi thẳng status code với body rỗng, phá vỡ hợp đồng JSON mà Web/Desktop phụ thuộc.
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiAuthorizationMiddlewareResultHandler>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -88,6 +92,10 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
+
+// Phai dat truoc UseAuthentication de "boc" toan bo pipeline: den luot doc context.User o chieu ve,
+// UseAuthentication/UseAuthorization ben trong da chay xong nen claims va status code cuoi cung deu san sang.
+app.UseMiddleware<AuditLoggingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

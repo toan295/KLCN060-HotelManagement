@@ -37,7 +37,15 @@ public class DichVuService : IDichVuService
         };
 
         _context.DichVus.Add(dichVu);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            throw new ApiException(StatusCodes.Status409Conflict, "XUNG_DOT_DU_LIEU", "Có xung đột dữ liệu khi tạo dịch vụ, vui lòng thử lại.");
+        }
 
         return ToDto(dichVu);
     }
