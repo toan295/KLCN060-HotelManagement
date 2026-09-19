@@ -152,7 +152,7 @@ public static class DataSeeder
         await context.SaveChangesAsync();
     }
 
-    private static async Task SeedCauHoiThuongGapAsync(KLCN060DbContext context)
+    private static async Task SeedCauHoiCoBanAsync(KLCN060DbContext context)
     {
         if (await context.CauHoiThuongGaps.AnyAsync()) return;
 
@@ -183,6 +183,77 @@ public static class DataSeeder
                 CauTraLoi = "Khách sạn chấp nhận thanh toán bằng tiền mặt, chuyển khoản hoặc quẹt thẻ. Quý khách có thể thanh toán một phần hoặc toàn bộ hóa đơn, chi tiết từng lần thanh toán đều được ghi nhận trên hệ thống."
             }
         );
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedCauHoiThuongGapAsync(KLCN060DbContext context)
+    {
+        await SeedCauHoiCoBanAsync(context);
+        await SeedCauHoiMoRongAsync(context);
+    }
+
+    /// <summary>
+    /// Bổ sung/cập nhật FAQ cho các chức năng Giai đoạn 3-5 (đặt cọc, hủy, đổi phòng, trả phòng, hóa đơn...).
+    /// Chạy mỗi lần khởi động nhưng idempotent: chỉ thêm mục chưa có, và sửa câu trả lời hủy phòng cũ cho đúng chính sách 30 ngày.
+    /// </summary>
+    private static async Task SeedCauHoiMoRongAsync(KLCN060DbContext context)
+    {
+        const string tuKhoaHuy = "huy phong,chinh sach huy,hoan coc,hoan tien,huy dat phong";
+        const string traLoiHuy =
+            "Quý khách có thể hủy phiếu đặt phòng khi chưa nhận phòng. Nếu hủy trước ngày nhận phòng dự kiến từ 30 ngày trở lên, tiền cọc (50% giá trị đặt phòng) được hoàn lại; " +
+            "hủy trong vòng dưới 30 ngày hoặc không đến nhận phòng (no-show) thì tiền cọc không được hoàn. Phiếu đã nhận phòng vui lòng liên hệ trực tiếp lễ tân để được hỗ trợ.";
+
+        var faqs = await context.CauHoiThuongGaps.ToListAsync();
+
+        var faqHuy = faqs.FirstOrDefault(x => x.TuKhoa == tuKhoaHuy);
+        if (faqHuy is not null && faqHuy.CauTraLoi != traLoiHuy)
+            faqHuy.CauTraLoi = traLoiHuy;
+
+        var moiRong = new[]
+        {
+            new CauHoiThuongGap
+            {
+                TuKhoa = "doi phong,chuyen phong,doi sang phong,phong bi hong",
+                CauTraLoi = "Nếu phòng gặp sự cố hoặc quý khách muốn đổi phòng khi đang lưu trú, vui lòng liên hệ lễ tân. Việc đổi phòng tùy thuộc vào tình trạng phòng trống; nếu phòng mới khác hạng phòng, đơn giá những đêm ở phòng mới sẽ tính theo hạng phòng đó."
+            },
+            new CauHoiThuongGap
+            {
+                TuKhoa = "tien coc,dat coc,coc bao nhieu,xac nhan coc",
+                CauTraLoi = "Tiền đặt cọc bằng 50% tổng tiền phòng dự kiến. Phiếu đặt phòng ở trạng thái chờ xác nhận cho tới khi khách xác nhận đã đặt cọc; sau đó phiếu được xác nhận và phòng được giữ cho quý khách. Tiền cọc sẽ được trừ vào hóa đơn khi trả phòng."
+            },
+            new CauHoiThuongGap
+            {
+                TuKhoa = "cach dat phong,dat phong nhu the nao,dat phong online,huong dan dat phong",
+                CauTraLoi = "Quý khách chọn ngày nhận - trả phòng, chọn loại phòng và số lượng phòng (cá nhân hoặc đoàn), hệ thống sẽ giữ sẵn phòng trống phù hợp. Sau đó xác nhận đặt cọc để hoàn tất. Quý khách cũng có thể nhờ lễ tân đặt phòng hộ."
+            },
+            new CauHoiThuongGap
+            {
+                TuKhoa = "tra phong tre,tra phong muon,tre gio,muon gio tra,phu thu tra phong",
+                CauTraLoi = "Giờ trả phòng tiêu chuẩn là 12:00. Nếu quý khách trả phòng trễ và ảnh hưởng đến khách nhận phòng kế tiếp, khách sạn có thể tính phụ thu tương đương 1 đêm; lễ tân sẽ xác nhận với quý khách khi làm thủ tục trả phòng."
+            },
+            new CauHoiThuongGap
+            {
+                TuKhoa = "dich vu,giat ui,su dung dich vu,tinh tien dich vu",
+                CauTraLoi = "Các dịch vụ quý khách sử dụng trong thời gian lưu trú (giặt ủi và các dịch vụ khác) được lễ tân ghi nhận theo bảng giá tại thời điểm sử dụng và cộng vào hóa đơn khi trả phòng."
+            },
+            new CauHoiThuongGap
+            {
+                TuKhoa = "hoa don,xuat hoa don,in hoa don,file pdf,tai hoa don",
+                CauTraLoi = "Hóa đơn được lập tự động khi trả phòng, gồm tiền phòng, phụ thu, dịch vụ, khuyến mãi và tiền cọc đã trừ. Quý khách có thể yêu cầu lễ tân xuất hóa đơn dạng PDF để lưu hoặc in."
+            },
+            new CauHoiThuongGap
+            {
+                TuKhoa = "khuyen mai,uu dai,giam gia,ma giam gia,ma khuyen mai",
+                CauTraLoi = "Khách sạn thường xuyên có các chương trình khuyến mãi theo thời gian. Quý khách nhập mã khuyến mãi còn hiệu lực khi đặt phòng để được áp dụng ưu đãi; mã hết hạn hoặc hết lượt sử dụng sẽ không áp dụng được."
+            }
+        };
+
+        foreach (var faq in moiRong)
+        {
+            if (!faqs.Any(x => x.TuKhoa == faq.TuKhoa))
+                context.CauHoiThuongGaps.Add(faq);
+        }
+
         await context.SaveChangesAsync();
     }
 }

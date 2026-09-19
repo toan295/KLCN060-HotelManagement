@@ -80,10 +80,41 @@ public class RoomService : IRoomService
         }
     }
 
-    public async Task<RoomDto> UpdateStatusAsync(string maPhong, string tinhTrang)
+    // Sơ đồ chuyển trạng thái buồng phòng hợp lệ. Cố ý KHÔNG có OC -> VC/VI: phòng đang có khách phải qua OD
+    // (cần dọn) rồi mới về trống; phòng chỉ thành OC qua check-in (không đặt tay), trả phòng (OC/OD -> VD) do luồng check-out xử lý, không đi qua endpoint này.
+    private static readonly Dictionary<TinhTrangPhong, TinhTrangPhong[]> ChuyenTrangThaiHopLe = new()
+    {
+        [TinhTrangPhong.VD] = new[] { TinhTrangPhong.VC, TinhTrangPhong.OOO },
+        [TinhTrangPhong.VC] = new[] { TinhTrangPhong.VI, TinhTrangPhong.VD, TinhTrangPhong.OOO },
+        [TinhTrangPhong.VI] = new[] { TinhTrangPhong.VD, TinhTrangPhong.OOO },
+        [TinhTrangPhong.OC] = new[] { TinhTrangPhong.OD },
+        [TinhTrangPhong.OD] = new[] { TinhTrangPhong.OC, TinhTrangPhong.VD },
+        [TinhTrangPhong.OOO] = new[] { TinhTrangPhong.VD, TinhTrangPhong.VC }
+    };
+
+    public async Task<RoomDto> UpdateStatusAsync(string maPhong, string tinhTrang, string? ghiChu, string tenDN)
     {
         var phong = await TimPhongAsync(maPhong);
-        phong.TinhTrang = ParseTinhTrang(tinhTrang);
+        var moi = ParseTinhTrang(tinhTrang);
+        var cu = phong.TinhTrang;
+
+        if (!ChuyenTrangThaiHopLe[cu].Contains(moi))
+            throw new ApiException(StatusCodes.Status422UnprocessableEntity, "INVALID_STATUS_TRANSITION",
+                $"Không thể chuyển phòng từ {cu} sang {moi}. Các trạng thái được phép từ {cu}: {string.Join(", ", ChuyenTrangThaiHopLe[cu])}.", "tinhTrang");
+
+        phong.TinhTrang = moi;
+
+        if (!string.IsNullOrEmpty(tenDN))
+        {
+            _context.NhatKyThaoTacs.Add(new NhatKyThaoTac
+            {
+                MaTaiKhoan = tenDN,
+                HanhDong = "DOI_TINH_TRANG_PHONG",
+                DoiTuongTacDong = maPhong,
+                ThoiGian = DateTime.Now,
+                ChiTiet = string.IsNullOrWhiteSpace(ghiChu) ? $"{cu} -> {moi}" : $"{cu} -> {moi}; {ghiChu}"
+            });
+        }
 
         await _context.SaveChangesAsync();
         return await LayTheoMaAsync(maPhong);

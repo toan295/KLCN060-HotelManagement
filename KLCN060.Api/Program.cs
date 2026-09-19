@@ -24,6 +24,15 @@ builder.Services.AddScoped<IDichVuService, DichVuService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IFacilityService, FacilityService>();
 builder.Services.AddScoped<IChatbotService, ChatbotService>();
+builder.Services.AddScoped<IGuestService, GuestService>();
+builder.Services.AddScoped<IStayService, StayService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<ICheckInService, CheckInService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddScoped<IShiftHandoverService, ShiftHandoverService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Thiếu cấu hình Jwt:Key. Thiết lập qua User Secrets: dotnet user-secrets set \"Jwt:Key\" \"...\"");

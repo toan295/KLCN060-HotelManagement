@@ -74,7 +74,15 @@ public class FacilityService : IFacilityService
     {
         var coSoVatChat = await TimCoSoVatChatAsync(maSo);
         _context.CoSoVatChats.Remove(coSoVatChat);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            throw new ApiException(StatusCodes.Status409Conflict, "CO_SO_VAT_CHAT_DANG_DUOC_SU_DUNG", "Không thể xóa cơ sở vật chất vì đang có dữ liệu liên quan.");
+        }
     }
 
     private async Task<CoSoVatChat> TimCoSoVatChatAsync(string maSo)

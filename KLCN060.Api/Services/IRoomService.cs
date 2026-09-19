@@ -8,5 +8,5 @@ public interface IRoomService
     Task<RoomDto> CreateAsync(RoomRequest request);
     Task<RoomDto> UpdateAsync(string maPhong, RoomRequest request);
     Task DeleteAsync(string maPhong);
-    Task<RoomDto> UpdateStatusAsync(string maPhong, string tinhTrang);
+    Task<RoomDto> UpdateStatusAsync(string maPhong, string tinhTrang, string? ghiChu, string tenDN);
 }
