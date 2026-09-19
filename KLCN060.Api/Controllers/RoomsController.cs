@@ -54,7 +54,7 @@ public class RoomsController : ControllerBase
     [Authorize(Roles = "LE_TAN,BUONG_PHONG")]
     public async Task<IActionResult> UpdateStatus(string id, [FromBody] RoomStatusRequest request)
     {
-        var result = await _roomService.UpdateStatusAsync(id, request.TinhTrang);
+        var result = await _roomService.UpdateStatusAsync(id, request.TinhTrang, request.GhiChu, CurrentUser.From(User).TenDN);
         return Ok(ApiResponse<RoomDto>.Ok(result));
     }
 }

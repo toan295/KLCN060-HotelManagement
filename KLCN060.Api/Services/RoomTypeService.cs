@@ -92,22 +92,7 @@ public class RoomTypeService : IRoomTypeService
         if (checkout <= checkin)
             throw new ApiException(StatusCodes.Status400BadRequest, "KHOANG_NGAY_KHONG_HOP_LE", "Ngày trả phải sau ngày nhận.");
 
-        var phongDaDat = await _context.ChiTietPhieuDats
-            .Where(ct => ct.PhieuDatPhong.TrangThai != TrangThaiPhieuDat.DA_HUY
-                      && ct.PhieuDatPhong.TrangThai != TrangThaiPhieuDat.KHONG_DEN
-                      && ct.PhieuDatPhong.NgayDonDuKien < checkout
-                      && ct.PhieuDatPhong.NgayTraDuKien > checkin)
-            .Select(ct => ct.MaPhong)
-            .Distinct()
-            .ToListAsync();
-
-        var phongDangO = await _context.ChiTietPhieuNhans
-            .Where(ct => ct.NgayNhan < checkout && (ct.NgayTra == null || ct.NgayTra > checkin))
-            .Select(ct => ct.MaPhong)
-            .Distinct()
-            .ToListAsync();
-
-        var maPhongKhongTrong = phongDaDat.Concat(phongDangO).ToHashSet();
+        var maPhongKhongTrong = await RoomAvailability.GetOccupiedRoomIdsAsync(_context, checkin, checkout);
 
         var loaiPhongs = await _context.LoaiPhongs
             .Where(lp => lp.SoNguoiTieuChuan >= guests)

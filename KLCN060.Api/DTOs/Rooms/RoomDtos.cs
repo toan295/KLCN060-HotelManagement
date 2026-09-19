@@ -11,6 +11,7 @@ public class RoomRequest
 public class RoomStatusRequest
 {
     public string TinhTrang { get; set; } = null!;
+    public string? GhiChu { get; set; }
 }
 
 public class RoomDto
