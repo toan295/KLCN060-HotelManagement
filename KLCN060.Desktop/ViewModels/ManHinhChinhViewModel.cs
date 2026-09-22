@@ -67,6 +67,9 @@ public partial class ManHinhChinhViewModel : ObservableObject
         ManHinhDangChon = value switch
         {
             QuanLyKhachHangViewModel => "d9",
+            DashboardViewModel => "d2",
+            DatPhongViewModel => "d3",
+            NhanPhongViewModel => "d4",
             QuanLyDanhMucPhongViewModel => "d11",
             QuanLyKhuyenMaiViewModel => "d12",
             QuanLyDichVuViewModel => "d13",
@@ -90,7 +93,7 @@ public partial class ManHinhChinhViewModel : ObservableObject
         if (_session.VaiTro == "QUAN_LY")
             HienThiPhong();
         else if (_session.VaiTro == "LE_TAN")
-            HienThiKhachHang();
+            HienThiDashboard();
     }
 
     [RelayCommand]
@@ -99,6 +102,9 @@ public partial class ManHinhChinhViewModel : ObservableObject
         if (CoTheQuanLyKhachHang)
             CurrentViewModel = new QuanLyKhachHangViewModel(_api);
     }
+    [RelayCommand] private void HienThiDashboard() { if (_session.VaiTro is "LE_TAN" or "BUONG_PHONG" or "QUAN_LY") CurrentViewModel = new DashboardViewModel(_api); }
+    [RelayCommand] private void HienThiDatPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new DatPhongViewModel(_api); }
+    [RelayCommand] private void HienThiNhanPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new NhanPhongViewModel(_api); }
 
     [RelayCommand] private void HienThiPhong() => CurrentViewModel = new QuanLyDanhMucPhongViewModel(_api);
     [RelayCommand] private void HienThiKhuyenMai() => CurrentViewModel = new QuanLyKhuyenMaiViewModel(_api);
