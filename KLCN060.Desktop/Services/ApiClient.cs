@@ -58,6 +58,35 @@ public sealed class ApiClient
         => PostAsync<YeuCauNhanPhong, KetQuaNhanPhongDto>($"api/v1/bookings/{Uri.EscapeDataString(maPhieuDat)}/check-in", request);
     public Task<KetQuaNhanPhongDto> NhanKhachVangLaiAsync(YeuCauNhanPhongVangLai request)
         => PostAsync<YeuCauNhanPhongVangLai, KetQuaNhanPhongDto>("api/v1/check-ins", request);
+    public Task<List<LuotLuuTruDto>> GetLuotDangOAsync()
+        => GetAsync<List<LuotLuuTruDto>>("api/v1/stays?trangThai=DANG_O");
+    public Task<KetQuaDoiPhongDto> DoiPhongAsync(string maPhieuNhan, string maPhong, YeuCauDoiPhong request)
+        => PostAsync<YeuCauDoiPhong, KetQuaDoiPhongDto>($"api/v1/stays/{Uri.EscapeDataString(maPhieuNhan)}/{Uri.EscapeDataString(maPhong)}/change-room", request);
+    public Task<List<DichVuSuDungDto>> GetDichVuSuDungAsync(string pn,string phong)=>GetAsync<List<DichVuSuDungDto>>($"api/v1/stays/{pn}/{phong}/services");
+    public Task<DichVuSuDungDto> ThemDichVuAsync(string pn,string phong,YeuCauDichVuSuDung x)=>PostAsync<YeuCauDichVuSuDung,DichVuSuDungDto>($"api/v1/stays/{pn}/{phong}/services",x);
+    public Task<FolioDto> GetFolioAsync(string pn,string phong)=>GetAsync<FolioDto>($"api/v1/stays/{pn}/{phong}/folio");
+    public Task<KetQuaTraPhongDto> TraPhongAsync(string pn,string phong,bool phuThu)=>PostAsync<object,KetQuaTraPhongDto>($"api/v1/stays/{pn}/{phong}/check-out",new { apDungPhuThuTreGio=phuThu});
+    public Task<HoaDonDto> GetHoaDonAsync(string ma)=>GetAsync<HoaDonDto>($"api/v1/invoices/{ma}");
+    public Task<HoaDonDto> ThanhToanAsync(string ma,YeuCauThanhToan x)=>PostAsync<YeuCauThanhToan,HoaDonDto>($"api/v1/invoices/{ma}/payments",x);
+    public async Task<byte[]> TaiHoaDonPdfAsync(string maHoaDon)
+    {
+        var duongDan = $"api/v1/invoices/{Uri.EscapeDataString(maHoaDon)}/export";
+        using var request = Create(HttpMethod.Get, duongDan);
+        using var response = await _httpClient.SendAsync(request);
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized && await ThuLamMoiTokenAsync())
+        {
+            using var requestMoi = Create(HttpMethod.Get, duongDan);
+            using var responseMoi = await _httpClient.SendAsync(requestMoi);
+            if (!responseMoi.IsSuccessStatusCode)
+                throw await ErrorAsync(responseMoi);
+
+            return await responseMoi.Content.ReadAsByteArrayAsync();
+        }
+
+        if (!response.IsSuccessStatusCode) throw await ErrorAsync(response);
+        return await response.Content.ReadAsByteArrayAsync();
+    }
 
     private Task<T> GetAsync<T>(string url) => GuiCoLamMoiAsync<T>(HttpMethod.Get, url, null);
     private Task<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest body) => GuiCoLamMoiAsync<TResponse>(HttpMethod.Post, url, body);
@@ -195,6 +224,9 @@ public sealed record YeuCauDatPhong(string LoaiDatPhong, string? MaKhach, DateOn
 public sealed record ThongTinNhanPhong(string MaPhong, string? CCCD, int SoNguoi);
 public sealed record YeuCauNhanPhong(List<string> PhongNhan, List<ThongTinNhanPhong> Khach);
 public sealed record YeuCauNhanPhongVangLai(string MaKhach, List<ThongTinNhanPhong> Khach);
+public sealed record YeuCauDoiPhong(string MaPhongMoi, string? GhiChu);
+public sealed record YeuCauDichVuSuDung(string MaDV,int SoLuong);
+public sealed record YeuCauThanhToan(string HinhThucThanhToan,decimal SoTien,string? MaGiaoDich);
 public sealed class KetQuaDangNhap { public string AccessToken { get; init; } = ""; public string RefreshToken { get; init; } = ""; }
 public sealed class KetQuaLamMoiToken { public string AccessToken { get; init; } = ""; }
 public sealed class LoaiPhongDto { public string MaLoai { get; init; } = ""; public string TenLoai { get; init; } = ""; public int SoNguoiTieuChuan { get; init; } public decimal DonGia { get; init; } public decimal PhuThu { get; init; } }
@@ -268,6 +300,82 @@ public sealed class KetQuaNhanPhongDto
 {
     public string MaPhieuNhan { get; init; } = "";
     public string? MaPhieuDat { get; init; }
+}
+public sealed class LuotLuuTruDto
+{
+    public string MaPhieuNhan { get; init; } = "";
+    public string MaPhong { get; init; } = "";
+    public string? HoTenKhach { get; init; }
+    public string TrangThai { get; init; } = "";
+}
+public sealed class KetQuaDoiPhongDto
+{
+    public string MaPhongCu { get; init; } = "";
+    public string MaPhongMoi { get; init; } = "";
+    public decimal ChenhLechGia { get; init; }
+}
+public sealed class DichVuSuDungDto
+{
+    public string TenDV { get; init; } = "";
+    public int SoLuong { get; init; }
+    public decimal ThanhTien { get; init; }
+}
+
+public sealed class FolioDto
+{
+    public FolioTongHopDto TongHopFolio { get; init; } = new();
+    public List<DongFolioDto> ChiTiet { get; init; } = [];
+}
+
+public sealed class FolioTongHopDto
+{
+    public decimal TienPhong { get; init; }
+    public decimal PhuThu { get; init; }
+    public decimal TienDichVu { get; init; }
+    public decimal ConPhaiThu { get; init; }
+}
+
+public sealed class DongFolioDto
+{
+    public string LoaiKhoanMuc { get; init; } = "";
+    public string MoTa { get; init; } = "";
+    public int SoLuong { get; init; }
+    public decimal DonGia { get; init; }
+    public decimal ThanhTien { get; init; }
+}
+
+public sealed class KetQuaTraPhongDto
+{
+    public string? MaHoaDon { get; init; }
+}
+
+public sealed class HoaDonDto
+{
+    public string MaHD { get; init; } = "";
+    public decimal TienPhong { get; init; }
+    public decimal TienDV { get; init; }
+    public decimal PhuThu { get; init; }
+    public decimal TienDaCoc { get; init; }
+    public decimal TongTien { get; init; }
+    public decimal DaThanhToan { get; init; }
+    public decimal ConNo { get; init; }
+    public string HinhThucThanhToan { get; init; } = "";
+    public string TrangThaiThanhToan { get; init; } = "";
+    public List<DongHoaDonDto> ChiTietHoaDon { get; init; } = [];
+    public List<ChiTietThanhToanDto> ChiTietThanhToan { get; init; } = [];
+}
+
+public sealed class DongHoaDonDto
+{
+    public string MoTa { get; init; } = "";
+    public decimal ThanhTien { get; init; }
+}
+
+public sealed class ChiTietThanhToanDto
+{
+    public DateTime ThoiGianThanhToan { get; init; }
+    public string HinhThucThanhToan { get; init; } = "";
+    public decimal SoTien { get; init; }
 }
 public sealed class CoSoVatChatDto { public string MaSo { get; init; } = ""; public string Ten { get; init; } = ""; public int SoLuong { get; init; } public string TinhTrang { get; init; } = ""; public string? MaPhong { get; init; } }
 public sealed class DongCoSoVatChat { public string MaSo { get; init; } = ""; public string Ten { get; init; } = ""; public string Phong { get; init; } = ""; public int SoLuong { get; init; } public string TinhTrang { get; init; } = ""; }

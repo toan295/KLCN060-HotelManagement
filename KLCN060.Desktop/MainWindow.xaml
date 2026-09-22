@@ -5,6 +5,10 @@
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><views:D2DashboardView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:DatPhongViewModel}"><views:D3DatPhongView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:NhanPhongViewModel}"><views:D4NhanPhongView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DoiPhongViewModel}"><views:D5DoiPhongView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DichVuSuDungViewModel}"><views:D6DichVuView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TraPhongViewModel}"><views:D7TraPhongView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ThanhToanViewModel}"><views:D8ThanhToanView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyDanhMucPhongViewModel}"><views:D11QuanLyDanhMucPhongView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyKhuyenMaiViewModel}"><views:D12QuanLyKhuyenMaiView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyDichVuViewModel}"><views:D13QuanLyDichVuView /></DataTemplate>
@@ -76,6 +80,13 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="NavItemD2" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d2"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD3" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d3"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD4" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d4"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD5" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d5"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD6" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d6"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD7" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d7"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD8" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d8"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
     </Window.Resources>
 
     <Grid>
@@ -123,9 +134,13 @@
                     <DockPanel LastChildFill="False" Margin="10,16,10,14">
                         <TextBlock DockPanel.Dock="Top" Text="CHỨC NĂNG" FontSize="10" FontWeight="Bold" Foreground="#647A6C" Margin="10,0,0,8" />
                         <StackPanel DockPanel.Dock="Top">
-                            <Button Content="▦ Sơ đồ phòng" Style="{StaticResource NavItemStyle}" Command="{Binding HienThiDashboardCommand}" />
-                            <Button Content="＋ Đặt phòng" Style="{StaticResource NavItemStyle}" Command="{Binding HienThiDatPhongCommand}" />
-                            <Button Content="✓ Nhận phòng" Style="{StaticResource NavItemStyle}" Command="{Binding HienThiNhanPhongCommand}" />
+                            <Button Style="{StaticResource NavItemD2}" Command="{Binding HienThiDashboardCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="▦" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Sơ đồ phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD3}" Command="{Binding HienThiDatPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="+" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Đặt phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD4}" Command="{Binding HienThiNhanPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="✓" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Nhận phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD5}" Command="{Binding HienThiDoiPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="↔" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Đổi phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD6}" Command="{Binding HienThiDichVuSuDungCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="●" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Dịch vụ"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD7}" Command="{Binding HienThiTraPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="→" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Trả phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD8}" Command="{Binding HienThiThanhToanCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="₫" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Thanh toán"/></Grid></Button>
                             <Button Content="👤 Khách hàng" Style="{StaticResource NavItemD9}" Command="{Binding HienThiKhachHangCommand}" />
                             <Button Content="🛏️ Danh mục phòng" Style="{StaticResource NavItemD11}" Command="{Binding HienThiPhongCommand}" />
                             <Button Content="🏷️ Khuyến mãi" Style="{StaticResource NavItemD12}" Command="{Binding HienThiKhuyenMaiCommand}" />

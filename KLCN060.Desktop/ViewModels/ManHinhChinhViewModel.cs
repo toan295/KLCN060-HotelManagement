@@ -70,6 +70,10 @@ public partial class ManHinhChinhViewModel : ObservableObject
             DashboardViewModel => "d2",
             DatPhongViewModel => "d3",
             NhanPhongViewModel => "d4",
+            DoiPhongViewModel => "d5",
+            DichVuSuDungViewModel => "d6",
+            TraPhongViewModel => "d7",
+            ThanhToanViewModel => "d8",
             QuanLyDanhMucPhongViewModel => "d11",
             QuanLyKhuyenMaiViewModel => "d12",
             QuanLyDichVuViewModel => "d13",
@@ -105,6 +109,20 @@ public partial class ManHinhChinhViewModel : ObservableObject
     [RelayCommand] private void HienThiDashboard() { if (_session.VaiTro is "LE_TAN" or "BUONG_PHONG" or "QUAN_LY") CurrentViewModel = new DashboardViewModel(_api); }
     [RelayCommand] private void HienThiDatPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new DatPhongViewModel(_api); }
     [RelayCommand] private void HienThiNhanPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new NhanPhongViewModel(_api); }
+    [RelayCommand] private void HienThiDoiPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new DoiPhongViewModel(_api); }
+    [RelayCommand] private void HienThiDichVuSuDung() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new DichVuSuDungViewModel(_api); }
+    [RelayCommand]
+    private void HienThiTraPhong()
+    {
+        if (_session.VaiTro != "LE_TAN")
+            return;
+
+        var manHinhTraPhong = new TraPhongViewModel(_api);
+        manHinhTraPhong.HoaDonDaTao += maHoaDon =>
+            CurrentViewModel = new ThanhToanViewModel(_api, maHoaDon);
+        CurrentViewModel = manHinhTraPhong;
+    }
+    [RelayCommand] private void HienThiThanhToan() { if (_session.VaiTro is "LE_TAN" or "KE_TOAN") CurrentViewModel = new ThanhToanViewModel(_api); }
 
     [RelayCommand] private void HienThiPhong() => CurrentViewModel = new QuanLyDanhMucPhongViewModel(_api);
     [RelayCommand] private void HienThiKhuyenMai() => CurrentViewModel = new QuanLyKhuyenMaiViewModel(_api);
