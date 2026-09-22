@@ -1,0 +1,58 @@
+@model KLCN060.Web.Models.Booking.BookViewModel
+@{
+    ViewData["Title"] = "Đặt phòng cá nhân";
+    var homNay = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <h1 class="h3 mb-1">Đặt phòng cá nhân</h1>
+        <p class="text-muted mb-4">@Model.TenLoai — @Model.DonGia?.ToVnd() / đêm</p>
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <form asp-controller="Booking" asp-action="Book" method="post">
+            <input type="hidden" asp-for="MaLoai" />
+
+            <div class="mb-3">
+                <label asp-for="NgayNhan" class="form-label"></label>
+                <input asp-for="NgayNhan" type="date" class="form-control" min="@homNay" />
+                <span asp-validation-for="NgayNhan" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NgayTra" class="form-label"></label>
+                <input asp-for="NgayTra" type="date" class="form-control" min="@homNay" />
+                <span asp-validation-for="NgayTra" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SoKhach" class="form-label"></label>
+                <input asp-for="SoKhach" type="number" min="1" max="20" class="form-control" />
+                <span asp-validation-for="SoKhach" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Xác nhận đặt phòng</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        // Ngày trả phải sau ngày nhận (validate phía client bằng min attribute) - Mục 5B.
+        document.addEventListener('DOMContentLoaded', function () {
+            var ngayNhan = document.getElementById('NgayNhan');
+            var ngayTra = document.getElementById('NgayTra');
+            function capNhatMinNgayTra() {
+                if (ngayNhan.value) {
+                    var min = new Date(ngayNhan.value);
+                    min.setDate(min.getDate() + 1);
+                    ngayTra.min = min.toISOString().slice(0, 10);
+                }
+            }
+            ngayNhan.addEventListener('change', capNhatMinNgayTra);
+            capNhatMinNgayTra();
+        });
+    </script>
+}

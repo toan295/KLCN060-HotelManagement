@@ -1,0 +1,58 @@
+@model List<KLCN060.Web.Models.Booking.BookingSummaryViewModel>
+@{
+    ViewData["Title"] = "Lịch sử đặt phòng của tôi";
+
+    (string Nhan, string Mau) HienThiTrangThai(string trangThai) => trangThai switch
+    {
+        "CHO_XAC_NHAN" => ("Chờ xác nhận", "warning"),
+        "DA_XAC_NHAN" => ("Đã xác nhận", "primary"),
+        "DA_NHAN_PHONG" => ("Đã nhận phòng", "success"),
+        "DA_HUY" => ("Đã hủy", "secondary"),
+        "KHONG_DEN" => ("Không đến", "secondary"),
+        _ => (trangThai, "secondary")
+    };
+}
+
+<h1 class="h3 mb-4">Lịch sử đặt phòng của tôi</h1>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Bạn chưa có đơn đặt phòng nào.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Loại đặt</th>
+                    <th>Ngày nhận</th>
+                    <th>Ngày trả</th>
+                    <th>Số phòng</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var donDat in Model)
+                {
+                    var trangThai = HienThiTrangThai(donDat.TrangThai);
+                    <tr>
+                        <td>@donDat.MaPhieuDat</td>
+                        <td>@(donDat.LoaiDatPhong == "CA_NHAN" ? "Cá nhân" : "Đoàn")</td>
+                        <td>@donDat.NgayDonDuKien.ToString("dd/MM/yyyy")</td>
+                        <td>@donDat.NgayTraDuKien.ToString("dd/MM/yyyy")</td>
+                        <td>@donDat.SoPhong</td>
+                        <td>@donDat.TongTienDuKien.ToVnd()</td>
+                        <td><span class="badge bg-@trangThai.Mau">@trangThai.Nhan</span></td>
+                        <td>
+                            <a asp-controller="Booking" asp-action="Detail" asp-route-maPhieuDat="@donDat.MaPhieuDat">Xem chi tiết</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

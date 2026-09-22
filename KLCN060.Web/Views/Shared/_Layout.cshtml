@@ -1,10 +1,12 @@
 ﻿@inject KLCN060.Web.Services.ApiClient ApiClient
+@inject IConfiguration Configuration
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - KLCN060 Hotel</title>
+    <meta name="api-base-url" content="@Configuration["Api:BaseUrl"]" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -37,6 +39,12 @@
                     <ul class="navbar-nav align-items-sm-center">
                         @if (ApiClient.IsLoggedIn)
                         {
+                            <li class="nav-item me-2">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Profile">Hồ sơ của tôi</a>
+                            </li>
+                            <li class="nav-item me-2">
+                                <a class="nav-link text-dark" asp-controller="Booking" asp-action="MyBookings">Đơn đặt phòng của tôi</a>
+                            </li>
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
@@ -73,5 +81,6 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_ChatbotWidget" />
 </body>
 </html>

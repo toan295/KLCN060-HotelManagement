@@ -49,13 +49,12 @@
         <p class="text-muted">Đặt cọc 50% giá trị đặt phòng. Hủy phòng trước 30 ngày sẽ được hoàn lại tiền cọc.</p>
 
         <div class="d-flex gap-2 mt-4">
-            <button type="button" class="btn btn-primary" disabled title="Chức năng đang được hoàn thiện, vui lòng quay lại sau">
+            <a asp-controller="Booking" asp-action="Book" asp-route-maLoai="@Model.MaLoai" class="btn btn-primary">
                 Đặt phòng cá nhân
-            </button>
-            <button type="button" class="btn btn-outline-primary" disabled title="Chức năng đang được hoàn thiện, vui lòng quay lại sau">
+            </a>
+            <a asp-controller="Booking" asp-action="BookGroup" class="btn btn-outline-primary">
                 Đặt theo đoàn
-            </button>
+            </a>
         </div>
-        <p class="text-muted small mt-2">Chức năng đặt phòng đang được hoàn thiện, vui lòng quay lại sau.</p>
     </div>
 </div>

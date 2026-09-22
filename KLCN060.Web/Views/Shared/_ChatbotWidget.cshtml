@@ -1,0 +1,111 @@
+@* Widget chatbot nổi, hiển thị trên MỌI trang qua _Layout.cshtml (Giai đoạn 7, Mục 5B). *@
+<div id="chatbotWidget">
+    <button id="chatbotToggleBtn" type="button" aria-label="Mở chatbot hỗ trợ">💬</button>
+
+    <div id="chatbotPanel" class="d-none">
+        <div id="chatbotHeader">
+            <span>Hỗ trợ trực tuyến</span>
+            <button id="chatbotCloseBtn" type="button" aria-label="Đóng chatbot">&times;</button>
+        </div>
+        <div id="chatbotMessages"></div>
+        <form id="chatbotForm">
+            <input type="text" id="chatbotInput" placeholder="Nhập câu hỏi..." autocomplete="off" />
+            <button type="submit">Gửi</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    #chatbotWidget { position: fixed; bottom: 20px; right: 20px; z-index: 1050; }
+    #chatbotToggleBtn {
+        width: 56px; height: 56px; border-radius: 50%; border: none;
+        background: #0d6efd; color: #fff; font-size: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        cursor: pointer;
+    }
+    #chatbotPanel {
+        position: absolute; bottom: 68px; right: 0; width: 320px; max-width: 90vw; height: 420px;
+        background: #fff; border-radius: .5rem; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+        display: flex; flex-direction: column; overflow: hidden;
+    }
+    #chatbotHeader {
+        background: #0d6efd; color: #fff; padding: .6rem 1rem;
+        display: flex; align-items: center; justify-content: space-between; font-weight: 600;
+    }
+    #chatbotHeader button { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; line-height: 1; }
+    #chatbotMessages { flex: 1; overflow-y: auto; padding: .75rem; background: #f8f9fa; }
+    .chatbot-msg { margin-bottom: .5rem; max-width: 85%; padding: .4rem .6rem; border-radius: .5rem; font-size: .9rem; }
+    .chatbot-msg-user { background: #0d6efd; color: #fff; margin-left: auto; }
+    .chatbot-msg-bot { background: #e9ecef; color: #212529; margin-right: auto; }
+    #chatbotForm { display: flex; border-top: 1px solid #dee2e6; }
+    #chatbotInput { flex: 1; border: none; padding: .5rem; outline: none; }
+    #chatbotForm button { border: none; background: #fff; color: #0d6efd; font-weight: 600; padding: 0 .9rem; cursor: pointer; }
+</style>
+
+<script>
+    (function () {
+        // Base URL API đọc từ <meta> do _Layout.cshtml render từ IConfiguration["Api:BaseUrl"] (KHÔNG hard-code) - Mục 5B.
+        var apiBaseUrl = document.querySelector('meta[name="api-base-url"]').content;
+
+        var toggleBtn = document.getElementById('chatbotToggleBtn');
+        var closeBtn = document.getElementById('chatbotCloseBtn');
+        var panel = document.getElementById('chatbotPanel');
+        var form = document.getElementById('chatbotForm');
+        var input = document.getElementById('chatbotInput');
+        var messages = document.getElementById('chatbotMessages');
+
+        // Lịch sử hội thoại giữ trong biến JS phía client, mất khi tải lại trang - Mục 5B.
+        function themTinNhan(noiDung, laNguoiDung) {
+            var div = document.createElement('div');
+            div.className = 'chatbot-msg ' + (laNguoiDung ? 'chatbot-msg-user' : 'chatbot-msg-bot');
+            div.textContent = noiDung;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        toggleBtn.addEventListener('click', function () {
+            var dangAn = panel.classList.contains('d-none');
+            panel.classList.toggle('d-none');
+            if (dangAn && messages.children.length === 0) {
+                themTinNhan('Xin chào! Bạn cần hỗ trợ gì về KLCN060 Hotel?', false);
+            }
+            if (dangAn) input.focus();
+        });
+
+        closeBtn.addEventListener('click', function () {
+            panel.classList.add('d-none');
+        });
+
+        form.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            var cauHoi = input.value.trim();
+            if (!cauHoi) return;
+
+            themTinNhan(cauHoi, true);
+            input.value = '';
+            input.disabled = true;
+
+            var url = new URL('api/v1/chatbot/ask', apiBaseUrl).toString();
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cauHoi: cauHoi })
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (json) {
+                    if (json && json.success && json.data && json.data.cauTraLoi) {
+                        themTinNhan(json.data.cauTraLoi, false);
+                    } else {
+                        themTinNhan((json && json.error && json.error.message) || 'Xin lỗi, chatbot hiện chưa trả lời được câu hỏi này.', false);
+                    }
+                })
+                .catch(function () {
+                    themTinNhan('Không thể kết nối tới hệ thống hỗ trợ, vui lòng thử lại sau.', false);
+                })
+                .finally(function () {
+                    input.disabled = false;
+                    input.focus();
+                });
+        });
+    })();
+</script>
