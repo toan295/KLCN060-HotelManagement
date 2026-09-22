@@ -47,6 +47,9 @@ public partial class ManHinhChinhViewModel : ObservableObject
     public bool CoTheQuanLyKhachHang
         => _session.VaiTro is "QUAN_LY" or "LE_TAN";
 
+    public bool CoTheXemBaoCao
+        => _session.VaiTro is "QUAN_LY" or "KE_TOAN";
+
     // Nhãn vai trò hiển thị trên thanh app-chrome, khớp mẫu "Quản lý · Trần Văn Long" trong bản thiết kế
     // nhưng dùng đúng tên đăng nhập thật của phiên hiện tại thay vì tên minh hoạ.
     public string VaiTroHienThi => _session.VaiTro switch
@@ -64,6 +67,7 @@ public partial class ManHinhChinhViewModel : ObservableObject
         OnPropertyChanged(nameof(VaiTroHienThi));
         OnPropertyChanged(nameof(LaQuanLy));
         OnPropertyChanged(nameof(CoTheQuanLyKhachHang));
+        OnPropertyChanged(nameof(CoTheXemBaoCao));
         ManHinhDangChon = value switch
         {
             QuanLyKhachHangViewModel => "d9",
@@ -74,6 +78,9 @@ public partial class ManHinhChinhViewModel : ObservableObject
             DichVuSuDungViewModel => "d6",
             TraPhongViewModel => "d7",
             ThanhToanViewModel => "d8",
+            PhanQuyenViewModel => "d15",
+            SaoLuuViewModel => "d16",
+            BaoCaoViewModel => "d17",
             QuanLyDanhMucPhongViewModel => "d11",
             QuanLyKhuyenMaiViewModel => "d12",
             QuanLyDichVuViewModel => "d13",
@@ -128,6 +135,9 @@ public partial class ManHinhChinhViewModel : ObservableObject
     [RelayCommand] private void HienThiKhuyenMai() => CurrentViewModel = new QuanLyKhuyenMaiViewModel(_api);
     [RelayCommand] private void HienThiDichVu() => CurrentViewModel = new QuanLyDichVuViewModel(_api);
     [RelayCommand] private void HienThiCoSoVatChat() => CurrentViewModel = new QuanLyCoSoVatChatViewModel(_api);
+    [RelayCommand] private void HienThiPhanQuyen() { if (LaQuanLy) CurrentViewModel = new PhanQuyenViewModel(_api); }
+    [RelayCommand] private void HienThiSaoLuu() { if (LaQuanLy) CurrentViewModel = new SaoLuuViewModel(_api); }
+    [RelayCommand] private void HienThiBaoCao() { if (CoTheXemBaoCao) CurrentViewModel = new BaoCaoViewModel(_api); }
 
     // "← Đăng xuất" (bản thiết kế D2-D17): gọi API để thu hồi refresh token, xoá phiên làm việc,
     // rồi quay về màn hình đăng nhập D1 - trước đây chưa có cách nào thoát khỏi phiên đã đăng nhập.
