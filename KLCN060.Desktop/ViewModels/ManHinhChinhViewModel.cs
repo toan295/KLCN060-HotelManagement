@@ -42,6 +42,11 @@ public partial class ManHinhChinhViewModel : ObservableObject
     // ("D1: standalone, no app chrome/sidebar (login screen precedes the main app shell)").
     public bool DaDangNhap => CurrentViewModel is not DangNhapViewModel;
 
+    public bool LaQuanLy => _session.VaiTro == "QUAN_LY";
+
+    public bool CoTheQuanLyKhachHang
+        => _session.VaiTro is "QUAN_LY" or "LE_TAN";
+
     // Nhãn vai trò hiển thị trên thanh app-chrome, khớp mẫu "Quản lý · Trần Văn Long" trong bản thiết kế
     // nhưng dùng đúng tên đăng nhập thật của phiên hiện tại thay vì tên minh hoạ.
     public string VaiTroHienThi => _session.VaiTro switch
@@ -57,8 +62,11 @@ public partial class ManHinhChinhViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(DaDangNhap));
         OnPropertyChanged(nameof(VaiTroHienThi));
+        OnPropertyChanged(nameof(LaQuanLy));
+        OnPropertyChanged(nameof(CoTheQuanLyKhachHang));
         ManHinhDangChon = value switch
         {
+            QuanLyKhachHangViewModel => "d9",
             QuanLyDanhMucPhongViewModel => "d11",
             QuanLyKhuyenMaiViewModel => "d12",
             QuanLyDichVuViewModel => "d13",
@@ -81,6 +89,15 @@ public partial class ManHinhChinhViewModel : ObservableObject
     {
         if (_session.VaiTro == "QUAN_LY")
             HienThiPhong();
+        else if (_session.VaiTro == "LE_TAN")
+            HienThiKhachHang();
+    }
+
+    [RelayCommand]
+    private void HienThiKhachHang()
+    {
+        if (CoTheQuanLyKhachHang)
+            CurrentViewModel = new QuanLyKhachHangViewModel(_api);
     }
 
     [RelayCommand] private void HienThiPhong() => CurrentViewModel = new QuanLyDanhMucPhongViewModel(_api);

@@ -1,6 +1,7 @@
 <Window x:Class="KLCN060.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="clr-namespace:KLCN060.Desktop.ViewModels" xmlns:views="clr-namespace:KLCN060.Desktop.Views" Title="KLCN060 Hotel Management" Height="720" Width="1120" MinWidth="960" MinHeight="600" WindowStartupLocation="CenterScreen" Background="#F5F6F0">
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:DangNhapViewModel}"><views:D1DangNhapView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:QuanLyKhachHangViewModel}"><views:D9QuanLyKhachHangView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyDanhMucPhongViewModel}"><views:D11QuanLyDanhMucPhongView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyKhuyenMaiViewModel}"><views:D12QuanLyKhuyenMaiView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyDichVuViewModel}"><views:D13QuanLyDichVuView /></DataTemplate>
@@ -34,6 +35,7 @@
         </Style>
         <Style x:Key="NavItemD11" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d11">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
@@ -41,6 +43,7 @@
         </Style>
         <Style x:Key="NavItemD12" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d12">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
@@ -48,6 +51,7 @@
         </Style>
         <Style x:Key="NavItemD13" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d13">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
@@ -55,7 +59,16 @@
         </Style>
         <Style x:Key="NavItemD14" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d14">
+                    <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NavItemD9" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CoTheQuanLyKhachHang}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d9">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
             </Style.Triggers>
@@ -105,8 +118,9 @@
 
                 <Border Grid.Column="0" Background="#EAEEE4" BorderBrush="#D7DDCE" BorderThickness="0,0,1,0">
                     <DockPanel LastChildFill="False" Margin="10,16,10,14">
-                        <TextBlock DockPanel.Dock="Top" Text="QUẢN TRỊ" FontSize="10" FontWeight="Bold" Foreground="#647A6C" Margin="10,0,0,8" />
+                        <TextBlock DockPanel.Dock="Top" Text="CHỨC NĂNG" FontSize="10" FontWeight="Bold" Foreground="#647A6C" Margin="10,0,0,8" />
                         <StackPanel DockPanel.Dock="Top">
+                            <Button Content="👤 Khách hàng" Style="{StaticResource NavItemD9}" Command="{Binding HienThiKhachHangCommand}" />
                             <Button Content="🛏️ Danh mục phòng" Style="{StaticResource NavItemD11}" Command="{Binding HienThiPhongCommand}" />
                             <Button Content="🏷️ Khuyến mãi" Style="{StaticResource NavItemD12}" Command="{Binding HienThiKhuyenMaiCommand}" />
                             <Button Content="🧾 Danh mục dịch vụ" Style="{StaticResource NavItemD13}" Command="{Binding HienThiDichVuCommand}" />

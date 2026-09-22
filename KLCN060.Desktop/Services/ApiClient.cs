@@ -36,6 +36,12 @@ public sealed class ApiClient
     public Task<DichVuDto> UpdateServiceAsync(string id, YeuCauDichVu x) => PutAsync<YeuCauDichVu, DichVuDto>($"api/v1/services/{id}", x);
     public Task DeleteServiceAsync(string id) => SendKhongCoNoiDungAsync(HttpMethod.Delete, $"api/v1/services/{id}");
     public Task<List<CoSoVatChatDto>> GetFacilitiesAsync(string roomId) => GetAsync<List<CoSoVatChatDto>>($"api/v1/rooms/{roomId}/facilities");
+    public Task<List<KhachHangDto>> TimKiemKhachHangAsync(string tuKhoa)
+        => GetAsync<List<KhachHangDto>>($"api/v1/guests?q={Uri.EscapeDataString(tuKhoa)}");
+    public Task<ChiTietKhachHangDto> GetChiTietKhachHangAsync(string maKhach)
+        => GetAsync<ChiTietKhachHangDto>($"api/v1/guests/{Uri.EscapeDataString(maKhach)}");
+    public Task<KhachHangDto> CapNhatKhachHangAsync(string maKhach, YeuCauKhachHang request)
+        => PutAsync<YeuCauKhachHang, KhachHangDto>($"api/v1/guests/{Uri.EscapeDataString(maKhach)}", request);
 
     private Task<T> GetAsync<T>(string url) => GuiCoLamMoiAsync<T>(HttpMethod.Get, url, null);
     private Task<TResponse> PostAsync<TRequest, TResponse>(string url, TRequest body) => GuiCoLamMoiAsync<TResponse>(HttpMethod.Post, url, body);
@@ -165,6 +171,7 @@ public sealed record YeuCauLoaiPhong(string TenLoai, int SoNguoiTieuChuan, decim
 public sealed record YeuCauPhong(string TenPhong, int Tang, string MaLoai, string? TinhTrang);
 public sealed record YeuCauKhuyenMai(string TenKM, decimal? PhanTramKM, DateOnly NgayBatDau, DateOnly NgayKetThuc, string? DieuKien, string LoaiKM, decimal? GiaTri, int? SoLuongGioiHan);
 public sealed record YeuCauDichVu(string TenDV, decimal GiaDV, string DonViTinh);
+public sealed record YeuCauKhachHang(string HoTen, string SoDT, string? CCCD, string? Email, string? DiaChi);
 public sealed class KetQuaDangNhap { public string AccessToken { get; init; } = ""; public string RefreshToken { get; init; } = ""; }
 public sealed class KetQuaLamMoiToken { public string AccessToken { get; init; } = ""; }
 public sealed class LoaiPhongDto { public string MaLoai { get; init; } = ""; public string TenLoai { get; init; } = ""; public int SoNguoiTieuChuan { get; init; } public decimal DonGia { get; init; } public decimal PhuThu { get; init; } }
@@ -186,6 +193,27 @@ public sealed class KhuyenMaiDto
         : "Đã kết thúc";
 }
 public sealed class DichVuDto { public string MaDV { get; init; } = ""; public string TenDV { get; init; } = ""; public decimal GiaDV { get; init; } public string DonViTinh { get; init; } = ""; }
+public class KhachHangDto
+{
+    public string MaKhach { get; init; } = "";
+    public string HoTen { get; init; } = "";
+    public string SoDT { get; init; } = "";
+    public string? CCCD { get; init; }
+    public string? Email { get; init; }
+    public string? DiaChi { get; init; }
+}
+public sealed class ChiTietKhachHangDto : KhachHangDto
+{
+    public List<LichSuLuuTruDto> LichSuLuuTru { get; init; } = [];
+}
+public sealed class LichSuLuuTruDto
+{
+    public string MaPhieuDat { get; init; } = "";
+    public string TrangThai { get; init; } = "";
+    public DateOnly NgayDonDuKien { get; init; }
+    public DateOnly NgayTraDuKien { get; init; }
+    public decimal TongTien { get; init; }
+}
 public sealed class CoSoVatChatDto { public string MaSo { get; init; } = ""; public string Ten { get; init; } = ""; public int SoLuong { get; init; } public string TinhTrang { get; init; } = ""; public string? MaPhong { get; init; } }
 public sealed class DongCoSoVatChat { public string MaSo { get; init; } = ""; public string Ten { get; init; } = ""; public string Phong { get; init; } = ""; public int SoLuong { get; init; } public string TinhTrang { get; init; } = ""; }
 public sealed class PhanHoiApi<T> { public bool Success { get; init; } public T? Data { get; init; } }
