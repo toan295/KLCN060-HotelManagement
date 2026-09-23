@@ -1,0 +1,70 @@
+<UserControl x:Class="KLCN060.Desktop.Views.D2DashboardView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Background="#F5F6F0" Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBlock Text="Sơ đồ trạng thái phòng" FontSize="26" FontWeight="Bold" Foreground="#123328"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14">
+            <Button Content="Tải lại" Command="{Binding TaiDuLieuCommand}"/>
+        </StackPanel>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding DanhSachPhong}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Width="112" Height="76" Margin="0,0,12,12" Command="{Binding DataContext.ChonPhongCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#8B8F8C"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding TinhTrang}" Value="VC">
+                                                <Setter Property="Background" Value="#4CAF7D"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding TinhTrang}" Value="VD">
+                                                <Setter Property="Background" Value="#E08A3C"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding TinhTrang}" Value="VI">
+                                                <Setter Property="Background" Value="#4FA3D1"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding TinhTrang}" Value="OC">
+                                                <Setter Property="Background" Value="#1F6B4A"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding TinhTrang}" Value="OD">
+                                                <Setter Property="Background" Value="#C8452F"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding TenPhong}" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding TinhTrang}" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <Border Grid.Column="1" Background="White" Padding="16" CornerRadius="10">
+                <StackPanel>
+                    <TextBlock Text="Đổi trạng thái" FontWeight="Bold" FontSize="17"/>
+                    <TextBlock Text="{Binding PhongDaChon.TenPhong}" Margin="0,12,0,0"/>
+                    <ComboBox ItemsSource="{Binding TrangThaiDuocPhep}" SelectedItem="{Binding TrangThaiMoi}" Height="34"/>
+                    <TextBox Text="{Binding GhiChu}"/>
+                    <Button Content="Cập nhật" Command="{Binding CapNhatTrangThaiCommand}"/>
+                    <TextBlock Text="{Binding ThongBao}" Foreground="#C8452F" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -42,6 +42,21 @@ public partial class ManHinhChinhViewModel : ObservableObject
     // ("D1: standalone, no app chrome/sidebar (login screen precedes the main app shell)").
     public bool DaDangNhap => CurrentViewModel is not DangNhapViewModel;
 
+    public bool LaQuanLy => _session.VaiTro == "QUAN_LY";
+    public bool LaLeTan => _session.VaiTro == "LE_TAN";
+
+    public bool CoTheXemSoDoPhong
+        => _session.VaiTro is "LE_TAN" or "BUONG_PHONG" or "QUAN_LY";
+
+    public bool CoTheThanhToan
+        => _session.VaiTro is "LE_TAN" or "KE_TOAN";
+
+    public bool CoTheQuanLyKhachHang
+        => _session.VaiTro is "QUAN_LY" or "LE_TAN";
+
+    public bool CoTheXemBaoCao
+        => _session.VaiTro is "QUAN_LY" or "KE_TOAN";
+
     // Nhãn vai trò hiển thị trên thanh app-chrome, khớp mẫu "Quản lý · Trần Văn Long" trong bản thiết kế
     // nhưng dùng đúng tên đăng nhập thật của phiên hiện tại thay vì tên minh hoạ.
     public string VaiTroHienThi => _session.VaiTro switch
@@ -57,8 +72,26 @@ public partial class ManHinhChinhViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(DaDangNhap));
         OnPropertyChanged(nameof(VaiTroHienThi));
+        OnPropertyChanged(nameof(LaQuanLy));
+        OnPropertyChanged(nameof(LaLeTan));
+        OnPropertyChanged(nameof(CoTheXemSoDoPhong));
+        OnPropertyChanged(nameof(CoTheThanhToan));
+        OnPropertyChanged(nameof(CoTheQuanLyKhachHang));
+        OnPropertyChanged(nameof(CoTheXemBaoCao));
         ManHinhDangChon = value switch
         {
+            QuanLyKhachHangViewModel => "d9",
+            BanGiaoCaViewModel => "d10",
+            DashboardViewModel => "d2",
+            DatPhongViewModel => "d3",
+            NhanPhongViewModel => "d4",
+            DoiPhongViewModel => "d5",
+            DichVuSuDungViewModel => "d6",
+            TraPhongViewModel => "d7",
+            ThanhToanViewModel => "d8",
+            PhanQuyenViewModel => "d15",
+            SaoLuuViewModel => "d16",
+            BaoCaoViewModel => "d17",
             QuanLyDanhMucPhongViewModel => "d11",
             QuanLyKhuyenMaiViewModel => "d12",
             QuanLyDichVuViewModel => "d13",
@@ -81,12 +114,42 @@ public partial class ManHinhChinhViewModel : ObservableObject
     {
         if (_session.VaiTro == "QUAN_LY")
             HienThiPhong();
+        else if (_session.VaiTro == "LE_TAN")
+            HienThiDashboard();
     }
+
+    [RelayCommand]
+    private void HienThiKhachHang()
+    {
+        if (CoTheQuanLyKhachHang)
+            CurrentViewModel = new QuanLyKhachHangViewModel(_api);
+    }
+    [RelayCommand] private void HienThiDashboard() { if (_session.VaiTro is "LE_TAN" or "BUONG_PHONG" or "QUAN_LY") CurrentViewModel = new DashboardViewModel(_api); }
+    [RelayCommand] private void HienThiDatPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new DatPhongViewModel(_api); }
+    [RelayCommand] private void HienThiNhanPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new NhanPhongViewModel(_api); }
+    [RelayCommand] private void HienThiDoiPhong() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new DoiPhongViewModel(_api); }
+    [RelayCommand] private void HienThiDichVuSuDung() { if (_session.VaiTro == "LE_TAN") CurrentViewModel = new DichVuSuDungViewModel(_api); }
+    [RelayCommand]
+    private void HienThiTraPhong()
+    {
+        if (_session.VaiTro != "LE_TAN")
+            return;
+
+        var manHinhTraPhong = new TraPhongViewModel(_api);
+        manHinhTraPhong.HoaDonDaTao += maHoaDon =>
+            CurrentViewModel = new ThanhToanViewModel(_api, maHoaDon);
+        CurrentViewModel = manHinhTraPhong;
+    }
+    [RelayCommand] private void HienThiThanhToan() { if (_session.VaiTro is "LE_TAN" or "KE_TOAN") CurrentViewModel = new ThanhToanViewModel(_api); }
+    [RelayCommand] private void HienThiBanGiaoCa() { if (LaLeTan) CurrentViewModel = new BanGiaoCaViewModel(_api); }
 
     [RelayCommand] private void HienThiPhong() => CurrentViewModel = new QuanLyDanhMucPhongViewModel(_api);
     [RelayCommand] private void HienThiKhuyenMai() => CurrentViewModel = new QuanLyKhuyenMaiViewModel(_api);
     [RelayCommand] private void HienThiDichVu() => CurrentViewModel = new QuanLyDichVuViewModel(_api);
     [RelayCommand] private void HienThiCoSoVatChat() => CurrentViewModel = new QuanLyCoSoVatChatViewModel(_api);
+    [RelayCommand] private void HienThiPhanQuyen() { if (LaQuanLy) CurrentViewModel = new PhanQuyenViewModel(_api); }
+    [RelayCommand] private void HienThiSaoLuu() { if (LaQuanLy) CurrentViewModel = new SaoLuuViewModel(_api); }
+    [RelayCommand] private void HienThiBaoCao() { if (CoTheXemBaoCao) CurrentViewModel = new BaoCaoViewModel(_api); }
 
     // "← Đăng xuất" (bản thiết kế D2-D17): gọi API để thu hồi refresh token, xoá phiên làm việc,
     // rồi quay về màn hình đăng nhập D1 - trước đây chưa có cách nào thoát khỏi phiên đã đăng nhập.

@@ -1,10 +1,22 @@
 <Window x:Class="KLCN060.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="clr-namespace:KLCN060.Desktop.ViewModels" xmlns:views="clr-namespace:KLCN060.Desktop.Views" Title="KLCN060 Hotel Management" Height="720" Width="1120" MinWidth="960" MinHeight="600" WindowStartupLocation="CenterScreen" Background="#F5F6F0">
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:DangNhapViewModel}"><views:D1DangNhapView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:QuanLyKhachHangViewModel}"><views:D9QuanLyKhachHangView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BanGiaoCaViewModel}"><views:D10BanGiaoCaView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><views:D2DashboardView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DatPhongViewModel}"><views:D3DatPhongView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NhanPhongViewModel}"><views:D4NhanPhongView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DoiPhongViewModel}"><views:D5DoiPhongView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DichVuSuDungViewModel}"><views:D6DichVuView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TraPhongViewModel}"><views:D7TraPhongView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ThanhToanViewModel}"><views:D8ThanhToanView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyDanhMucPhongViewModel}"><views:D11QuanLyDanhMucPhongView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyKhuyenMaiViewModel}"><views:D12QuanLyKhuyenMaiView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyDichVuViewModel}"><views:D13QuanLyDichVuView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyCoSoVatChatViewModel}"><views:D14QuanLyCoSoVatChatView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PhanQuyenViewModel}"><views:D15PhanQuyenView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SaoLuuViewModel}"><views:D16SaoLuuView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BaoCaoViewModel}"><views:D17BaoCaoView /></DataTemplate>
 
         <!-- Nút điều hướng trên sidebar: nền trong suốt, bo tròn khi hover - khác nút hành động chính (App.xaml). -->
         <Style x:Key="NavItemStyle" TargetType="Button">
@@ -34,6 +46,7 @@
         </Style>
         <Style x:Key="NavItemD11" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d11">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
@@ -41,6 +54,7 @@
         </Style>
         <Style x:Key="NavItemD12" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d12">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
@@ -48,6 +62,7 @@
         </Style>
         <Style x:Key="NavItemD13" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d13">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
@@ -55,11 +70,31 @@
         </Style>
         <Style x:Key="NavItemD14" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
             <Style.Triggers>
+                <DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
                 <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d14">
                     <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="NavItemD9" TargetType="Button" BasedOn="{StaticResource NavItemStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding CoTheQuanLyKhachHang}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                <DataTrigger Binding="{Binding ManHinhDangChon}" Value="d9">
+                    <Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NavItemD2" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding CoTheXemSoDoPhong}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d2"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD3" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaLeTan}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d3"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD4" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaLeTan}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d4"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD5" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaLeTan}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d5"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD6" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaLeTan}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d6"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD7" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaLeTan}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d7"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD8" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding CoTheThanhToan}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d8"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD10" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaLeTan}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d10"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD15" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d15"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD16" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding LaQuanLy}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d16"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
+        <Style x:Key="NavItemD17" TargetType="Button" BasedOn="{StaticResource NavItemStyle}"><Style.Triggers><DataTrigger Binding="{Binding CoTheXemBaoCao}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger><DataTrigger Binding="{Binding ManHinhDangChon}" Value="d17"><Setter Property="Background" Value="White" /><Setter Property="Foreground" Value="#123328" /><Setter Property="FontWeight" Value="SemiBold" /></DataTrigger></Style.Triggers></Style>
     </Window.Resources>
 
     <Grid>
@@ -105,12 +140,30 @@
 
                 <Border Grid.Column="0" Background="#EAEEE4" BorderBrush="#D7DDCE" BorderThickness="0,0,1,0">
                     <DockPanel LastChildFill="False" Margin="10,16,10,14">
-                        <TextBlock DockPanel.Dock="Top" Text="QUẢN TRỊ" FontSize="10" FontWeight="Bold" Foreground="#647A6C" Margin="10,0,0,8" />
+                        <TextBlock DockPanel.Dock="Top" Text="CHỨC NĂNG" FontSize="10" FontWeight="Bold" Foreground="#647A6C" Margin="10,0,0,8" />
                         <StackPanel DockPanel.Dock="Top">
+                            <Button Style="{StaticResource NavItemD2}" Command="{Binding HienThiDashboardCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="▦" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Sơ đồ phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD3}" Command="{Binding HienThiDatPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="+" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Đặt phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD4}" Command="{Binding HienThiNhanPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="✓" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Nhận phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD5}" Command="{Binding HienThiDoiPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="↔" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Đổi phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD6}" Command="{Binding HienThiDichVuSuDungCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="●" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Dịch vụ"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD7}" Command="{Binding HienThiTraPhongCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="→" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Trả phòng"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD8}" Command="{Binding HienThiThanhToanCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="₫" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Thanh toán"/></Grid></Button>
+                            <Button Style="{StaticResource NavItemD10}" Command="{Binding HienThiBanGiaoCaCommand}"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="↹" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Bàn giao ca"/></Grid></Button>
+                            <Button Content="👤 Khách hàng" Style="{StaticResource NavItemD9}" Command="{Binding HienThiKhachHangCommand}" />
                             <Button Content="🛏️ Danh mục phòng" Style="{StaticResource NavItemD11}" Command="{Binding HienThiPhongCommand}" />
                             <Button Content="🏷️ Khuyến mãi" Style="{StaticResource NavItemD12}" Command="{Binding HienThiKhuyenMaiCommand}" />
                             <Button Content="🧾 Danh mục dịch vụ" Style="{StaticResource NavItemD13}" Command="{Binding HienThiDichVuCommand}" />
                             <Button Content="🧰 Cơ sở vật chất" Style="{StaticResource NavItemD14}" Command="{Binding HienThiCoSoVatChatCommand}" />
+                            <Button Style="{StaticResource NavItemD15}" Command="{Binding HienThiPhanQuyenCommand}">
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="⚿" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Phân quyền"/></Grid>
+                            </Button>
+                            <Button Style="{StaticResource NavItemD16}" Command="{Binding HienThiSaoLuuCommand}">
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="▣" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Sao lưu dữ liệu"/></Grid>
+                            </Button>
+                            <Button Style="{StaticResource NavItemD17}" Command="{Binding HienThiBaoCaoCommand}">
+                                <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><TextBlock Text="▥" HorizontalAlignment="Center"/><TextBlock Grid.Column="1" Text="Báo cáo"/></Grid>
+                            </Button>
                         </StackPanel>
                         <Button DockPanel.Dock="Bottom" Content="← Đăng xuất" Style="{StaticResource NavItemStyle}" Command="{Binding DangXuatCommand}" Foreground="#C8452F" />
                     </DockPanel>

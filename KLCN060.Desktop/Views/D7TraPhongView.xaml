@@ -1,0 +1,90 @@
+<UserControl x:Class="KLCN060.Desktop.Views.D7TraPhongView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="28" Background="#F5F6F0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Trả phòng" FontSize="26" FontWeight="Bold" Foreground="#123328" />
+
+        <WrapPanel Grid.Row="1" Margin="0,18,0,12">
+            <ComboBox Width="250"
+                      Height="34"
+                      ItemsSource="{Binding Luot}"
+                      DisplayMemberPath="MaPhong"
+                      SelectedItem="{Binding LuotDaChon}" />
+            <Button Margin="10,0,0,0" Command="{Binding XemFolioCommand}" Content="Xem folio" />
+            <CheckBox Margin="16,0,0,0"
+                      VerticalAlignment="Center"
+                      Content="Áp dụng phụ thu trễ giờ"
+                      IsChecked="{Binding ApDungPhuThuTreGio}" />
+        </WrapPanel>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Padding="20" Background="White" CornerRadius="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Chi tiết folio" FontSize="18" FontWeight="SemiBold" />
+                    <DataGrid Grid.Row="1"
+                              Margin="0,14,0,0"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              ItemsSource="{Binding Folio.ChiTiet}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="110" Header="Loại" Binding="{Binding LoaiKhoanMuc}" />
+                            <DataGridTextColumn Width="*" Header="Nội dung" Binding="{Binding MoTa}" />
+                            <DataGridTextColumn Width="60" Header="SL" Binding="{Binding SoLuong}" />
+                            <DataGridTextColumn Width="115"
+                                                Header="Đơn giá"
+                                                Binding="{Binding DonGia, Converter={StaticResource VndMoneyConverter}}" />
+                            <DataGridTextColumn Width="120"
+                                                Header="Thành tiền"
+                                                Binding="{Binding ThanhTien, Converter={StaticResource VndMoneyConverter}}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Padding="20" Background="White" CornerRadius="10">
+                <StackPanel>
+                    <TextBlock Text="Tổng hợp" FontSize="18" FontWeight="SemiBold" />
+                    <TextBlock Margin="0,18,0,0"
+                               Text="{Binding Folio.TongHopFolio.TienPhong, StringFormat=Tiền phòng: {0:N0}đ}" />
+                    <TextBlock Margin="0,8,0,0"
+                               Text="{Binding Folio.TongHopFolio.PhuThu, StringFormat=Phụ thu: {0:N0}đ}" />
+                    <TextBlock Margin="0,8,0,0"
+                               Text="{Binding Folio.TongHopFolio.TienDichVu, StringFormat=Dịch vụ: {0:N0}đ}" />
+                    <Separator Margin="0,14" />
+                    <TextBlock Text="{Binding Folio.TongHopFolio.ConPhaiThu, StringFormat=Còn phải thu: {0:N0}đ}"
+                               FontSize="16"
+                               FontWeight="Bold" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <StackPanel Grid.Row="3" Margin="0,18,0,0" HorizontalAlignment="Center">
+            <TextBlock Foreground="#C8452F"
+                       Text="{Binding ThongBao}"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap" />
+            <Button MinWidth="190"
+                    Margin="0,10,0,0"
+                    Command="{Binding TraPhongCommand}"
+                    Content="Xác nhận trả phòng" />
+        </StackPanel>
+    </Grid>
+</UserControl>

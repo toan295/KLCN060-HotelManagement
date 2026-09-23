@@ -1,0 +1,101 @@
+<UserControl x:Class="KLCN060.Desktop.Views.D8ThanhToanView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="28" Background="#F5F6F0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Thanh toán hóa đơn" FontSize="26" FontWeight="Bold" Foreground="#123328" />
+
+        <WrapPanel Grid.Row="1" Margin="0,18,0,12">
+            <TextBox Width="230" Height="34" Text="{Binding MaHoaDon}" />
+            <Button Margin="10,0,0,0" Command="{Binding TaiCommand}" Content="Tra cứu" />
+            <Button Margin="10,0,0,0" Command="{Binding XuatPdfCommand}" Content="Xuất hóa đơn PDF" />
+        </WrapPanel>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Padding="20" Background="White" CornerRadius="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Chi tiết hóa đơn" FontSize="18" FontWeight="SemiBold" />
+                    <DataGrid Grid.Row="1"
+                              Margin="0,14"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              ItemsSource="{Binding HoaDon.ChiTietHoaDon}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="*" Header="Nội dung" Binding="{Binding MoTa}" />
+                            <DataGridTextColumn Width="130"
+                                                Header="Thành tiền"
+                                                Binding="{Binding ThanhTien, Converter={StaticResource VndMoneyConverter}}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Grid.Row="2" Text="Lịch sử thanh toán" FontWeight="SemiBold" />
+                    <DataGrid Grid.Row="3"
+                              Margin="0,14,0,0"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              ItemsSource="{Binding HoaDon.ChiTietThanhToan}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="*" Header="Thời gian" Binding="{Binding ThoiGianThanhToan, StringFormat=dd/MM/yyyy HH:mm}" />
+                            <DataGridTextColumn Width="130" Header="Hình thức" Binding="{Binding HinhThucThanhToan}" />
+                            <DataGridTextColumn Width="130"
+                                                Header="Số tiền"
+                                                Binding="{Binding SoTien, Converter={StaticResource VndMoneyConverter}}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Padding="20" Background="White" CornerRadius="10">
+                <StackPanel>
+                    <TextBlock Text="Thông tin thanh toán" FontSize="18" FontWeight="SemiBold" />
+                    <TextBlock Margin="0,18,0,0" Text="{Binding HoaDon.MaHD, StringFormat=Mã hóa đơn: {0}}" />
+                    <TextBlock Margin="0,8,0,0" Text="{Binding HoaDon.TongTien, StringFormat=Tổng tiền: {0:N0}đ}" />
+                    <TextBlock Margin="0,8,0,0" Text="{Binding HoaDon.DaThanhToan, StringFormat=Đã thanh toán: {0:N0}đ}" />
+                    <TextBlock Margin="0,8,0,0"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Text="{Binding HoaDon.ConNo, StringFormat=Còn nợ: {0:N0}đ}" />
+                    <TextBlock Margin="0,18,0,5" Text="Hình thức thanh toán" />
+                    <ComboBox Height="34" SelectedValue="{Binding HinhThuc}" SelectedValuePath="Content">
+                        <ComboBoxItem Content="TIEN_MAT" />
+                        <ComboBoxItem Content="CHUYEN_KHOAN" />
+                        <ComboBoxItem Content="THE" />
+                    </ComboBox>
+                    <TextBlock Margin="0,14,0,5" Text="Số tiền thu" />
+                    <TextBox Height="34" Text="{Binding SoTien}" />
+                    <Button Width="170"
+                            Margin="0,20,0,0"
+                            HorizontalAlignment="Center"
+                            Command="{Binding ThuTienCommand}"
+                            Content="Xác nhận thu tiền" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="3"
+                   Margin="0,16,0,0"
+                   Foreground="#C8452F"
+                   Text="{Binding ThongBao}"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap" />
+    </Grid>
+</UserControl>
