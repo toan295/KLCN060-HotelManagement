@@ -1,0 +1,57 @@
+@model KLCN060.Web.Models.Account.ProfileViewModel
+@{
+    ViewData["Title"] = "Hồ sơ của tôi";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <h1 class="h3 mb-4">Hồ sơ của tôi</h1>
+
+        @if (ViewBag.SuccessMessage is string successMessage)
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <form asp-controller="Account" asp-action="Profile" method="post">
+            <div class="mb-3">
+                <label asp-for="HoTen" class="form-label"></label>
+                <input asp-for="HoTen" class="form-control" />
+                <span asp-validation-for="HoTen" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SoDT" class="form-label"></label>
+                <input asp-for="SoDT" class="form-control" />
+                <span asp-validation-for="SoDT" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="DiaChi" class="form-label"></label>
+                <input asp-for="DiaChi" class="form-control" />
+                <span asp-validation-for="DiaChi" class="text-danger"></span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.CCCD))
+            {
+                <div class="mb-3">
+                    <label class="form-label">CCCD</label>
+                    <input type="text" class="form-control" value="@Model.CCCD" disabled readonly />
+                    <div class="form-text">CCCD chỉ được lễ tân cập nhật khi nhận phòng trực tiếp.</div>
+                </div>
+            }
+
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

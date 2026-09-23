@@ -98,6 +98,66 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    // GET /Account/Profile — W11 Hồ sơ cá nhân
+    // Gọi GET /users/me (JWT trong Session, không cần tham số) - Mục 5B.
+    [HttpGet]
+    public async Task<IActionResult> Profile()
+    {
+        if (!_apiClient.IsLoggedIn)
+            return RedirectToAction(nameof(Login), new { returnUrl = Url.Action(nameof(Profile)) });
+
+        var result = await _apiClient.GetAsync<ProfileApiModel>("api/v1/users/me", requireAuth: true);
+        if (!result.Success || result.Data is null)
+        {
+            TempData["ErrorMessage"] = result.ErrorMessage ?? "Không tải được hồ sơ.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        var model = new ProfileViewModel
+        {
+            HoTen = result.Data.HoTen,
+            SoDT = result.Data.SoDT,
+            Email = result.Data.Email,
+            DiaChi = result.Data.DiaChi,
+            CCCD = result.Data.CCCD
+        };
+        return View(model);
+    }
+
+    // POST /Account/Profile — W11
+    // Gọi PUT /users/me với { hoTen, soDT, email, diaChi }. KHÔNG gửi CCCD (Mục 5B).
+    // Thành công -> hiển thị thông báo NGAY TRÊN TRANG, không chuyển hướng.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Profile(ProfileViewModel model)
+    {
+        if (!_apiClient.IsLoggedIn)
+            return RedirectToAction(nameof(Login));
+
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var body = new
+        {
+            hoTen = model.HoTen,
+            soDT = model.SoDT,
+            email = model.Email,
+            diaChi = model.DiaChi
+        };
+
+        var result = await _apiClient.PutAsync<ProfileApiModel>("api/v1/users/me", body, requireAuth: true);
+
+        if (!result.Success)
+        {
+            ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Cập nhật hồ sơ thất bại.");
+            return View(model);
+        }
+
+        model.CCCD = result.Data?.CCCD;
+        ViewBag.SuccessMessage = "Cập nhật hồ sơ thành công";
+        return View(model);
+    }
+
     private class LoginResultModel
     {
         public string AccessToken { get; set; } = null!;
