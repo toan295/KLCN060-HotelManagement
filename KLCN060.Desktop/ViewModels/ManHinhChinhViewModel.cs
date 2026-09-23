@@ -43,6 +43,13 @@ public partial class ManHinhChinhViewModel : ObservableObject
     public bool DaDangNhap => CurrentViewModel is not DangNhapViewModel;
 
     public bool LaQuanLy => _session.VaiTro == "QUAN_LY";
+    public bool LaLeTan => _session.VaiTro == "LE_TAN";
+
+    public bool CoTheXemSoDoPhong
+        => _session.VaiTro is "LE_TAN" or "BUONG_PHONG" or "QUAN_LY";
+
+    public bool CoTheThanhToan
+        => _session.VaiTro is "LE_TAN" or "KE_TOAN";
 
     public bool CoTheQuanLyKhachHang
         => _session.VaiTro is "QUAN_LY" or "LE_TAN";
@@ -66,11 +73,15 @@ public partial class ManHinhChinhViewModel : ObservableObject
         OnPropertyChanged(nameof(DaDangNhap));
         OnPropertyChanged(nameof(VaiTroHienThi));
         OnPropertyChanged(nameof(LaQuanLy));
+        OnPropertyChanged(nameof(LaLeTan));
+        OnPropertyChanged(nameof(CoTheXemSoDoPhong));
+        OnPropertyChanged(nameof(CoTheThanhToan));
         OnPropertyChanged(nameof(CoTheQuanLyKhachHang));
         OnPropertyChanged(nameof(CoTheXemBaoCao));
         ManHinhDangChon = value switch
         {
             QuanLyKhachHangViewModel => "d9",
+            BanGiaoCaViewModel => "d10",
             DashboardViewModel => "d2",
             DatPhongViewModel => "d3",
             NhanPhongViewModel => "d4",
@@ -130,6 +141,7 @@ public partial class ManHinhChinhViewModel : ObservableObject
         CurrentViewModel = manHinhTraPhong;
     }
     [RelayCommand] private void HienThiThanhToan() { if (_session.VaiTro is "LE_TAN" or "KE_TOAN") CurrentViewModel = new ThanhToanViewModel(_api); }
+    [RelayCommand] private void HienThiBanGiaoCa() { if (LaLeTan) CurrentViewModel = new BanGiaoCaViewModel(_api); }
 
     [RelayCommand] private void HienThiPhong() => CurrentViewModel = new QuanLyDanhMucPhongViewModel(_api);
     [RelayCommand] private void HienThiKhuyenMai() => CurrentViewModel = new QuanLyKhuyenMaiViewModel(_api);

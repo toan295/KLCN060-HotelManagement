@@ -87,6 +87,10 @@ public sealed class ApiClient
         => GetAsync<List<LichSuSaoLuuDto>>("api/v1/system/backups");
     public Task<LichSuSaoLuuDto> PhucHoiAsync(int maLichSu)
         => PostAsync<object, LichSuSaoLuuDto>($"api/v1/system/backups/{maLichSu}/restore", new { });
+    public Task<BanGiaoCaDto> TaoBanGiaoCaAsync(YeuCauBanGiaoCa request)
+        => PostAsync<YeuCauBanGiaoCa, BanGiaoCaDto>("api/v1/shift-handovers", request);
+    public Task<List<BanGiaoCaDto>> GetBanGiaoCaAsync(DateOnly tuNgay, DateOnly denNgay)
+        => GetAsync<List<BanGiaoCaDto>>($"api/v1/shift-handovers?tuNgay={tuNgay:yyyy-MM-dd}&denNgay={denNgay:yyyy-MM-dd}");
     public async Task<byte[]> TaiHoaDonPdfAsync(string maHoaDon)
     {
         var duongDan = $"api/v1/invoices/{Uri.EscapeDataString(maHoaDon)}/export";
@@ -248,6 +252,7 @@ public sealed record YeuCauDichVuSuDung(string MaDV,int SoLuong);
 public sealed record YeuCauThanhToan(string HinhThucThanhToan,decimal SoTien,string? MaGiaoDich);
 public sealed record YeuCauVaiTro(string TenVaiTro, string? MoTa, List<int> MaQuyen);
 public sealed record YeuCauDoiVaiTro(int MaVaiTro);
+public sealed record YeuCauBanGiaoCa(string MaTaiKhoanNhan, decimal TongTienMatCuoiCa, decimal? TongTienMatDauCa, string? GhiChu);
 public sealed class KetQuaDangNhap { public string AccessToken { get; init; } = ""; public string RefreshToken { get; init; } = ""; }
 public sealed class KetQuaLamMoiToken { public string AccessToken { get; init; } = ""; }
 public sealed class LoaiPhongDto { public string MaLoai { get; init; } = ""; public string TenLoai { get; init; } = ""; public int SoNguoiTieuChuan { get; init; } public decimal DonGia { get; init; } public decimal PhuThu { get; init; } }
@@ -476,6 +481,18 @@ public sealed class LichSuSaoLuuDto
     public string MaTaiKhoan { get; init; } = "";
     public string? DuongDanFile { get; init; }
     public string KetQua { get; init; } = "";
+    public string? GhiChu { get; init; }
+}
+
+public sealed class BanGiaoCaDto
+{
+    public int MaBanGiao { get; init; }
+    public string MaTaiKhoanGiao { get; init; } = "";
+    public string MaTaiKhoanNhan { get; init; } = "";
+    public DateTime ThoiGianBanGiao { get; init; }
+    public decimal TongTienMatDauCa { get; init; }
+    public decimal TongTienMatCuoiCa { get; init; }
+    public int SoLuongPhieuTrongCa { get; init; }
     public string? GhiChu { get; init; }
 }
 public sealed class CoSoVatChatDto { public string MaSo { get; init; } = ""; public string Ten { get; init; } = ""; public int SoLuong { get; init; } public string TinhTrang { get; init; } = ""; public string? MaPhong { get; init; } }
