@@ -17,16 +17,16 @@ public static class InvoicePdfBuilder
         QuestPDF.Settings.UseSystemFonts = true;
     }
 
-    private static string Vnd(decimal x) => $"{Math.Round(x, 0, MidpointRounding.AwayFromZero):N0} đ";
+    internal static string Vnd(decimal x) => $"{Math.Round(x, 0, MidpointRounding.AwayFromZero):N0} đ";
 
-    private static string TrangThai(string t) => t switch
+    internal static string TrangThai(string t) => t switch
     {
         "DA_THANH_TOAN" => "Đã thanh toán",
         "THANH_TOAN_MOT_PHAN" => "Thanh toán một phần",
         _ => "Chưa thanh toán"
     };
 
-    public static byte[] Build(InvoiceDto hd)
+    public static byte[] Build(InvoiceDto hd, KLCN060.Domain.HoaDonDienTu? hddt = null)
     {
         return Document.Create(container =>
         {
@@ -41,6 +41,11 @@ public static class InvoicePdfBuilder
                     col.Item().Text(TenKhachSan).Bold().FontSize(16);
                     col.Item().Text("Hệ thống quản lý khách sạn").FontColor(Colors.Grey.Darken1);
                     col.Item().PaddingTop(8).Text("HÓA ĐƠN THANH TOÁN").Bold().FontSize(14);
+                    // Bản này chỉ là chứng từ thanh toán nội bộ; hóa đơn có giá trị pháp lý là hóa đơn điện tử do cơ quan thuế cấp mã.
+                    if (hddt is { TrangThai: KLCN060.Domain.TrangThaiHoaDonDienTu.DA_PHAT_HANH })
+                        col.Item().Text($"Hóa đơn điện tử số {hddt.SoHoaDon} - Ký hiệu {hddt.MauSo}{hddt.KyHieu} - Mã CQT: {hddt.MaCQT} - Tra cứu: {hddt.LienKetTraCuu} (mã {hddt.MaTraCuu})").FontSize(9);
+                    else
+                        col.Item().Text("Phiếu thanh toán - KHÔNG phải hóa đơn giá trị gia tăng. Hóa đơn điện tử chưa được phát hành.").FontSize(9).FontColor(Colors.Red.Darken2);
                 });
 
                 page.Content().PaddingVertical(10).Column(col =>

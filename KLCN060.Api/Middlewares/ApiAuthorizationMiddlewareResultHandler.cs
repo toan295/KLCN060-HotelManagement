@@ -35,6 +35,7 @@ public class ApiAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewareR
 
     private static async Task GhiLoiAsync(HttpContext context, int statusCode, string code, string message)
     {
+        context.Items["MaLoiApi"] = code;
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
         var body = ApiErrorResponse.Of(code, message);

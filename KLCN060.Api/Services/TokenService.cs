@@ -33,6 +33,8 @@ public class TokenService : ITokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
+        if (!string.IsNullOrEmpty(taiKhoan.NhanVien?.HoTen))
+            claims.Add(new Claim("hoTen", taiKhoan.NhanVien.HoTen));
         if (!string.IsNullOrEmpty(taiKhoan.MaNV))
             claims.Add(new Claim("maNV", taiKhoan.MaNV));
         if (!string.IsNullOrEmpty(taiKhoan.MaKhach))
