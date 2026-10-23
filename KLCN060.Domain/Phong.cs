@@ -9,10 +9,13 @@ public class Phong
     public int Tang { get; set; }
     public TinhTrangPhong TinhTrang { get; set; }
     public string MaLoai { get; set; } = null!;
+    /// <summary>Thời điểm thêm phòng vào danh mục (null = phòng có từ trước khi có cột này, coi như đã có ở mọi ngày): để công suất/RevPAR của ngày cũ không đổi khi thêm phòng mới.</summary>
+    public DateTime? NgayTao { get; set; }
 
     public LoaiPhong LoaiPhong { get; set; } = null!;
     public ICollection<CoSoVatChat> CoSoVatChats { get; set; } = new List<CoSoVatChat>();
     public ICollection<ChiTietPhieuDat> ChiTietPhieuDats { get; set; } = new List<ChiTietPhieuDat>();
     public ICollection<ChiTietPhieuNhan> ChiTietPhieuNhans { get; set; } = new List<ChiTietPhieuNhan>();
     public ICollection<PhieuDoiPhong> PhieuDoiPhongMois { get; set; } = new List<PhieuDoiPhong>();
+    public ICollection<LichSuTinhTrangPhong> LichSuTinhTrangs { get; set; } = new List<LichSuTinhTrangPhong>();
 }

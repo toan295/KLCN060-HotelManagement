@@ -1,4 +1,4 @@
-namespace KLCN060.Domain;
+﻿namespace KLCN060.Domain;
 
 public class Khach
 {
@@ -7,6 +7,7 @@ public class Khach
     public string SoDT { get; set; } = null!;
     public string? CCCD { get; set; }
     public string? Email { get; set; }
+
     public string? DiaChi { get; set; }
 
     public TaiKhoan? TaiKhoan { get; set; }

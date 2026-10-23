@@ -1,7 +1,7 @@
 namespace KLCN060.Domain;
 
 /// <summary>
-/// Bảng cấu hình tĩnh cho chatbot cơ bản (đối sánh từ khoá) — không thuộc 24 bảng nghiệp vụ ở Mục 2 (CLAUDE.md).
+/// Bảng cấu hình tĩnh cho chatbot cơ bản (đối sánh từ khoá) — không thuộc 24 bảng nghiệp vụ ở Mục 2 (tài liệu đặc tả).
 /// </summary>
 public class CauHoiThuongGap
 {

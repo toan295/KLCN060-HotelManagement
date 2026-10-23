@@ -11,4 +11,7 @@ public class ChiTietPhieuDat
 
     public PhieuDatPhong PhieuDatPhong { get; set; } = null!;
     public Phong Phong { get; set; } = null!;
+
+    /// <summary>Giá chốt từng đêm (rỗng với phiếu tạo trước khi có bảng giá từng đêm: khi đó giá chốt là DonGiaApDung × số đêm).</summary>
+    public ICollection<GiaDemDatPhong> GiaTheoDems { get; set; } = new List<GiaDemDatPhong>();
 }
