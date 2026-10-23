@@ -3,78 +3,121 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ctl="clr-namespace:KLCN060.Desktop.Controls"
              mc:Ignorable="d">
-    <Grid Background="#F5F6F0">
-        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="390">
-            <Border Background="White" Padding="36" CornerRadius="10">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.12" />
-                </Border.Effect>
-                <Grid>
-                    <StackPanel>
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
+    <UserControl.Resources>
+        <!-- Cây thông: cùng biểu tượng với logo Website (viewBox 24x24) - dùng làm họa tiết nền ở panel thương hiệu. -->
+        <Geometry x:Key="PineGeometry">M12 2l6 9h-3.5l4.5 7H5l4.5-7H6z</Geometry>
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource MauNen}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5*" MinWidth="380" />
+            <ColumnDefinition Width="6*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ===== Panel thương hiệu (trái): nền xanh rêu đậm, họa tiết rừng thông, giới thiệu ngắn ===== -->
+        <Border Grid.Column="0" ClipToBounds="True">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#0F2B21" Offset="0" />
+                    <GradientStop Color="#1F4D3D" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Grid>
+                <Canvas VerticalAlignment="Bottom" Height="260" ClipToBounds="True" IsHitTestVisible="False">
+                    <Viewbox Canvas.Left="-30" Canvas.Top="70" Width="190" Height="190"><Path Data="{StaticResource PineGeometry}" Fill="#173F31" /></Viewbox>
+                    <Viewbox Canvas.Left="110" Canvas.Top="30" Width="240" Height="240"><Path Data="{StaticResource PineGeometry}" Fill="#1B473A" /></Viewbox>
+                    <Viewbox Canvas.Left="300" Canvas.Top="90" Width="170" Height="170"><Path Data="{StaticResource PineGeometry}" Fill="#173F31" /></Viewbox>
+                    <Viewbox Canvas.Left="-10" Canvas.Top="150" Width="120" Height="120"><Path Data="{StaticResource PineGeometry}" Fill="#22584A" /></Viewbox>
+                    <Viewbox Canvas.Left="230" Canvas.Top="140" Width="130" Height="130"><Path Data="{StaticResource PineGeometry}" Fill="#22584A" /></Viewbox>
+                </Canvas>
+
+                <StackPanel VerticalAlignment="Center" Margin="56,0,40,90">
+                    <Border Width="54" Height="54" CornerRadius="15" Background="{StaticResource MauChinh}" HorizontalAlignment="Left" BorderBrush="{StaticResource MauNhan}" BorderThickness="1.5">
+                        <Viewbox Width="28" Height="28">
+                            <Canvas Width="24" Height="24">
+                                <Path Data="M12 2l6 9h-3.5l4.5 7H5l4.5-7H6z" Fill="#F0C987" />
+                                <Rectangle Canvas.Left="11" Canvas.Top="18" Width="2" Height="4" Fill="#F0C987" />
+                            </Canvas>
+                        </Viewbox>
+                    </Border>
+                    <TextBlock Text="KLCN060 Hotel" FontFamily="Georgia" FontSize="36" FontWeight="SemiBold" Foreground="White" Margin="0,22,0,0" />
+                    <TextBlock Text="Quản lý khách sạn giữa rừng thông Đà Lạt" FontSize="15" Foreground="#F0C987" Margin="0,8,0,0" TextWrapping="Wrap" />
+                    <StackPanel Margin="0,34,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#F0C987" Width="30" />
+                            <TextBlock Text="Đặt phòng, nhận phòng, trả phòng trong một màn hình" Foreground="#CFE0D6" FontSize="13" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="&#xE825;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#F0C987" Width="30" />
+                            <TextBlock Text="Thu tiền mặt và đối soát chuyển khoản tự động" Foreground="#CFE0D6" FontSize="13" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D2;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="#F0C987" Width="30" />
+                            <TextBlock Text="Báo cáo doanh thu và công suất theo thời gian thực" Foreground="#CFE0D6" FontSize="13" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== Biểu mẫu đăng nhập (phải) ===== -->
+        <Grid Grid.Column="1">
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="380">
+                <StackPanel>
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DaDangNhap}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Border Width="36" Height="4" CornerRadius="2" Background="{StaticResource MauNhan}" HorizontalAlignment="Left" Margin="0,0,0,14" />
+                    <TextBlock Text="Đăng nhập hệ thống" FontSize="26" FontWeight="Bold" Foreground="{StaticResource MauChinhDam}" />
+                    <TextBlock Text="Nhập tài khoản nhân viên để tiếp tục làm việc." FontSize="13" Foreground="{StaticResource MauChuNhat}" Margin="0,6,0,28" />
+
+                    <HeaderedContentControl Header="Tên đăng nhập">
+                        <TextBox Text="{Binding TenDangNhap, UpdateSourceTrigger=PropertyChanged}" Height="42" Padding="12,8" FontSize="14" />
+                    </HeaderedContentControl>
+                    <HeaderedContentControl Header="Mật khẩu" Margin="0,18,0,0">
+                        <PasswordBox x:Name="PasswordInput" Height="42" Padding="12,8" FontSize="14" />
+                    </HeaderedContentControl>
+
+                    <ctl:NoticeBar Text="{Binding ThongBao}" IsError="True" Margin="0,18,0,0" />
+
+                    <Button Height="46" Margin="0,24,0,0" IsDefault="True" Click="LoginButton_Click" FontSize="14.5">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Content" Value="Đăng nhập" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DaDangNhap}" Value="True">
-                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    <DataTrigger Binding="{Binding DangDangNhap}" Value="True">
+                                        <Setter Property="Content" Value="Đang đăng nhập..." />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </StackPanel.Style>
-                        <Border Width="44" Height="44" CornerRadius="10" Background="#1F4D3D" HorizontalAlignment="Center" Margin="0,0,0,12">
-                            <TextBlock Text="K" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Text="KLCN060 HOTEL" FontSize="25" FontWeight="Bold" Foreground="#1F4D3D" HorizontalAlignment="Center" />
-                        <TextBlock Text="Đăng nhập hệ thống" FontSize="17" FontWeight="SemiBold" Margin="0,10,0,28" HorizontalAlignment="Center" />
-                        <TextBlock Text="Tên đăng nhập" FontWeight="SemiBold" />
-                        <TextBox Text="{Binding TenDangNhap, UpdateSourceTrigger=PropertyChanged}" Height="38" Margin="0,7,0,18" Padding="10,7" />
-                        <TextBlock Text="Mật khẩu" FontWeight="SemiBold" />
-                        <PasswordBox x:Name="PasswordInput" Height="38" Margin="0,7,0,16" Padding="10,7" />
-                        <TextBlock Text="{Binding ThongBao}" TextWrapping="Wrap" Margin="0,0,0,16">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#C8452F" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding LaTaiKhoanBiKhoa}" Value="True">
-                                            <Setter Property="Foreground" Value="#C98420" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <Button Height="42" Click="LoginButton_Click">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Content" Value="Đăng nhập" />
-                                    <Setter Property="Foreground" Value="White" />
-                                    <Setter Property="Background" Value="#1F4D3D" />
-                                    <Setter Property="BorderBrush" Value="#1F4D3D" />
-                                    <Setter Property="FontWeight" Value="SemiBold" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding DangDangNhap}" Value="True">
-                                            <Setter Property="Content" Value="Đang đăng nhập..." />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DaDangNhap}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        <TextBlock Text="Đăng nhập thành công" FontSize="24" FontWeight="Bold" Foreground="#2E9E6B" HorizontalAlignment="Center" />
-                        <TextBlock Text="Bạn đã sẵn sàng sử dụng hệ thống quản lý khách sạn." Margin="0,12,0,0" TextAlignment="Center" />
-                    </StackPanel>
-                </Grid>
-            </Border>
+                        </Button.Style>
+                    </Button>
+                    <TextBlock Text="© KLCN060 Hotel · Đà Lạt, Lâm Đồng" FontSize="11.5" Foreground="{StaticResource MauChuNhat}" HorizontalAlignment="Center" Margin="0,34,0,0" />
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DaDangNhap}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <TextBlock Text="Đăng nhập thành công" FontSize="24" FontWeight="Bold" Foreground="#2E9E6B" HorizontalAlignment="Center" />
+                    <TextBlock Text="Bạn đã sẵn sàng sử dụng hệ thống quản lý khách sạn." Margin="0,12,0,0" TextAlignment="Center" />
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>

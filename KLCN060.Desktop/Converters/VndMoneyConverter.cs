@@ -3,7 +3,7 @@ using System.Windows.Data;
 
 namespace KLCN060.Desktop.Converters;
 
-/// <summary>Định dạng tiền VNĐ theo Mục 6 (CLAUDE.md Trọng): số nguyên kèm "đ", ví dụ 450000 -> "450.000đ".</summary>
+/// <summary>Định dạng tiền VNĐ theo Mục 6 (tài liệu đặc tả, Trọng): số nguyên kèm "đ", ví dụ 450000 -> "450.000đ".</summary>
 public class VndMoneyConverter : IValueConverter
 {
     private static readonly CultureInfo Vn = CultureInfo.GetCultureInfo("vi-VN");
