@@ -7,23 +7,31 @@
         "CHO_XAC_NHAN" => ("Chờ xác nhận", "warning"),
         "DA_XAC_NHAN" => ("Đã xác nhận", "primary"),
         "DA_NHAN_PHONG" => ("Đã nhận phòng", "success"),
+        "DA_TRA_PHONG" => ("Đã trả phòng", "secondary"),
         "DA_HUY" => ("Đã hủy", "secondary"),
         "KHONG_DEN" => ("Không đến", "secondary"),
         _ => (trangThai, "secondary")
     };
 }
 
-<h1 class="h3 mb-4">Lịch sử đặt phòng của tôi</h1>
+<div class="page-head">
+    <span class="eyebrow">Tài khoản của tôi</span>
+    <h1>Lịch sử đặt phòng của tôi</h1>
+    <p>Theo dõi trạng thái các đơn đặt phòng và xem chi tiết từng đơn.</p>
+</div>
 
 @if (!Model.Any())
 {
-    <p class="text-muted">Bạn chưa có đơn đặt phòng nào.</p>
+    <div class="card text-center p-5">
+    <p class="text-muted mb-3">Bạn chưa có đơn đặt phòng nào.</p>
+    <div><a class="btn btn-primary" asp-controller="Home" asp-action="Search">Tìm phòng ngay</a></div>
+</div>
 }
 else
 {
     <div class="table-responsive">
-        <table class="table table-striped align-middle">
-            <thead class="table-light">
+        <table class="table align-middle">
+            <thead>
                 <tr>
                     <th>Mã phiếu</th>
                     <th>Loại đặt</th>
@@ -40,7 +48,7 @@ else
                 {
                     var trangThai = HienThiTrangThai(donDat.TrangThai);
                     <tr>
-                        <td>@donDat.MaPhieuDat</td>
+                        <td class="mono">@donDat.MaPhieuDat</td>
                         <td>@(donDat.LoaiDatPhong == "CA_NHAN" ? "Cá nhân" : "Đoàn")</td>
                         <td>@donDat.NgayDonDuKien.ToString("dd/MM/yyyy")</td>
                         <td>@donDat.NgayTraDuKien.ToString("dd/MM/yyyy")</td>

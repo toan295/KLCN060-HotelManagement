@@ -1,0 +1,32 @@
+@using KLCN060.Web.Helpers
+@using KLCN060.Web.Services
+@model PhotoViewModel
+@inject IWebHostEnvironment Env
+@inject IRoomImageCatalog Anh
+@{
+    // Ưu tiên ảnh quản lý tải lên qua Desktop (lưu ở API); không có thì dò file copy tay trong wwwroot/images/rooms; không có nữa thì khung gradient.
+    var url = await Anh.GetUrlAsync(Model.Ten);
+    if (url is null && !string.IsNullOrWhiteSpace(Model.Ten))
+    {
+        foreach (var duoi in new[] { "jpg", "jpeg", "png", "webp" })
+        {
+            var duongDan = System.IO.Path.Combine(Env.WebRootPath, "images", "rooms", $"{Model.Ten}.{duoi}");
+            if (System.IO.File.Exists(duongDan))
+            {
+                var version = System.IO.File.GetLastWriteTimeUtc(duongDan).Ticks;
+                url = $"/images/rooms/{Model.Ten}.{duoi}?v={version}";
+                break;
+            }
+        }
+    }
+}
+<div class="photo @Model.CssClass" style="@Model.Style">
+    @if (url is not null)
+    {
+        <img src="@url" alt="@(Model.Caption ?? Model.Ten)" class="photo-img" loading="@(Model.CssClass.Contains("hero") ? "eager" : "lazy")" />
+    }
+    @if (!string.IsNullOrEmpty(Model.Caption))
+    {
+        <span class="cap">@Model.Caption</span>
+    }
+</div>

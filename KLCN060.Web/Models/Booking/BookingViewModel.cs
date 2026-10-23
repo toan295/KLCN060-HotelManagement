@@ -21,6 +21,9 @@ public class HeldRoomViewModel
 {
     public string MaPhong { get; set; } = null!;
     public string MaLoai { get; set; } = null!;
+    public string TenLoai { get; set; } = "";
+    /// <summary>Tên loại phòng (Standard, Superior...) để hiển thị cho khách; thiếu thì dùng mã loại.</summary>
+    public string LoaiHienThi => string.IsNullOrWhiteSpace(TenLoai) ? MaLoai : TenLoai;
     public decimal DonGiaApDung { get; set; }
     public decimal ThanhTien { get; set; }
 }

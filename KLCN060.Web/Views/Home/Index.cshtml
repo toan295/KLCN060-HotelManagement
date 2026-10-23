@@ -1,61 +1,127 @@
 @using KLCN060.Web.Helpers
 @model List<KLCN060.Web.Models.Home.RoomTypeViewModel>
+@inject KLCN060.Web.Services.ApiClient ApiClient
 @{
     ViewData["Title"] = "Trang chủ";
+    var homNay = DateTime.Today.ToString("yyyy-MM-dd");
 }
 
-<div class="mb-4 rounded-3 overflow-hidden" style="background:linear-gradient(150deg,var(--brand-weak),var(--accent-weak));">
-    <div class="container-fluid py-5 px-4 px-md-5">
-        <h1 class="display-6">KLCN060 Hotel</h1>
-        <p class="lead" style="color:var(--ink-2);">Đặt phòng trực tiếp, nhanh chóng, tiện nghi và giá tốt nhất — không qua trung gian.</p>
+@section Hero {
+    <section class="hero">
+        <partial name="_Photo" model='new PhotoViewModel("hero", "", null, "hero-photo")' />
+        <span class="hero-sun" aria-hidden="true"></span>
+        <partial name="_Pines" />
 
-        <form asp-controller="Home" asp-action="Search" method="get" class="row g-2 align-items-end bg-white p-3 rounded-3" style="box-shadow:var(--shadow);">
-            <div class="col-md-3">
-                <label class="form-label">Ngày nhận phòng</label>
-                <input type="date" name="ngayNhan" class="form-control" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Ngày trả phòng</label>
-                <input type="date" name="ngayTra" class="form-control" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Số khách</label>
-                <input type="number" name="soKhach" value="1" min="1" class="form-control" />
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-accent w-100">Tìm phòng trống</button>
-            </div>
-        </form>
-    </div>
-</div>
+        <div class="container hero-inner">
+            <span class="pill"><partial name="_Icon" model='"pin"' /> Đà Lạt · Lâm Đồng</span>
+            <h1>Nghỉ dưỡng giữa rừng thông <em>Đà Lạt</em></h1>
+            <p class="lead">Khách sạn quy mô nhỏ, phòng ấm cúng, gần trung tâm. Đặt phòng trực tiếp để nhận giá tốt nhất, không qua trung gian.</p>
 
-<h2 class="mb-3">Các loại phòng</h2>
-
-@if (!Model.Any())
-{
-    <p class="text-muted">Hiện chưa tải được danh sách loại phòng. Vui lòng thử lại sau.</p>
-}
-else
-{
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-        @foreach (var loaiPhong in Model)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">@loaiPhong.TenLoai</h5>
-                        <p class="card-text text-muted mb-1">Sức chứa tiêu chuẩn: @loaiPhong.SoNguoiTieuChuan khách</p>
-                        <p class="card-text fw-bold fs-5 mb-1">@loaiPhong.DonGia.ToVnd() / đêm</p>
-                        @if (loaiPhong.PhuThu > 0)
-                        {
-                            <p class="card-text text-muted small">Phụ thu: @loaiPhong.PhuThu.ToVnd()</p>
-                        }
-                    </div>
-                    <div class="card-footer bg-white border-top-0">
-                        <a asp-controller="Home" asp-action="Detail" asp-route-maLoai="@loaiPhong.MaLoai" class="btn btn-outline-primary w-100">Xem chi tiết</a>
-                    </div>
+            <form asp-controller="Home" asp-action="Search" method="get" class="search-glass row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Ngày nhận phòng</label>
+                    <input type="text" autocomplete="off" name="ngayNhan" class="form-control date-picker-vi" data-min="@homNay" placeholder="dd/mm/yyyy" />
                 </div>
-            </div>
-        }
-    </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ngày trả phòng</label>
+                    <input type="text" autocomplete="off" name="ngayTra" class="form-control date-picker-vi" data-min="@homNay" placeholder="dd/mm/yyyy" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Số khách</label>
+                    <input type="number" name="soKhach" value="1" min="1" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-accent w-100">Tìm phòng trống <partial name="_Icon" model='"arrow"' /></button>
+                </div>
+            </form>
+        </div>
+    </section>
 }
+
+<section class="features">
+    <div class="row g-3">
+        <div class="col-6 col-lg-3 reveal">
+            <div class="feature">
+                <span class="ico-wrap"><partial name="_Icon" model='"tag"' /></span>
+                <div><h3>Giá tốt nhất</h3><p>Đặt trực tiếp với khách sạn, không qua trung gian.</p></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 reveal" style="--d:80ms">
+            <div class="feature">
+                <span class="ico-wrap"><partial name="_Icon" model='"qr"' /></span>
+                <div><h3>Cọc bằng mã QR</h3><p>Chuyển khoản nhanh, hệ thống tự xác nhận đặt phòng.</p></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 reveal" style="--d:160ms">
+            <div class="feature">
+                <span class="ico-wrap"><partial name="_Icon" model='"pin"' /></span>
+                <div><h3>Vị trí trung tâm</h3><p>Yên tĩnh giữa rừng thông, gần các điểm tham quan.</p></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3 reveal" style="--d:240ms">
+            <div class="feature">
+                <span class="ico-wrap"><partial name="_Icon" model='"phone"' /></span>
+                <div><h3>Hỗ trợ tận tâm</h3><p>Hotline 1900 0001 và chatbot giải đáp mọi thắc mắc.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mt-5 pt-3">
+    <div class="section-head reveal">
+        <span class="eyebrow">Phòng nghỉ</span>
+        <h2>Các loại phòng</h2>
+        <p>Từ phòng tiêu chuẩn gọn gàng đến hạng phòng rộng rãi cho gia đình — chọn không gian phù hợp với chuyến đi của bạn.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted text-center">Hiện chưa tải được danh sách loại phòng. Vui lòng thử lại sau.</p>
+    }
+    else
+    {
+        var stt = 0;
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
+            @foreach (var loaiPhong in Model)
+            {
+                <div class="col reveal" style="--d:@(stt++ * 90)ms">
+                    <article class="room-card">
+                        <div class="media">
+                            <partial name="_Photo" model='new PhotoViewModel(loaiPhong.MaLoai, "", loaiPhong.TenLoai)' />
+                            <span class="price-tag">@loaiPhong.DonGia.ToVnd() <small>/ đêm</small></span>
+                        </div>
+                        <div class="body">
+                            <h3>@loaiPhong.TenLoai</h3>
+                            <div class="meta-row">
+                                <span><partial name="_Icon" model='"users"' /> @loaiPhong.SoNguoiTieuChuan khách tiêu chuẩn</span>
+                                @if (loaiPhong.PhuThu > 0)
+                                {
+                                    <span><partial name="_Icon" model='"tag"' /> Phụ thu @loaiPhong.PhuThu.ToVnd()</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="foot">
+                            <a asp-controller="Home" asp-action="Detail" asp-route-maLoai="@loaiPhong.MaLoai" class="btn btn-outline-primary w-100">Xem chi tiết <partial name="_Icon" model='"arrow"' /></a>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+<section class="mt-5 pt-4 reveal">
+    <div class="cta-band">
+        <partial name="_Pines" />
+        <span class="eyebrow" style="color:#f0c987;">Sẵn sàng cho kỳ nghỉ?</span>
+        <h2 class="mt-2">Giữ phòng ngay hôm nay, thư giãn giữa rừng thông Đà Lạt</h2>
+        <p>Chọn ngày, chọn phòng và thanh toán tiền cọc bằng mã QR chỉ trong vài phút.</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a class="btn btn-accent btn-lg" asp-controller="Home" asp-action="Search">Tìm phòng trống <partial name="_Icon" model='"arrow"' /></a>
+            @if (!ApiClient.IsLoggedIn)
+            {
+                <a class="btn btn-ghost-light btn-lg" asp-controller="Account" asp-action="Register">Đăng ký thành viên</a>
+            }
+        </div>
+    </div>
+</section>

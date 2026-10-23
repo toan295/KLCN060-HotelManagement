@@ -1,3 +1,4 @@
+using KLCN060.Web.Helpers;
 using KLCN060.Web.Models.Booking;
 using KLCN060.Web.Models.Home;
 using KLCN060.Web.Services;
@@ -168,23 +169,6 @@ public class BookingController : Controller
         return View(result.Data);
     }
 
-    // POST /Booking/ConfirmDeposit — W8 nút "Tôi đã chuyển khoản"
-    // MÔ PHỎNG: không có cổng thanh toán thật ở giữa, gọi thẳng API xác nhận (Mục 1).
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ConfirmDeposit(string maPhieuDat)
-    {
-        if (!_apiClient.IsLoggedIn)
-            return RedirectToAction("Login", "Account");
-
-        var result = await _apiClient.PostAsync<BookingViewModel>($"api/v1/bookings/{maPhieuDat}/confirm-deposit", null, requireAuth: true);
-
-        if (!result.Success)
-            TempData["ErrorMessage"] = result.ErrorMessage ?? "Xác nhận đặt cọc thất bại.";
-
-        return RedirectToAction(nameof(Confirmation), new { maPhieuDat });
-    }
-
     // GET /Booking/MyBookings — W9 Lịch sử đặt phòng của tôi
     [HttpGet]
     public async Task<IActionResult> MyBookings()
@@ -231,6 +215,15 @@ public class BookingController : Controller
             TempData["ErrorMessage"] = result.ErrorCode == "KHONG_THE_HUY_DA_NHAN_PHONG"
                 ? "Đơn đã được nhận phòng, vui lòng liên hệ trực tiếp khách sạn để được hỗ trợ."
                 : result.ErrorMessage ?? "Hủy đặt phòng thất bại.";
+        }
+        else if (result.Data is not null)
+        {
+            // [FIX P0 — 24/09/2026] W10: trước đây thành công thì chuyển hướng im lặng, không cho biết
+            // có được hoàn cọc hay không / hoàn bao nhiêu — KH phải tự suy ra từ trạng thái "Đã hủy".
+            // Hiển thị rõ kết quả hoàn cọc lấy từ CancelResultViewModel (khớp CancelBookingResultDto).
+            TempData["SuccessMessage"] = result.Data.HoanCoc
+                ? $"Hủy đặt phòng thành công. Bạn sẽ được hoàn cọc {result.Data.SoTienHoan.ToVnd()}."
+                : "Hủy đặt phòng thành công. Theo chính sách, đơn này không được hoàn cọc.";
         }
 
         return RedirectToAction(nameof(Detail), new { maPhieuDat });

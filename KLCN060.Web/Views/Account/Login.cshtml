@@ -4,51 +4,69 @@
     var isLocked = ViewBag.IsLocked as bool? ?? false;
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card">
-            <div class="card-body p-4">
-                <h1 class="h3 mb-4 text-center">Đăng nhập</h1>
-
-                @if (TempData["SuccessMessage"] is string successMessage)
-                {
-                    <div class="alert alert-success">@successMessage</div>
-                }
-
-                @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
-                {
-                    <div class="alert @(isLocked ? "alert-warning" : "alert-danger")">
-                        @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
-                        {
-                            <div>@error.ErrorMessage</div>
-                        }
-                    </div>
-                }
-
-                <form asp-controller="Account" asp-action="Login" method="post">
-                    <input type="hidden" asp-for="ReturnUrl" />
-
-                    <div class="mb-3">
-                        <label asp-for="TenDangNhap" class="form-label"></label>
-                        <input asp-for="TenDangNhap" class="form-control" autofocus />
-                        <span asp-validation-for="TenDangNhap" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="MatKhau" class="form-label"></label>
-                        <input asp-for="MatKhau" class="form-control" />
-                        <span asp-validation-for="MatKhau" class="text-danger"></span>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
-                </form>
-
-                <p class="text-center mt-3 mb-0">
-                    Chưa có tài khoản? <a asp-controller="Account" asp-action="Register">Đăng ký</a>
-                </p>
-            </div>
+<div class="auth-shell">
+    <aside class="auth-aside">
+        <partial name="_Pines" />
+        <div>
+            <span class="eyebrow" style="color:#f0c987;">Chào mừng trở lại</span>
+            <h2>Kỳ nghỉ giữa rừng thông đang chờ bạn</h2>
+            <ul>
+                <li><partial name="_Icon" model='"check"' /> Xem và quản lý các đơn đặt phòng</li>
+                <li><partial name="_Icon" model='"check"' /> Thanh toán tiền cọc nhanh bằng mã QR</li>
+                <li><partial name="_Icon" model='"check"' /> Đặt phòng chỉ với vài bước</li>
+            </ul>
         </div>
-    </div>
+    </aside>
+
+    <section class="auth-form">
+        <h1>Đăng nhập</h1>
+        <p class="sub">Nhập thông tin tài khoản của bạn để tiếp tục.</p>
+
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+
+        @if (TempData["ErrorMessage"] is string errorMessage)
+        {
+            <div class="alert alert-warning">@errorMessage</div>
+        }
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState[string.Empty]?.Errors.Count > 0)
+        {
+            <div class="alert @(isLocked ? "alert-warning" : "alert-danger")">
+                @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <form asp-controller="Account" asp-action="Login" method="post">
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="mb-3">
+                <label asp-for="TenDangNhap" class="form-label"></label>
+                <input asp-for="TenDangNhap" class="form-control" autofocus />
+                <span asp-validation-for="TenDangNhap" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <label asp-for="MatKhau" class="form-label"></label>
+                    <a asp-action="ForgotPassword" class="small fw-semibold">Quên mật khẩu?</a>
+                </div>
+                <input asp-for="MatKhau" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="MatKhau" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">Đăng nhập</button>
+        </form>
+
+        <p class="text-center mt-4 mb-0">
+            Chưa có tài khoản? <a asp-controller="Account" asp-action="Register" class="fw-semibold">Đăng ký</a>
+        </p>
+    </section>
 </div>
 
 @section Scripts {

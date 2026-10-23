@@ -1,0 +1,174 @@
+@using KLCN060.Web.Helpers
+@model List<KLCN060.Web.Models.Home.RoomTypeViewModel>
+@{
+    ViewData["Title"] = "Giới thiệu";
+    var faq = new (string Hoi, string Dap)[]
+    {
+        ("Giờ nhận phòng và trả phòng là mấy giờ?", "Giờ nhận phòng (check-in) tiêu chuẩn là 14:00 và giờ trả phòng (check-out) là 12:00 trưa. Nếu cần nhận phòng sớm hoặc trả phòng muộn, quý khách vui lòng liên hệ lễ tân để được hỗ trợ tùy theo tình trạng phòng trống."),
+        ("Chính sách đặt cọc và hủy phòng như thế nào?", "Quý khách đặt cọc 50% giá trị đặt phòng để giữ phòng. Hủy phòng trước 30 ngày so với ngày nhận phòng sẽ được hoàn lại tiền cọc."),
+        ("Khách sạn chấp nhận những hình thức thanh toán nào?", "Khách sạn chấp nhận tiền mặt hoặc chuyển khoản quét mã QR. Mọi lần thanh toán đều được ghi nhận rõ ràng trên hệ thống."),
+        ("Khách sạn có wifi miễn phí không?", "Có. Wifi miễn phí phủ sóng toàn bộ khuôn viên, mật khẩu được cung cấp tại quầy lễ tân khi nhận phòng."),
+        ("Số khách vượt quá tiêu chuẩn có bị phụ thu không?", "Mỗi loại phòng có số người tiêu chuẩn riêng. Nếu số khách lưu trú vượt quá số người tiêu chuẩn, khách sạn áp dụng phụ thu theo từng loại phòng và tính vào hóa đơn khi trả phòng."),
+        ("Khách sạn có đưa đón sân bay không?", "Có dịch vụ đưa đón sân bay Liên Khương theo lượt. Quý khách xem giá chi tiết tại trang Dịch vụ hoặc gọi hotline 1900 0001 để đặt trước.")
+    };
+}
+
+@section Hero {
+    <section class="hero hero-page">
+        <partial name="_Photo" model='new PhotoViewModel("hero", "", null, "hero-photo")' />
+        <span class="hero-sun" aria-hidden="true"></span>
+        <partial name="_Pines" />
+        <div class="container hero-inner">
+            <nav class="crumbs" aria-label="breadcrumb"><a asp-controller="Home" asp-action="Index">Trang chủ</a> <span>/</span> <span>Giới thiệu</span></nav>
+            <h1>Về KLCN060 <em>Hotel</em></h1>
+            <p class="lead">Không gian nghỉ dưỡng ấm cúng giữa rừng thông Đà Lạt — nơi mỗi kỳ nghỉ và chuyến công tác đều được chăm chút tận tâm.</p>
+        </div>
+    </section>
+}
+
+<section class="about-story">
+    <div class="row g-5 align-items-center">
+        <div class="col-lg-6 reveal">
+            <span class="eyebrow">Câu chuyện của chúng tôi</span>
+            <h2 class="mt-2 mb-3">Nhỏ gọn để chu đáo, gần gũi để chân thành</h2>
+            <p class="text-muted">
+                KLCN060 Hotel là khách sạn quy mô nhỏ, tọa lạc tại vị trí trung tâm thuận tiện di chuyển nhưng vẫn giữ được sự yên tĩnh của rừng thông Đà Lạt.
+                Chúng tôi chọn cách làm nhỏ để có thể chăm sóc từng vị khách: từ căn phòng ấm cúng, đầy đủ tiện nghi đến những dịch vụ đi kèm cho mọi kỳ nghỉ lẫn chuyến công tác.
+            </p>
+            <p class="text-muted">
+                Việc đặt phòng được làm đơn giản và minh bạch: bạn chọn phòng, giữ chỗ bằng khoản đặt cọc 50% qua mã QR, và mọi khoản phát sinh đều được ghi rõ trong hóa đơn khi trả phòng.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a class="btn btn-primary" asp-controller="Home" asp-action="Search">Tìm phòng trống <partial name="_Icon" model='"arrow"' /></a>
+                <a class="btn btn-outline-primary" asp-controller="Home" asp-action="Services">Xem dịch vụ</a>
+            </div>
+        </div>
+        <div class="col-lg-6 reveal" style="--d:120ms">
+            <div class="collage">
+                <div class="c1"><partial name="_Photo" model='new PhotoViewModel("LP03", "", null)' /></div>
+                <div class="c2"><partial name="_Photo" model='new PhotoViewModel("LP02", "", null)' /></div>
+                <div class="badge-float"><partial name="_Icon" model='"leaf"' /><div><strong>Giữa rừng thông</strong><span>Đà Lạt, Lâm Đồng</span></div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mt-5 pt-4">
+    <div class="section-head reveal">
+        <span class="eyebrow">Giá trị cốt lõi</span>
+        <h2>Điều chúng tôi cam kết</h2>
+        <p>Bốn nguyên tắc định hình cách chúng tôi đón tiếp và phục vụ từng vị khách.</p>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-3 reveal">
+            <div class="value-card"><span class="ico-wrap"><partial name="_Icon" model='"heart"' /></span><h3>Ấm cúng</h3><p>Phòng nghỉ gọn gàng, ấm áp, tạo cảm giác như đang ở nhà giữa mùa sương Đà Lạt.</p></div>
+        </div>
+        <div class="col-md-6 col-lg-3 reveal" style="--d:90ms">
+            <div class="value-card"><span class="ico-wrap"><partial name="_Icon" model='"pin"' /></span><h3>Vị trí thuận tiện</h3><p>Gần trung tâm để dễ dàng di chuyển, nhưng đủ yên tĩnh để nghỉ ngơi trọn vẹn.</p></div>
+        </div>
+        <div class="col-md-6 col-lg-3 reveal" style="--d:180ms">
+            <div class="value-card"><span class="ico-wrap"><partial name="_Icon" model='"shield"' /></span><h3>Minh bạch</h3><p>Giá rõ ràng, chính sách đặt cọc và hủy phòng công khai, hóa đơn chi tiết từng khoản.</p></div>
+        </div>
+        <div class="col-md-6 col-lg-3 reveal" style="--d:270ms">
+            <div class="value-card"><span class="ico-wrap"><partial name="_Icon" model='"phone"' /></span><h3>Tận tâm</h3><p>Lễ tân, hotline 1900 0001 và chatbot luôn sẵn sàng giải đáp mọi thắc mắc của bạn.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="mt-5 pt-3 reveal">
+    <div class="facts">
+        <div class="fact"><span class="n">@(Model.Count > 0 ? Model.Count.ToString() : "4")</span><span class="l">Hạng phòng</span></div>
+        <div class="fact"><span class="n">14:00</span><span class="l">Giờ nhận phòng</span></div>
+        <div class="fact"><span class="n">12:00</span><span class="l">Giờ trả phòng</span></div>
+        <div class="fact"><span class="n">50%</span><span class="l">Đặt cọc giữ phòng</span></div>
+    </div>
+</section>
+
+@if (Model.Any())
+{
+    <section class="mt-5 pt-4">
+        <div class="section-head reveal">
+            <span class="eyebrow">Không gian nghỉ dưỡng</span>
+            <h2>Các hạng phòng</h2>
+            <p>Mỗi hạng phòng một phong cách — chọn không gian phù hợp với chuyến đi của bạn.</p>
+        </div>
+        <div class="row g-3">
+            @{ var stt = 0; }
+            @foreach (var loaiPhong in Model)
+            {
+                <div class="col-6 col-lg-3 reveal" style="--d:@(stt++ * 90)ms">
+                    <a class="tile" asp-controller="Home" asp-action="Detail" asp-route-maLoai="@loaiPhong.MaLoai">
+                        <partial name="_Photo" model='new PhotoViewModel(loaiPhong.MaLoai, "", null)' />
+                        <div class="tile-info">
+                            <strong>@loaiPhong.TenLoai</strong>
+                            <span>@loaiPhong.DonGia.ToVnd() / đêm</span>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+<section class="mt-5 pt-4">
+    <div class="section-head reveal">
+        <span class="eyebrow">Đặt phòng dễ dàng</span>
+        <h2>Chỉ với 3 bước</h2>
+        <p>Từ lúc chọn phòng đến khi nhận chìa khóa, mọi thứ đều rõ ràng và nhanh gọn.</p>
+    </div>
+    <div class="timeline">
+        <div class="tl-step reveal">
+            <span class="tl-n">1</span>
+            <div class="tl-ico"><partial name="_Icon" model='"calendar"' /></div>
+            <h3>Chọn phòng &amp; ngày ở</h3>
+            <p>Nhập ngày nhận, ngày trả và số khách để xem ngay các hạng phòng còn trống.</p>
+        </div>
+        <div class="tl-step reveal" style="--d:110ms">
+            <span class="tl-n">2</span>
+            <div class="tl-ico"><partial name="_Icon" model='"qr"' /></div>
+            <h3>Đặt cọc bằng mã QR</h3>
+            <p>Chuyển khoản 50% tiền cọc bằng cách quét mã QR. Hệ thống tự xác nhận khi nhận được tiền.</p>
+        </div>
+        <div class="tl-step reveal" style="--d:220ms">
+            <span class="tl-n">3</span>
+            <div class="tl-ico"><partial name="_Icon" model='"key"' /></div>
+            <h3>Nhận phòng tại lễ tân</h3>
+            <p>Đến khách sạn từ 14:00, xuất trình thông tin đặt phòng và nhận chìa khóa.</p>
+        </div>
+    </div>
+</section>
+
+<section class="mt-5 pt-4">
+    <div class="section-head reveal">
+        <span class="eyebrow">Giải đáp nhanh</span>
+        <h2>Câu hỏi thường gặp</h2>
+    </div>
+    <div class="faq reveal" style="max-width:820px;margin:0 auto;">
+        <div class="accordion" id="faqAccordion">
+            @for (var i = 0; i < faq.Length; i++)
+            {
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button @(i == 0 ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#faq@(i)" aria-expanded="@(i == 0 ? "true" : "false")">@faq[i].Hoi</button>
+                    </h3>
+                    <div id="faq@(i)" class="accordion-collapse collapse @(i == 0 ? "show" : "")" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">@faq[i].Dap</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="mt-5 pt-4 reveal">
+    <div class="cta-band">
+        <partial name="_Pines" />
+        <span class="eyebrow" style="color:#f0c987;">Liên hệ</span>
+        <h2 class="mt-2">Cần tư vấn thêm? Chúng tôi luôn sẵn sàng</h2>
+        <p>Gọi hotline 1900 0001 hoặc dùng chatbot ở góc phải màn hình để được giải đáp ngay.</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a class="btn btn-accent btn-lg" asp-controller="Home" asp-action="Search">Đặt phòng ngay <partial name="_Icon" model='"arrow"' /></a>
+            <a class="btn btn-ghost-light btn-lg" asp-controller="Home" asp-action="Services">Xem dịch vụ</a>
+        </div>
+    </div>
+</section>

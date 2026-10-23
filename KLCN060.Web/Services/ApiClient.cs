@@ -44,6 +44,25 @@ public class ApiClient
     public Task<ApiResult<TRes>> PutAsync<TRes>(string path, object? body, bool requireAuth = false)
         => SendAsync<TRes>(HttpMethod.Put, path, body, requireAuth);
 
+    /// <summary>Tải nội dung nhị phân (ảnh) từ API, không cần đăng nhập. Trả null nếu API không có file hoặc không kết nối được.</summary>
+    public async Task<(byte[] Data, string ContentType)?> GetBinaryAsync(string path)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, path);
+            using var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+            return (await response.Content.ReadAsByteArrayAsync(), contentType);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
     public void SaveTokens(string accessToken, string refreshToken)
     {
         HttpContext.Session.SetString(AccessTokenKey, accessToken);
@@ -86,6 +105,11 @@ public class ApiClient
         var accessToken = HttpContext.Session.GetString(AccessTokenKey);
         if (!string.IsNullOrEmpty(accessToken))
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        // Chuyển tiếp IP thật của người dùng để API áp dụng giới hạn tần suất/nhật ký đúng người (API chỉ tin header này từ Website).
+        var ip = HttpContext.Connection.RemoteIpAddress;
+        if (ip is not null)
+            request.Headers.TryAddWithoutValidation("X-Forwarded-For", (ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4() : ip).ToString());
 
         return await _httpClient.SendAsync(request);
     }

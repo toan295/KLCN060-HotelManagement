@@ -5,15 +5,28 @@
 
 <div class="row justify-content-center">
     <div class="col-md-7 col-lg-6">
-        <h1 class="h3 mb-4">Hồ sơ của tôi</h1>
+        <div class="page-head">
+            <span class="eyebrow">Tài khoản của tôi</span>
+            <h1>Hồ sơ của tôi</h1>
+            <p>Cập nhật thông tin liên hệ để việc đặt phòng và nhận phòng nhanh hơn.</p>
+        </div>
 
         @if (ViewBag.SuccessMessage is string successMessage)
         {
             <div class="alert alert-success">@successMessage</div>
         }
+        @if (TempData["SuccessMessage"] is string tempSuccess)
+        {
+            <div class="alert alert-success">@tempSuccess</div>
+        }
+        @if (TempData["ErrorMessage"] is string tempError)
+        {
+            <div class="alert alert-danger">@tempError</div>
+        }
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <form asp-controller="Account" asp-action="Profile" method="post">
+        <div class="card"><div class="card-body p-4">
+            <form asp-controller="Account" asp-action="Profile" method="post">
             <div class="mb-3">
                 <label asp-for="HoTen" class="form-label"></label>
                 <input asp-for="HoTen" class="form-control" />
@@ -28,8 +41,16 @@
 
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" />
+                <input asp-for="Email" type="email" class="form-control" autocomplete="email" />
                 <span asp-validation-for="Email" class="text-danger"></span>
+                @if (string.IsNullOrWhiteSpace(Model.Email))
+                {
+                    <div class="form-text text-warning-emphasis">Bạn chưa có email nên không thể khôi phục mật khẩu khi quên. Hãy nhập email rồi lưu.</div>
+                }
+                else
+                {
+                    <div class="form-text">Email này nhận liên kết khôi phục mật khẩu. Khi bạn đổi email, hộp thư cũ sẽ nhận được thông báo.</div>
+                }
             </div>
 
             <div class="mb-3">
@@ -49,6 +70,20 @@
 
             <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
         </form>
+        </div></div>
+
+        <div class="card mt-3">
+            <div class="card-body p-4 d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div class="d-flex gap-3 align-items-center">
+                    <span class="feature" style="padding:0;border:0;box-shadow:none;background:none;"><span class="ico-wrap"><partial name="_Icon" model='"shield"' /></span></span>
+                    <div>
+                        <h5 class="mb-1" style="font-size:1rem;">Bảo mật tài khoản</h5>
+                        <div class="small text-muted">Nên đổi mật khẩu định kỳ và không dùng chung với tài khoản khác.</div>
+                    </div>
+                </div>
+                <a asp-controller="Account" asp-action="ChangePassword" class="btn btn-outline-primary">Đổi mật khẩu</a>
+            </div>
+        </div>
     </div>
 </div>
 

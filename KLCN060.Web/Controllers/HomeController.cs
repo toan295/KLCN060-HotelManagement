@@ -29,23 +29,54 @@ public class HomeController : Controller
         return View(result.Data ?? new List<RoomTypeViewModel>());
     }
 
-    // GET /Home/Search — W2 Kết quả tìm kiếm
-    // Giai đoạn 2 CHƯA có /room-types/availability lọc theo tồn phòng thật (thuộc Giai đoạn 4)
-    // -> tạm gọi GET /room-types (toàn bộ danh mục) và lọc PHÍA CLIENT bằng JavaScript (Mục 5).
-    public async Task<IActionResult> Search(DateOnly? ngayNhan, DateOnly? ngayTra, int soKhach = 1)
+    // GET /Home/About — trang Giới thiệu (nội dung tĩnh + số hạng phòng thật từ API để hiển thị ảnh/liên kết)
+    public async Task<IActionResult> About()
     {
         var result = await _apiClient.GetAsync<List<RoomTypeViewModel>>("api/v1/room-types");
+        return View(result.Data ?? new List<RoomTypeViewModel>());
+    }
 
-        if (!result.Success)
-            _logger.LogWarning("Không lấy được danh sách loại phòng từ API: {Message}", result.ErrorMessage);
+    // GET /Home/Search — W2 Kết quả tìm kiếm
+    // Có đủ ngày nhận/trả -> gọi GET /room-types/availability (tồn phòng thật, đã trừ phòng đã đặt/đang ở, Giai đoạn 4).
+    // Chưa chọn ngày (vào thẳng từ menu) -> hiển thị toàn bộ danh mục loại phòng như trước, không có badge tồn kho.
+    public async Task<IActionResult> Search(DateOnly? ngayNhan, DateOnly? ngayTra, int soKhach = 1)
+    {
+        // Chuẩn hóa 1 lần, dùng chung cho cả phần hiển thị "Số khách: N" lẫn tham số gửi API - tránh lệch
+        // giữa số hiển thị (có thể âm/0 nếu nhập bậy) và số khách thực tế dùng để lọc sức chứa phòng.
+        soKhach = Math.Max(soKhach, 1);
+        var model = new SearchViewModel { NgayNhan = ngayNhan, NgayTra = ngayTra, SoKhach = soKhach };
 
-        var model = new SearchViewModel
+        if (ngayNhan is { } checkin && ngayTra is { } checkout && checkout > checkin)
         {
-            NgayNhan = ngayNhan,
-            NgayTra = ngayTra,
-            SoKhach = soKhach,
-            DanhSachLoaiPhong = result.Data ?? new List<RoomTypeViewModel>()
-        };
+            model.DaLocTheoNgay = true;
+            var result = await _apiClient.GetAsync<List<RoomTypeAvailabilityViewModel>>(
+                $"api/v1/room-types/availability?checkin={checkin:yyyy-MM-dd}&checkout={checkout:yyyy-MM-dd}&guests={soKhach}");
+
+            if (!result.Success)
+                _logger.LogWarning("Không lấy được tồn phòng từ API: {Message}", result.ErrorMessage);
+
+            model.DanhSachLoaiPhong = result.Data ?? new List<RoomTypeAvailabilityViewModel>();
+        }
+        else
+        {
+            var result = await _apiClient.GetAsync<List<RoomTypeViewModel>>("api/v1/room-types");
+
+            if (!result.Success)
+                _logger.LogWarning("Không lấy được danh sách loại phòng từ API: {Message}", result.ErrorMessage);
+
+            // SoPhongTrong = -1: chưa biết tồn kho thật (chưa chọn ngày) -> view không hiển thị badge còn/hết phòng.
+            model.DanhSachLoaiPhong = (result.Data ?? new List<RoomTypeViewModel>())
+                .Select(x => new RoomTypeAvailabilityViewModel
+                {
+                    MaLoai = x.MaLoai,
+                    TenLoai = x.TenLoai,
+                    SoNguoiTieuChuan = x.SoNguoiTieuChuan,
+                    DonGia = x.DonGia,
+                    PhuThu = x.PhuThu,
+                    SoPhongTrong = -1
+                })
+                .ToList();
+        }
 
         return View(model);
     }
@@ -62,7 +93,7 @@ public class HomeController : Controller
         return View(result.Data);
     }
 
-    // GET /Home/Services — W13 Giới thiệu & Dịch vụ
+    // GET /Home/Services — Dịch vụ (Giới thiệu đã tách sang /Home/About)
     // Gọi GET /services (endpoint công khai) - thay cho bảng dữ liệu viết cứng (Mục 5).
     public async Task<IActionResult> Services()
     {

@@ -6,23 +6,25 @@
 
 <div class="row justify-content-center">
     <div class="col-md-7 col-lg-6">
+        <partial name="_BookingSteps" model="1" />
         <h1 class="h3 mb-1">Đặt phòng cá nhân</h1>
         <p class="text-muted mb-4">@Model.TenLoai — @Model.DonGia?.ToVnd() / đêm</p>
 
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <form asp-controller="Booking" asp-action="Book" method="post">
+        <div class="card"><div class="card-body p-4">
+            <form asp-controller="Booking" asp-action="Book" method="post">
             <input type="hidden" asp-for="MaLoai" />
 
             <div class="mb-3">
                 <label asp-for="NgayNhan" class="form-label"></label>
-                <input asp-for="NgayNhan" type="date" class="form-control" min="@homNay" />
+                <input asp-for="NgayNhan" type="text" autocomplete="off" class="form-control date-picker-vi-linked" data-min="@homNay" />
                 <span asp-validation-for="NgayNhan" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="NgayTra" class="form-label"></label>
-                <input asp-for="NgayTra" type="date" class="form-control" min="@homNay" />
+                <input asp-for="NgayTra" type="text" autocomplete="off" class="form-control date-picker-vi-linked" data-min="@homNay" />
                 <span asp-validation-for="NgayTra" class="text-danger"></span>
             </div>
 
@@ -34,25 +36,28 @@
 
             <button type="submit" class="btn btn-primary w-100">Xác nhận đặt phòng</button>
         </form>
+        </div></div>
     </div>
 </div>
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
-        // Ngày trả phải sau ngày nhận (validate phía client bằng min attribute) - Mục 5B.
+        // Ngày trả phải sau ngày nhận (validate phía client) - Mục 5B. Ô ngày dùng flatpickr để LUÔN hiển thị
+        // dd/mm/yyyy bất kể ngôn ngữ trình duyệt (input[type=date] gốc của HTML5 theo locale trình duyệt,
+        // không nghe theo lang="vi" của trang - không sửa được bằng CSS/HTML thuần).
         document.addEventListener('DOMContentLoaded', function () {
-            var ngayNhan = document.getElementById('NgayNhan');
-            var ngayTra = document.getElementById('NgayTra');
-            function capNhatMinNgayTra() {
-                if (ngayNhan.value) {
-                    var min = new Date(ngayNhan.value);
-                    min.setDate(min.getDate() + 1);
-                    ngayTra.min = min.toISOString().slice(0, 10);
+            var ngayNhanEl = document.getElementById('NgayNhan');
+            var ngayTraEl = document.getElementById('NgayTra');
+            var fpNhan = flatpickr(ngayNhanEl, { locale: 'vn', disableMobile: true, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', altInputClass: 'form-control', minDate: ngayNhanEl.dataset.min, allowInput: true });
+            var fpTra = flatpickr(ngayTraEl, { locale: 'vn', disableMobile: true, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', altInputClass: 'form-control', minDate: ngayTraEl.dataset.min, allowInput: true });
+            fpNhan.config.onChange.push(function (selectedDates) {
+                if (selectedDates[0]) {
+                    var minTra = new Date(selectedDates[0]);
+                    minTra.setDate(minTra.getDate() + 1);
+                    fpTra.set('minDate', minTra);
                 }
-            }
-            ngayNhan.addEventListener('change', capNhatMinNgayTra);
-            capNhatMinNgayTra();
+            });
         });
     </script>
 }
