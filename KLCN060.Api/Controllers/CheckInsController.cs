@@ -1,3 +1,5 @@
+using KLCN060.Api.Authorization;
+using KLCN060.Domain;
 using KLCN060.Api.DTOs.Bookings;
 using KLCN060.Api.DTOs.Common;
 using KLCN060.Api.Services;
@@ -9,7 +11,7 @@ namespace KLCN060.Api.Controllers;
 /// <summary>Nhận phòng cho khách vãng lai (walk-in), không có phiếu đặt trước.</summary>
 [ApiController]
 [Route("api/v1/check-ins")]
-[Authorize(Roles = "LE_TAN")]
+[HasPermission(Permissions.ThaoTacLeTan)]
 public class CheckInsController : ControllerBase
 {
     private readonly ICheckInService _checkInService;
