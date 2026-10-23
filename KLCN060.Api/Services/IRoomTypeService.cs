@@ -6,6 +6,7 @@ public interface IRoomTypeService
 {
     Task<List<RoomTypeDto>> GetAllAsync();
     Task<RoomTypeDto> GetByIdAsync(string maLoai);
+    Task<List<RoomTypeCatalogDto>> GetCatalogAsync();
     Task<RoomTypeDto> CreateAsync(RoomTypeRequest request);
     Task<RoomTypeDto> UpdateAsync(string maLoai, RoomTypeRequest request);
     Task DeleteAsync(string maLoai);

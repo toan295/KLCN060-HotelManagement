@@ -1,3 +1,5 @@
+using KLCN060.Api.Authorization;
+using KLCN060.Domain;
 using KLCN060.Api.DTOs.Common;
 using KLCN060.Api.DTOs.RoomTypes;
 using KLCN060.Api.Middlewares;
@@ -26,6 +28,12 @@ public class RoomTypesController : ControllerBase
         return Ok(ApiResponse<List<RoomTypeDto>>.Ok(result));
     }
 
+    /// <summary>Loại phòng kèm số liệu vận hành (số phòng, bảo trì, đặt phòng sắp tới, xóa được không) cho màn quản lý danh mục.</summary>
+    [HttpGet("catalog")]
+    [HasPermission(Permissions.XemPhong, Permissions.QuanLyPhong)]
+    public async Task<IActionResult> Catalog()
+        => Ok(ApiResponse<List<RoomTypeCatalogDto>>.Ok(await _roomTypeService.GetCatalogAsync()));
+
     [HttpGet("availability")]
     [AllowAnonymous]
     public async Task<IActionResult> GetAvailability([FromQuery] DateOnly checkin, [FromQuery] DateOnly checkout, [FromQuery] int guests = 1)
@@ -43,7 +51,7 @@ public class RoomTypesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "QUAN_LY")]
+    [HasPermission(Permissions.QuanLyPhong)]
     public async Task<IActionResult> Create([FromBody] RoomTypeRequest request)
     {
         var result = await _roomTypeService.CreateAsync(request);
@@ -51,7 +59,7 @@ public class RoomTypesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "QUAN_LY")]
+    [HasPermission(Permissions.QuanLyPhong)]
     public async Task<IActionResult> Update(string id, [FromBody] RoomTypeRequest request)
     {
         var result = await _roomTypeService.UpdateAsync(id, request);
@@ -59,7 +67,7 @@ public class RoomTypesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "QUAN_LY")]
+    [HasPermission(Permissions.QuanLyPhong)]
     public async Task<IActionResult> Delete(string id)
     {
         await _roomTypeService.DeleteAsync(id);
