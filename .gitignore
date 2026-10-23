@@ -22,7 +22,17 @@
 !**/[Pp]ackages/repositories.config
 
 # ASP.NET Core
-**/wwwroot/lib/
+# [Khối 8 - K8-8] KLCN060.Web/wwwroot/lib/ CỐ Ý KHÔNG bị ignore: dùng dotnet-tool libman restore để tải (xem
+# KLCN060.Web/libman.json), nhưng KHÔNG có bước build-time nào tự restore lại (thiếu Microsoft.Web.LibraryManager.Build).
+# Nếu để .gitignore mặc định loại wwwroot/lib, clone sạch rồi dotnet run sẽ mất toàn bộ CSS/JS (404 hàng loạt, xem
+# docs/testing/07-Khoi8-SystemTesting.md mục 12.4). Đã trim libman.json chỉ lấy đúng file cần dùng (10 file, ~500KB)
+# để commit thẳng vào repo — chạy offline, không phụ thuộc Internet lúc build/demo.
+
+# Ảnh phòng do quản lý tải lên qua Desktop (lưu trong thư mục API)
+KLCN060.Api/Uploads/
+
+# Email đã "gửi" khi chưa cấu hình SMTP (chỉ để xem khi phát triển)
+KLCN060.Api/App_Data/
 
 # Rider
 .idea/
