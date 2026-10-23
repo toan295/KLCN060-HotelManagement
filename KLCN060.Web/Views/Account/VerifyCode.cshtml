@@ -1,0 +1,64 @@
+@model KLCN060.Web.Models.Account.VerifyCodeViewModel
+@{
+    ViewData["Title"] = "Nhập mã xác nhận";
+}
+
+<div class="auth-shell">
+    <aside class="auth-aside">
+        <partial name="_Pines" />
+        <div>
+            <span class="eyebrow" style="color:#f0c987;">Khôi phục tài khoản</span>
+            <h2>Kiểm tra hộp thư của bạn</h2>
+            <ul>
+                <li><partial name="_Icon" model='"mail"' /> Mã gồm 6 chữ số, gửi tới @Model.Email</li>
+                <li><partial name="_Icon" model='"clock"' /> Mã có hiệu lực trong 10 phút</li>
+                <li><partial name="_Icon" model='"shield"' /> Sai quá 5 lần phải yêu cầu mã mới</li>
+            </ul>
+        </div>
+    </aside>
+
+    <section class="auth-form">
+        <h1>Nhập mã xác nhận</h1>
+        <p class="sub">Nhập mã gồm 6 chữ số được gửi tới <strong>@Model.Email</strong>.</p>
+
+        @if (ViewBag.ThongBao is string thongBao)
+        {
+            <div class="alert alert-success d-flex gap-2 align-items-start">
+                <partial name="_Icon" model='"check"' />
+                <div>@thongBao</div>
+            </div>
+        }
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+        <form asp-controller="Account" asp-action="VerifyCode" method="post">
+            <input type="hidden" asp-for="Email" />
+
+            <div class="mb-4">
+                <label asp-for="Ma" class="form-label"></label>
+                <input asp-for="Ma" class="form-control form-control-lg text-center" style="letter-spacing:.5em;font-weight:700;"
+                       inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="••••••" autofocus />
+                <span asp-validation-for="Ma" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">Xác nhận</button>
+        </form>
+
+        <form asp-controller="Account" asp-action="ResendCode" method="post" class="text-center mt-4">
+            <input type="hidden" name="Email" value="@Model.Email" />
+            <span class="text-muted small">Chưa nhận được mã?</span>
+            <button type="submit" class="btn btn-link p-0 align-baseline fw-semibold" formnovalidate>Gửi lại mã</button>
+        </form>
+
+        <ul class="small text-muted ps-3 mt-3 mb-0">
+            <li>Nếu chưa thấy email, hãy đợi 1–2 phút rồi kiểm tra mục <strong>Thư rác / Spam</strong>.</li>
+            <li>Nhập sai email? <a asp-action="ForgotPassword" class="fw-semibold">Thử lại với email khác</a>.</li>
+        </ul>
+
+        <p class="text-center mt-4 mb-0"><a asp-action="Login" class="fw-semibold">Quay lại đăng nhập</a></p>
+    </section>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

@@ -57,6 +57,32 @@ public partial class DangNhapViewModel : ObservableObject
             var result = await _apiClient.LoginAsync(TenDangNhap.Trim(), matKhau!);
             _appSession.Start(result.AccessToken, result.RefreshToken);
             _apiClient.SetAccessToken(result.AccessToken);
+
+            // Ứng dụng này chỉ dành cho nhân viên: tài khoản khách hàng không có màn hình nào để vào. Nhân viên còn phải có ít nhất một quyền
+            // (vai trò mới tạo ở D15 mà chưa được cấp quyền thì không có chức năng nào để hiện). Nếu cho qua, người dùng bị kẹt ở màn hình
+            // đăng nhập "thành công" mà không có menu. Thu hồi phiên vừa tạo và báo rõ lý do.
+            string? lyDoTuChoi = null;
+            if (_appSession.VaiTro is null or "KHACH_HANG")
+                lyDoTuChoi = "Tài khoản này không phải tài khoản nhân viên. Khách hàng vui lòng sử dụng Website để đặt phòng.";
+            else
+            {
+                // Quyền HIỆN TẠI của vai trò (theo phân quyền ở D15) - quyết định các chức năng được hiện.
+                var quyen = await _apiClient.GetQuyenCuaToiAsync();
+                _appSession.DatQuyen(quyen.Quyen);
+                if (quyen.Quyen.Count == 0)
+                    lyDoTuChoi = "Vai trò của tài khoản này chưa được cấp quyền nào. Vui lòng liên hệ Quản lý.";
+            }
+
+            if (lyDoTuChoi is not null)
+            {
+                try { await _apiClient.LogoutAsync(); }
+                catch (LoiYeuCauApi) { /* best-effort: phiên này bị bỏ ở phía client dù thu hồi thất bại */ }
+                _appSession.Clear();
+                _apiClient.ClearAccessToken();
+                ThongBao = lyDoTuChoi;
+                return;
+            }
+
             DaDangNhap = true;
             LoginSucceeded?.Invoke();
         }

@@ -1,56 +1,522 @@
-<Application x:Class="KLCN060.Desktop.App"
+﻿<Application x:Class="KLCN060.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:conv="clr-namespace:KLCN060.Desktop.Converters">
     <Application.Resources>
         <conv:VndMoneyConverter x:Key="VndMoneyConverter" />
+        <conv:VndInputConverter x:Key="VndInputConverter" />
+        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <conv:TrangThaiPhongConverter x:Key="TrangThaiPhongConverter" />
+        <conv:EqualsMultiConverter x:Key="EqualsMultiConverter" />
+        <conv:MaxValueConverter x:Key="MaxValueConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
         <!-- Bảng màu khớp Hệ thống thiết kế (bản UI Prototype): brand = xanh rêu đậm, accent = vàng đồng. -->
         <SolidColorBrush x:Key="MauChinh" Color="#1F4D3D" />
         <SolidColorBrush x:Key="MauChinhDam" Color="#123328" />
+        <SolidColorBrush x:Key="MauChinhNhat" Color="#E3EDE7" />
         <SolidColorBrush x:Key="MauNhan" Color="#C08A3E" />
         <SolidColorBrush x:Key="MauNhanDam" Color="#93641F" />
+        <SolidColorBrush x:Key="MauNhanNhat" Color="#F6ECD9" />
         <SolidColorBrush x:Key="MauNen" Color="#F5F6F0" />
         <SolidColorBrush x:Key="MauNenPhu" Color="#EAEEE4" />
+        <SolidColorBrush x:Key="MauNenPhu3" Color="#DDE4D7" />
         <SolidColorBrush x:Key="MauVien" Color="#D7DDCE" />
+        <SolidColorBrush x:Key="MauVienNhat" Color="#E6EAE0" />
         <SolidColorBrush x:Key="MauChu" Color="#16241D" />
-        <SolidColorBrush x:Key="MauChuPhu" Color="#647A6C" />
+        <SolidColorBrush x:Key="MauChuPhu" Color="#3C4C40" />
+        <SolidColorBrush x:Key="MauChuNhat" Color="#647A6C" />
         <SolidColorBrush x:Key="MauNguyHiem" Color="#C8452F" />
 
+        <!-- Màu trạng thái dùng chung (chip) - khớp đúng success/warning/danger/info của bản UI Prototype. -->
+        <SolidColorBrush x:Key="MauThanhCong" Color="#2E9E6B" />
+        <SolidColorBrush x:Key="MauThanhCongNhat" Color="#DFF3EA" />
+        <SolidColorBrush x:Key="MauCanhBao" Color="#C98420" />
+        <SolidColorBrush x:Key="MauCanhBaoNhat" Color="#FAEBD6" />
+        <SolidColorBrush x:Key="MauLoiNhat" Color="#F8DFDA" />
+        <SolidColorBrush x:Key="MauThongTin" Color="#2F7FBD" />
+        <SolidColorBrush x:Key="MauThongTinNhat" Color="#DDEBF6" />
+
+        <!-- Màu trạng thái phòng - khớp đúng bảng 1.2 Chương 1 / Hệ thống thiết kế. -->
+        <SolidColorBrush x:Key="MauPhongVC" Color="#4CAF7D" />
+        <SolidColorBrush x:Key="MauPhongVD" Color="#E08A3C" />
+        <SolidColorBrush x:Key="MauPhongVI" Color="#4FA3D1" />
+        <SolidColorBrush x:Key="MauPhongOC" Color="#1F6B4A" />
+        <SolidColorBrush x:Key="MauPhongOD" Color="#C8452F" />
+        <SolidColorBrush x:Key="MauPhongOOO" Color="#8B8F8C" />
+
+        <!-- ============ Kiểu chữ dùng chung ============ -->
+        <Style x:Key="CardTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource MauChinhDam}" />
+        </Style>
+        <Style x:Key="SubTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource MauChinhDam}" />
+        </Style>
+        <Style x:Key="HintTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{StaticResource MauChuNhat}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <!-- ============ Thẻ (card): nền trắng, viền mảnh, bo góc 12px, viền dưới đậm hơn chút để nổi lên khỏi nền trang.
+             KHÔNG dùng DropShadowEffect: hiệu ứng làm chữ bên trong bị vẽ lại bằng bitmap nên dễ bị mờ (đúng lỗi từng gặp ở ô nhập). ============ -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="BorderThickness" Value="1,1,1,2" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="20" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+        </Style>
+        <!-- Khung phụ nằm trong thẻ (nhóm "tạo khách vãng lai", khối tổng hợp...) -->
+        <Style x:Key="InsetStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource MauNen}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauVienNhat}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+        <!-- Số thứ tự bước (1., 2.) trong tiêu đề thẻ -->
+        <Style x:Key="StepBadgeStyle" TargetType="Border">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="CornerRadius" Value="13" />
+            <Setter Property="Background" Value="{StaticResource MauChinh}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="DividerStyle" TargetType="Border">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{StaticResource MauVienNhat}" />
+            <Setter Property="Margin" Value="0,14" />
+        </Style>
+
+        <!-- Ô nhập có nhãn: <HeaderedContentControl Header="Họ tên"><TextBox/></HeaderedContentControl> - nhãn nằm trên, khoảng cách
+             nhất quán ở mọi màn hình. Style ngầm định chỉ áp cho đúng loại HeaderedContentControl (không ảnh hưởng GroupBox/Expander). -->
+        <Style TargetType="HeaderedContentControl">
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="HeaderedContentControl">
+                        <StackPanel>
+                            <ContentPresenter ContentSource="Header" Margin="0,0,0,5" TextElement.FontSize="12" TextElement.FontWeight="SemiBold"
+                                              TextElement.Foreground="{StaticResource MauChuPhu}" />
+                            <ContentPresenter />
+                        </StackPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ============ Button: bo góc 8px, không dùng chrome mặc định của Windows, hover/pressed bằng độ mờ
+             (áp dụng cho MỌI Button không khai báo Style khác - kể cả các nút đặt Background inline như nút
+             "Xác nhận đã thu cọc" màu vàng đồng hay nút "Xóa" màu đỏ, vì Template chỉ đọc lại đúng Background/
+             BorderBrush hiện có qua TemplateBinding, không cần sửa lại từng màn hình). ============ -->
         <Style TargetType="Button">
             <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="Padding" Value="16,8" />
-            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="18,8" />
+            <Setter Property="MinHeight" Value="38" />
             <Setter Property="Background" Value="{StaticResource MauChinh}" />
             <Setter Property="BorderBrush" Value="{StaticResource MauChinh}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" SnapsToDevicePixels="True">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                               VerticalAlignment="Center" RecognizesAccessKey="True" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.88" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.74" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Biến thể nút, đúng tinh thần .btn-accent / .btn-outline / .btn-danger / .btn-ghost của Hệ thống thiết kế -
+             dùng qua Style="{StaticResource AccentButtonStyle}" khi cần, không bắt buộc cho mọi nút. -->
+        <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource MauNhan}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauNhan}" />
+        </Style>
+        <Style x:Key="OutlineButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MauChinh}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauChinh}" />
+        </Style>
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource MauNguyHiem}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauNguyHiem}" />
+        </Style>
+        <Style x:Key="DangerOutlineButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MauNguyHiem}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauNguyHiem}" />
+        </Style>
+        <Style x:Key="GhostButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource MauChuNhat}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <!-- Nút nhỏ dùng trong bảng/thẻ (Chọn ảnh, Phục hồi...) -->
+        <Style x:Key="SmallButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <!-- ============ TextBox/PasswordBox/DatePicker: CHỦ Ý dùng ControlTemplate MẶC ĐỊNH của WPF,
+             chỉ chỉnh màu/kích thước qua các thuộc tính chuẩn (Background/Foreground/BorderBrush/Height/Padding).
+             Đã thử tự vẽ lại ControlTemplate riêng (viền bo góc 8px) 3 lần để khớp bản thiết kế nhưng luôn bị lỗi
+             chữ gõ vào hiển thị mờ/mất nét trên máy người dùng dù đã thử nhiều cách (không tái hiện được trong môi
+             trường thử nghiệm tự động) - ưu tiên CHẮC CHẮN đọc được chữ hơn là bo góc đúng bản thiết kế.
+             ComboBox (chỉ chọn, không gõ chữ) thì vẽ lại được an toàn: viền phẳng cùng màu với ô nhập. ============ -->
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="SelectionBrush" Value="{StaticResource MauChinhNhat}" />
+        </Style>
+
+        <Style TargetType="PasswordBox">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="SelectionBrush" Value="{StaticResource MauChinhNhat}" />
+        </Style>
+
+        <!-- Ô gõ ngày của DatePicker: thay chữ mờ tiếng Anh mặc định "Select a date" bằng "dd/mm/yyyy" (vẫn là DatePickerTextBox, DatePicker tự xử lý việc gõ/chọn ngày). -->
+        <Style TargetType="DatePickerTextBox">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePickerTextBox">
+                        <Grid Background="Transparent">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+                            <TextBlock x:Name="goiY" Text="dd/mm/yyyy" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Foreground="{StaticResource MauChuNhat}" Visibility="Collapsed" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="Text" Value="" />
+                                    <Condition Property="IsKeyboardFocused" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="goiY" Property="Visibility" Value="Visible" />
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DatePicker: khung phẳng cùng kiểu ô nhập + nút lịch bằng biểu tượng đơn sắc (thay biểu tượng xanh dương kiểu cũ).
+             Phần nhập ngày vẫn là DatePickerTextBox MẶC ĐỊNH của WPF (không tự vẽ lại ô gõ chữ), lịch xổ ra do DatePicker tự tạo. -->
+        <Style TargetType="DatePicker">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePicker">
+                        <Grid x:Name="PART_Root">
+                            <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="3" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <DatePickerTextBox x:Name="PART_TextBox" Grid.Column="0" BorderThickness="0" Background="Transparent" Foreground="{TemplateBinding Foreground}"
+                                                   Padding="8,0,0,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Focusable="{TemplateBinding Focusable}" />
+                                <Button x:Name="PART_Button" Grid.Column="1" Width="36" Margin="0" Padding="0" MinHeight="0" Focusable="False"
+                                        Style="{StaticResource GhostButtonStyle}" Foreground="{StaticResource MauChuNhat}">
+                                    <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Button>
+                            </Grid>
+                            <Popup x:Name="PART_Popup" PlacementTarget="{Binding ElementName=PART_Root}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource MauChinh}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{StaticResource MauChuPhu}" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="9,6" />
-            <Setter Property="Margin" Value="0,5,10,0" />
+
+        <!-- ============ ComboBox phẳng: cùng chiều cao/viền với TextBox, mũi tên nét mảnh, danh sách thả xuống bo góc. ============ -->
+        <ControlTemplate x:Key="ComboToggleTemplate" TargetType="ToggleButton">
+            <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="3" SnapsToDevicePixels="True">
+                <Path x:Name="arrow" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" Data="M0,0 L4.5,5 L9,0"
+                      Stroke="{StaticResource MauChuNhat}" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="bd" Property="BorderBrush" Value="#9DB0A3" />
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource MauChinh}" />
+                    <Setter TargetName="arrow" Property="Stroke" Value="{StaticResource MauChinh}" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="bd" Margin="4,1" Padding="{TemplateBinding Padding}" CornerRadius="5" Background="Transparent" SnapsToDevicePixels="True">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource MauNenPhu}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource MauChinhNhat}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="36" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
             <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="BorderThickness" Value="1" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton x:Name="ToggleButton" Template="{StaticResource ComboToggleTemplate}" Focusable="False" ClickMode="Press"
+                                          Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False" Margin="10,0,30,0" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                              Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" />
+                            <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                                <Grid x:Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border Margin="0,3,0,0" Background="White" BorderBrush="{StaticResource MauVien}" BorderThickness="1" CornerRadius="8" Padding="0,4">
+                                        <ScrollViewer SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="ToggleButton" Property="BorderBrush" Value="{StaticResource MauChinh}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
-        <Style TargetType="DatePicker">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Margin" Value="0,5,10,0" />
+
+        <!-- ============ ScrollBar mảnh, thanh trượt bo tròn (thay thanh cuộn dày kiểu cũ của Windows) ============ -->
+        <Style x:Key="ScrollThumbStyle" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="th" Background="#C3CCBD" CornerRadius="4" Margin="1" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="th" Property="Background" Value="#9DB0A3" /></Trigger>
+                            <Trigger Property="IsDragging" Value="True"><Setter TargetName="th" Property="Background" Value="{StaticResource MauChuNhat}" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
+        <Style x:Key="ScrollPageButtonStyle" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton"><Border Background="Transparent" /></ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <ControlTemplate x:Key="VerticalScrollBarTemplate" TargetType="ScrollBar">
+            <Grid Background="Transparent" Width="12">
+                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                    <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ScrollPageButtonStyle}" /></Track.DecreaseRepeatButton>
+                    <Track.Thumb><Thumb Style="{StaticResource ScrollThumbStyle}" /></Track.Thumb>
+                    <Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ScrollPageButtonStyle}" /></Track.IncreaseRepeatButton>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+        <ControlTemplate x:Key="HorizontalScrollBarTemplate" TargetType="ScrollBar">
+            <Grid Background="Transparent" Height="12">
+                <Track x:Name="PART_Track">
+                    <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource ScrollPageButtonStyle}" /></Track.DecreaseRepeatButton>
+                    <Track.Thumb><Thumb Style="{StaticResource ScrollThumbStyle}" /></Track.Thumb>
+                    <Track.IncreaseRepeatButton><RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource ScrollPageButtonStyle}" /></Track.IncreaseRepeatButton>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template" Value="{StaticResource VerticalScrollBarTemplate}" />
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Template" Value="{StaticResource HorizontalScrollBarTemplate}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ============ DataGrid: tiêu đề cột nền sage, hàng cao 40, đường kẻ ngang mảnh, chọn hàng bằng màu xanh nhạt của thương hiệu ============ -->
         <Style TargetType="DataGrid">
-            <Setter Property="RowHeight" Value="34" />
+            <Setter Property="MinRowHeight" Value="40" />
+            <Setter Property="ColumnHeaderHeight" Value="38" />
             <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource MauVienNhat}" />
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
             <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Background" Value="White" />
+            <Setter Property="AlternatingRowBackground" Value="White" />
+            <Setter Property="RowBackground" Value="White" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
+            <Setter Property="FontSize" Value="12.6" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         </Style>
         <Style TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="{StaticResource MauNenPhu}" />
-            <Setter Property="Foreground" Value="{StaticResource MauChinhDam}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Foreground" Value="{StaticResource MauChuNhat}" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="SeparatorBrush" Value="Transparent" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="DataGridRow">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="ValidationErrorTemplate" Value="{x:Null}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3F6EF" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource MauChinhNhat}" />
+                    <Setter Property="Foreground" Value="{StaticResource MauChinhDam}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <!-- Dòng đang chọn: chữ luôn tối trên nền xanh nhạt (trước đây chữ trắng gần như không đọc được) -->
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource MauChinhDam}" />
+                    <Setter Property="Background" Value="Transparent" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ============ Chip trạng thái (dùng cho các ô "Trạng thái"/"Kết quả" trong DataGrid, ví dụ D16 lịch sử
+             sao lưu, D15 trạng thái tài khoản) - đặt trong <Border Style="{StaticResource ChipThanhCongStyle}">
+             <TextBlock .../></Border>, khớp đúng .chip-success/.chip-warning/.chip-danger/.chip-info. ============ -->
+        <Style x:Key="ChipBaseStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="999" />
+            <Setter Property="Padding" Value="10,3" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="ChipThanhCongStyle" TargetType="Border" BasedOn="{StaticResource ChipBaseStyle}">
+            <Setter Property="Background" Value="{StaticResource MauThanhCongNhat}" />
+        </Style>
+        <Style x:Key="ChipCanhBaoStyle" TargetType="Border" BasedOn="{StaticResource ChipBaseStyle}">
+            <Setter Property="Background" Value="{StaticResource MauCanhBaoNhat}" />
+        </Style>
+        <Style x:Key="ChipLoiStyle" TargetType="Border" BasedOn="{StaticResource ChipBaseStyle}">
+            <Setter Property="Background" Value="{StaticResource MauLoiNhat}" />
+        </Style>
+        <Style x:Key="ChipThongTinStyle" TargetType="Border" BasedOn="{StaticResource ChipBaseStyle}">
+            <Setter Property="Background" Value="{StaticResource MauThongTinNhat}" />
+        </Style>
+        <Style x:Key="ChipTrungTinhStyle" TargetType="Border" BasedOn="{StaticResource ChipBaseStyle}">
+            <Setter Property="Background" Value="{StaticResource MauNenPhu3}" />
         </Style>
     </Application.Resources>
 </Application>

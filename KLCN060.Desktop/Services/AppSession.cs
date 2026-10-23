@@ -11,6 +11,13 @@ public sealed class AppSession
     public string? RefreshToken { get; private set; }
     public string? VaiTro { get; private set; }
     public string? TenDangNhap { get; private set; }
+    public string? HoTen { get; private set; }
+
+    // Quyền HIỆN TẠI của vai trò đang đăng nhập (lấy từ API sau khi đăng nhập, làm mới khi bị từ chối quyền) - quyết định menu hiện ra.
+    // Quyền thật luôn do API kiểm tra ở từng request; đây chỉ để ẩn/hiện chức năng cho khớp.
+    private HashSet<string> _quyen = new();
+    public bool CoQuyen(string tenQuyen) => _quyen.Contains(tenQuyen);
+    public void DatQuyen(IEnumerable<string> cacQuyen) => _quyen = new HashSet<string>(cacQuyen);
 
     private AppSession()
     {
@@ -24,6 +31,7 @@ public sealed class AppSession
         using var payload = JsonDocument.Parse(DecodePayload(accessToken));
         TenDangNhap = ReadClaim(payload.RootElement, "sub");
         VaiTro = ReadClaim(payload.RootElement, "vaiTro");
+        HoTen = ReadClaim(payload.RootElement, "hoTen");
     }
 
     /// <summary>Cập nhật access token mới sau khi làm mới thành công (Mục 3: giữ trong bộ nhớ, không ghi xuống đĩa).</summary>
@@ -35,6 +43,8 @@ public sealed class AppSession
         RefreshToken = null;
         VaiTro = null;
         TenDangNhap = null;
+        HoTen = null;
+        _quyen = new HashSet<string>();
     }
 
     private static string DecodePayload(string token)

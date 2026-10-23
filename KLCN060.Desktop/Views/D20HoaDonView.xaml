@@ -1,0 +1,268 @@
+﻿<UserControl x:Class="KLCN060.Desktop.Views.D20HoaDonView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:KLCN060.Desktop.Controls">
+    <UserControl.Resources>
+        <!-- Thẻ thống kê bấm được để lọc nhanh danh sách -->
+        <Style x:Key="TheThongKeStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Padding" Value="11,6" />
+            <Setter Property="MinWidth" Value="128" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource MauVien}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource MauChu}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource MauNhan}" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="DongChiTietStyle" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{StaticResource MauChuPhu}" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+        </Style>
+        <DataTemplate x:Key="DongHienThi"><TextBlock Text="{Binding HienThi}" Style="{StaticResource DongChiTietStyle}" /></DataTemplate>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid Margin="28,20,28,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="470" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ctl:PageHeader Title="Hóa đơn" ManagerTitle="Quản lý hóa đơn" Subtitle="{Binding PhuDe}" />
+
+        <!-- Thẻ thống kê -->
+        <StackPanel Grid.Row="1" Margin="0,14,0,0">
+            <WrapPanel Visibility="{Binding CoThongKe, Converter={StaticResource BoolToVis}}">
+                <Button Style="{StaticResource TheThongKeStyle}" Command="{Binding LocNhanhCommand}" CommandParameter="TAT_CA" ToolTip="Bấm để xem tất cả hóa đơn">
+                    <StackPanel>
+                        <TextBlock Text="HÓA ĐƠN" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
+                        <TextBlock Text="{Binding ThongKe.TongHoaDon}" FontSize="19" FontWeight="Bold" />
+                        <TextBlock FontSize="11" Foreground="{StaticResource MauChuNhat}"><Run Text="{Binding ThongKe.SoDaThanhToan, Mode=OneWay}" /><Run Text=" đủ · " /><Run Text="{Binding ThongKe.SoThanhToanMotPhan, Mode=OneWay}" /><Run Text=" một phần · " /><Run Text="{Binding ThongKe.SoChuaThanhToan, Mode=OneWay}" /><Run Text=" chưa" /></TextBlock>
+                    </StackPanel>
+                </Button>
+                <Border Background="White" BorderBrush="{StaticResource MauVien}" BorderThickness="1" CornerRadius="10" Padding="11,6" Margin="0,0,8,8" MinWidth="150">
+                    <StackPanel>
+                        <TextBlock Text="TỔNG PHẢI THU" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
+                        <TextBlock Text="{Binding ThongKe.TongTien, StringFormat={}{0:N0}đ}" FontSize="18" FontWeight="Bold" />
+                        <TextBlock Text="{Binding ThongKe.DaThu, StringFormat=đã thu {0:N0}đ}" FontSize="11" Foreground="{StaticResource MauThanhCong}" />
+                    </StackPanel>
+                </Border>
+                <Button Style="{StaticResource TheThongKeStyle}" Command="{Binding LocNhanhCommand}" CommandParameter="NO" ToolTip="Bấm để xem hóa đơn còn nợ nhiều nhất">
+                    <StackPanel>
+                        <TextBlock Text="TỔNG CÔNG NỢ" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
+                        <TextBlock Text="{Binding ThongKe.ConNo, StringFormat={}{0:N0}đ}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource MauCanhBao}" />
+                        <TextBlock Text="tổng còn nợ các hóa đơn" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource TheThongKeStyle}" Command="{Binding LocNhanhCommand}" CommandParameter="QUA_HAN" ToolTip="Bấm để xem hóa đơn quá hạn">
+                    <StackPanel>
+                        <TextBlock Text="QUÁ HẠN" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
+                        <TextBlock Text="{Binding ThongKe.SoQuaHan}" FontSize="19" FontWeight="Bold" Foreground="{StaticResource MauNguyHiem}" />
+                        <TextBlock Text="{Binding ThongKe.ConNoQuaHan, StringFormat=còn nợ {0:N0}đ}" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
+                    </StackPanel>
+                </Button>
+            </WrapPanel>
+            <TextBlock Margin="0,6,0,0" FontSize="12" Foreground="{StaticResource MauChuPhu}" Visibility="{Binding CoThongKe, Converter={StaticResource BoolToVis}}">
+                <Run Text="Đối chiếu: " FontWeight="SemiBold" /><Run Text="{Binding ThongKe.DoiChieu, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding CapNhatLuc, Mode=OneWay}" />
+                <Run Text="  ·  Quá hạn = còn nợ và khách đã trả phòng từ " /><Run Text="{Binding ThongKe.NgayQuaHan, Mode=OneWay}" /><Run Text=" ngày." />
+            </TextBlock>
+        </StackPanel>
+
+        <!-- Bộ lọc -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,12,0,12" Padding="16,10">
+            <StackPanel>
+            <WrapPanel>
+                <HeaderedContentControl Header="Tìm hóa đơn (mã, khách, SĐT, phòng)" Width="300" Margin="0,0,10,8">
+                    <TextBox Text="{Binding TuKhoa, UpdateSourceTrigger=PropertyChanged}" ToolTip="Gõ mã hóa đơn, mã booking, tên khách, số điện thoại hoặc số phòng (không cần gõ dấu) rồi nhấn Enter">
+                        <TextBox.InputBindings><KeyBinding Key="Return" Command="{Binding TaiCommand}" /></TextBox.InputBindings>
+                    </TextBox>
+                </HeaderedContentControl>
+                <HeaderedContentControl Header="Thanh toán" Width="170" Margin="0,0,10,8">
+                    <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding LocTrangThai}">
+                        <ComboBoxItem Tag="" Content="Tất cả" IsSelected="True" />
+                        <ComboBoxItem Tag="CHUA_THANH_TOAN" Content="Chưa thanh toán" />
+                        <ComboBoxItem Tag="THANH_TOAN_MOT_PHAN" Content="Thanh toán một phần" />
+                        <ComboBoxItem Tag="DA_THANH_TOAN" Content="Đã thanh toán" />
+                    </ComboBox>
+                </HeaderedContentControl>
+                <HeaderedContentControl Header="Tình huống" Width="170" Margin="0,0,10,8">
+                    <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding LocDacBiet}">
+                        <ComboBoxItem Tag="" Content="Tất cả" IsSelected="True" />
+                        <ComboBoxItem Tag="QUA_HAN" Content="Quá hạn" />
+                    </ComboBox>
+                </HeaderedContentControl>
+                <HeaderedContentControl Header="Lập từ ngày" Width="150" Margin="0,0,10,8"><DatePicker SelectedDate="{Binding TuNgay}" /></HeaderedContentControl>
+                <HeaderedContentControl Header="Đến ngày" Width="150" Margin="0,0,10,8"><DatePicker SelectedDate="{Binding DenNgay}" /></HeaderedContentControl>
+                <HeaderedContentControl Header="Sắp xếp" Width="160" Margin="0,0,10,8">
+                    <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SapXep}">
+                        <ComboBoxItem Tag="" Content="Mới nhất" IsSelected="True" />
+                        <ComboBoxItem Tag="con_no" Content="Còn nợ nhiều" />
+                        <ComboBoxItem Tag="tong_tien" Content="Tổng tiền lớn" />
+                        <ComboBoxItem Tag="qua_han" Content="Quá hạn lâu nhất" />
+                    </ComboBox>
+                </HeaderedContentControl>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,8">
+                    <Button Content="Tìm / Làm mới" Command="{Binding TaiCommand}" IsDefault="True" Margin="0" MinWidth="120" />
+                    <Button Content="Xóa lọc" Command="{Binding XoaBoLocCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="8,0,0,0" />
+                </StackPanel>
+            </WrapPanel>
+            <TextBlock Style="{StaticResource HintTextStyle}" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Ô tìm hóa đơn: gõ mã hóa đơn, mã booking, tên khách, số điện thoại hoặc số phòng (không cần gõ dấu), rồi nhấn Enter. Hóa đơn quá hạn tô đỏ." />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="420" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="400" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource CardStyle}" Padding="14">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <TextBlock Text="{Binding TieuDeDanhSach}" FontWeight="SemiBold" Foreground="{StaticResource MauChinh}" Margin="0,0,0,8" />
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding DanhSach}" SelectedItem="{Binding HoaDonDaChon}" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0"
+                              CanUserSortColumns="False" RowHeight="NaN">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding QuaHan}" Value="True"><Setter Property="Background" Value="{StaticResource MauLoiNhat}" /></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Hóa đơn / khách" Width="*" MinWidth="190">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,3">
+                                            <TextBlock Text="{Binding KhachVaPhong}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                            <TextBlock FontSize="11.5" Foreground="{StaticResource MauChuPhu}"><Run Text="{Binding MaHD, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding BookingHienThi, Mode=OneWay}" /></TextBlock>
+                                            <TextBlock Text="{Binding CoGhiChu}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource MauNguyHiem}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Lập / thu cuối" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,3">
+                                            <TextBlock Text="{Binding NgayLap, StringFormat=Lập dd/MM/yy}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding ThuHienThi}" FontSize="11" Foreground="{StaticResource MauChuNhat}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Tiền" Width="112">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,3">
+                                            <TextBlock Text="{Binding TongTien, Converter={StaticResource VndMoneyConverter}}" FontWeight="SemiBold" />
+                                            <TextBlock FontSize="11" Foreground="{StaticResource MauThanhCong}"><Run Text="thu " /><Run Text="{Binding DaThanhToan, Converter={StaticResource VndMoneyConverter}, Mode=OneWay}" /></TextBlock>
+                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource MauCanhBao}"><Run Text="nợ " /><Run Text="{Binding ConNo, Converter={StaticResource VndMoneyConverter}, Mode=OneWay}" /></TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Trạng thái" Width="124"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding TrangThaiHienThi}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="4,0" /></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource HintTextStyle}" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="360"
+                               Visibility="{Binding TrongDanhSach, Converter={StaticResource BoolToVis}}" Text="Không có hóa đơn nào khớp bộ lọc. Bấm &quot;Xóa lọc&quot; để xem tất cả." />
+                    <Button Grid.Row="2" Content="Mở thanh toán" Command="{Binding MoThanhToanHoaDonCommand}" HorizontalAlignment="Right" Margin="0,12,0,0" MinWidth="230"
+                            Visibility="{Binding CoTheThanhToan, Converter={StaticResource BoolToVis}}" />
+                </Grid>
+            </Border>
+
+            <!-- Tổng quan một hóa đơn -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Chi tiết hóa đơn" Style="{StaticResource CardTitleStyle}" />
+                        <Border Style="{StaticResource DividerStyle}" />
+
+                        <TextBlock TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource HintTextStyle}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers><DataTrigger Binding="{Binding CoTongQuan}" Value="False"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                            <Run Text="Chọn một hóa đơn ở bảng bên trái để xem của ai, booking/phòng nào, cơ cấu tiền và ai thu tiền." />
+                        </TextBlock>
+
+                        <StackPanel Visibility="{Binding CoTongQuan, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding TongQuan.MaHD}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource MauChinhDam}" />
+                            <TextBlock Text="{Binding TongQuan.TrangThaiHienThi}" FontWeight="SemiBold" Foreground="{StaticResource MauChinh}" />
+
+                            <Border Background="{StaticResource MauLoiNhat}" CornerRadius="6" Padding="10,6" Margin="0,8,0,0" Visibility="{Binding TongQuan.CoCanhBao, Converter={StaticResource BoolToVis}}">
+                                <ItemsControl ItemsSource="{Binding TongQuan.CanhBaoHienThi}">
+                                    <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource MauNguyHiem}" Margin="0,0,0,2" /></DataTemplate></ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+
+                            <TextBlock Text="Thông tin khách và phòng" Style="{StaticResource SubTitleStyle}" Margin="0,12,0,3" />
+                            <TextBlock Text="{Binding TongQuan.KhachHienThi}" Style="{StaticResource DongChiTietStyle}" Foreground="{StaticResource MauChu}" />
+                            <TextBlock Text="{Binding TongQuan.BookingHienThi}" Style="{StaticResource DongChiTietStyle}" />
+                            <ItemsControl ItemsSource="{Binding TongQuan.Phong}" ItemTemplate="{StaticResource DongHienThi}" />
+                            <TextBlock Text="{Binding TongQuan.LapHienThi}" Style="{StaticResource DongChiTietStyle}" />
+
+                            <TextBlock Text="Cơ cấu tiền" Style="{StaticResource SubTitleStyle}" Margin="0,12,0,3" />
+                            <ItemsControl ItemsSource="{Binding TongQuan.CacKhoan}" ItemTemplate="{StaticResource DongHienThi}" />
+                            <TextBlock Text="{Binding TongQuan.CoCauHienThi}" Style="{StaticResource DongChiTietStyle}" FontWeight="SemiBold" Foreground="{StaticResource MauChu}" Margin="0,4,0,2" />
+                            <TextBlock Text="{Binding TongQuan.TienHienThi}" Style="{StaticResource DongChiTietStyle}" FontWeight="SemiBold" Foreground="{StaticResource MauChinh}" />
+                            <TextBlock Text="{Binding TongQuan.CongThucGhiChu}" Style="{StaticResource DongChiTietStyle}" FontSize="12" />
+                            <TextBlock Text="{Binding TongQuan.HanThanhToan}" Style="{StaticResource DongChiTietStyle}" FontSize="12" />
+
+                            <TextBlock Text="Thu tiền" Style="{StaticResource SubTitleStyle}" Margin="0,12,0,3" />
+                            <ItemsControl ItemsSource="{Binding TongQuan.ThanhToan}" ItemTemplate="{StaticResource DongHienThi}" />
+                            <TextBlock Text="Chưa có lần thu nào." Style="{StaticResource HintTextStyle}" Visibility="{Binding TongQuan.KhongCoThanhToan, Converter={StaticResource BoolToVis}}" />
+
+                            <TextBlock Text="Quyền thao tác" Style="{StaticResource SubTitleStyle}" Margin="0,12,0,3" />
+                            <ItemsControl ItemsSource="{Binding TongQuan.ThaoTacHienThi}" ItemTemplate="{StaticResource DongHienThi}" />
+
+                            <StackPanel Visibility="{Binding HienDieuChinh, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Lịch sử thao tác" Style="{StaticResource SubTitleStyle}" Margin="0,12,0,3" />
+                            <ItemsControl ItemsSource="{Binding TongQuan.LichSu}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,5">
+                                            <TextBlock Text="{Binding HienThi}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource MauChuPhu}" />
+                                            <TextBlock Text="{Binding ChiTiet}" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Style="{StaticResource InsetStyle}" Padding="12,10" Margin="0,12,0,0" Visibility="{Binding CheDoChiXem, Converter={StaticResource BoolToVis}}">
+                            <TextBlock TextWrapping="Wrap" Style="{StaticResource HintTextStyle}" FontSize="12"
+                                       Text="Chế độ xem: bạn theo dõi hóa đơn và công nợ. Thu tiền do Kế toán / Lễ tân thực hiện. Hệ thống không cho sửa tiền hay xóa hóa đơn." />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <ctl:NoticeBar Grid.Row="4" Text="{Binding ThongBao}" IsError="{Binding ThongBaoLaLoi}" Margin="0,10,0,0" />
+    </Grid>
+    </ScrollViewer>
+</UserControl>

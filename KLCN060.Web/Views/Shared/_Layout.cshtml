@@ -1,43 +1,66 @@
-﻿@inject KLCN060.Web.Services.ApiClient ApiClient
+@inject KLCN060.Web.Services.ApiClient ApiClient
+@inject IConfiguration Configuration
+@{
+    // Đánh dấu mục menu đang mở (gạch chân vàng) theo controller/action hiện tại.
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    string Active(bool khop) => khop ? "active" : "";
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f4d3d" />
     <title>@ViewData["Title"] - KLCN060 Hotel</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <meta name="api-base-url" content="@Configuration["Api:BaseUrl"]" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%231f4d3d'/%3E%3Cpath d='M16 5l7 10h-4l5 8H8l5-8H9z' fill='%23f0c987'/%3E%3Crect x='15' y='23' width='2' height='4' fill='%23f0c987'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/KLCN060.Web.styles.css" asp-append-version="true" />
+    <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
+    <header class="site-header">
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="container">
                 <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
-                    <span style="display:inline-block;width:26px;height:26px;border-radius:7px;background:linear-gradient(160deg,var(--brand),var(--brand-strong));"></span>
+                    <span class="brand-mark">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l6 9h-3.5l4.5 7H5l4.5-7H6z"/><rect class="gold" x="11" y="18" width="2" height="4"/></svg>
+                    </span>
                     KLCN060 Hotel
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav"
+                        aria-expanded="false" aria-label="Mở menu">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div class="navbar-collapse collapse justify-content-between" id="mainNav">
+                    <ul class="navbar-nav ms-lg-3 flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                            <a class="nav-link @Active(controller == "Home" && action == "Index")" asp-controller="Home" asp-action="Index">Trang chủ</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Search">Tìm phòng</a>
+                            <a class="nav-link @Active(controller == "Home" && (action == "Search" || action == "Detail"))" asp-controller="Home" asp-action="Search">Tìm phòng</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Services">Giới thiệu &amp; Dịch vụ</a>
+                            <a class="nav-link @Active(controller == "Home" && action == "About")" asp-controller="Home" asp-action="About">Giới thiệu</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @Active(controller == "Home" && action == "Services")" asp-controller="Home" asp-action="Services">Dịch vụ</a>
                         </li>
                     </ul>
-                    <ul class="navbar-nav align-items-sm-center">
+                    <ul class="navbar-nav align-items-lg-center gap-lg-1">
                         @if (ApiClient.IsLoggedIn)
                         {
                             <li class="nav-item">
+                                <a class="nav-link @Active(controller == "Account" && action == "Profile")" asp-controller="Account" asp-action="Profile">Hồ sơ của tôi</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @Active(controller == "Booking" && action == "MyBookings")" asp-controller="Booking" asp-action="MyBookings">Đơn đặt phòng của tôi</a>
+                            </li>
+                            <li class="nav-item ms-lg-2">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-outline-secondary btn-sm">Đăng xuất</button>
                                 </form>
@@ -45,7 +68,7 @@
                         }
                         else
                         {
-                            <li class="nav-item me-2">
+                            <li class="nav-item me-lg-1">
                                 <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
                             </li>
                             <li class="nav-item">
@@ -57,21 +80,63 @@
             </div>
         </nav>
     </header>
+
+    @* Khu vực tràn hết chiều ngang (hero trang chủ...) - các trang khác không dùng. *@
+    @await RenderSectionAsync("Hero", required: false)
+
     <div class="container">
-        <main role="main" class="pb-3">
+        <main role="main" class="site-main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container d-flex justify-content-between flex-wrap py-2" style="font-size:.85rem;">
-            <span>&copy; 2026 - KLCN060 Hotel</span>
-            <span>Hotline hỗ trợ: 1900 xxxx</span>
+    <footer class="site-footer">
+        <partial name="_Pines" />
+        <div class="container">
+            <div class="top row g-4">
+                <div class="col-lg-5">
+                    <div class="brand">
+                        <span class="brand-mark">
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l6 9h-3.5l4.5 7H5l4.5-7H6z"/><rect class="gold" x="11" y="18" width="2" height="4"/></svg>
+                        </span>
+                        KLCN060 Hotel
+                    </div>
+                    <p class="about">Khách sạn quy mô nhỏ giữa rừng thông Đà Lạt: phòng ấm cúng, gần trung tâm, phục vụ tận tâm cho mọi kỳ nghỉ và chuyến công tác.</p>
+                </div>
+                <div class="col-6 col-lg-3 offset-lg-1">
+                    <h4>Khám phá</h4>
+                    <ul>
+                        <li><a asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                        <li><a asp-controller="Home" asp-action="Search">Tìm phòng trống</a></li>
+                        <li><a asp-controller="Home" asp-action="About">Giới thiệu</a></li>
+                        <li><a asp-controller="Home" asp-action="Services">Dịch vụ</a></li>
+                        @if (ApiClient.IsLoggedIn)
+                        {
+                            <li><a asp-controller="Booking" asp-action="MyBookings">Đơn đặt phòng của tôi</a></li>
+                        }
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <h4>Liên hệ</h4>
+                    <ul class="contact">
+                        <li><partial name="_Icon" model='"phone"' /><span>Hotline hỗ trợ: 1900 0001</span></li>
+                        <li><partial name="_Icon" model='"pin"' /><span>Đà Lạt, Lâm Đồng</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="bottom">
+                <span>&copy; 2026 - KLCN060 Hotel</span>
+                <span>Đặt phòng trực tiếp, không qua trung gian</span>
+            </div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/l10n/vn.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_ChatbotWidget" />
 </body>
 </html>

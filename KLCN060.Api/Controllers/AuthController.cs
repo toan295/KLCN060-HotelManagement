@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using KLCN060.Api.DTOs.Auth;
 using KLCN060.Api.DTOs.Common;
+using KLCN060.Api.DTOs.Roles;
 using KLCN060.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +41,15 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.RefreshAsync(request);
         return Ok(ApiResponse<RefreshResultDto>.Ok(result));
+    }
+
+    /// <summary>Quyền hiện tại của vai trò đang đăng nhập; Desktop gọi sau khi đăng nhập và khi bị từ chối quyền để cập nhật menu.</summary>
+    [HttpGet("permissions")]
+    [Authorize]
+    public async Task<IActionResult> GetMyPermissions([FromServices] IPermissionService permissionService)
+    {
+        // Vai trò/quyền lấy theo tài khoản trong CSDL (không theo vai trò ghi trong token) nên đổi vai trò hoặc quyền có hiệu lực ngay.
+        return Ok(ApiResponse<MyPermissionsDto>.Ok(await permissionService.GetForAccountAsync(CurrentUser.From(User).TenDN)));
     }
 
     [HttpPost("logout")]

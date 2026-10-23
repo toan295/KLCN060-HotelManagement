@@ -1,0 +1,89 @@
+@model KLCN060.Web.Models.Booking.BookingViewModel
+@{
+    ViewData["Title"] = "Xác nhận đặt phòng";
+    var trangThaiHienThi = Model.TrangThai switch
+    {
+        "CHO_XAC_NHAN" => ("Chờ xác nhận đặt cọc", "warning"),
+        "DA_XAC_NHAN" => ("Đã xác nhận, chờ ngày nhận phòng", "primary"),
+        "DA_NHAN_PHONG" => ("Đã nhận phòng", "success"),
+        "DA_TRA_PHONG" => ("Đã trả phòng", "secondary"),
+        "DA_HUY" => ("Đã hủy", "secondary"),
+        "KHONG_DEN" => ("Không đến", "secondary"),
+        _ => (Model.TrangThai, "secondary")
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <partial name="_BookingSteps" model="@(Model.TrangThai == "CHO_XAC_NHAN" ? 2 : 3)" />
+        <h1 class="h3 mb-1">Xác nhận đặt phòng</h1>
+        <p class="text-muted mb-4">Mã phiếu đặt: <strong class="mono">@Model.MaPhieuDat</strong></p>
+
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+
+        @if (TempData["ErrorMessage"] is string errorMessage)
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <span>Trạng thái:</span>
+            <span class="badge bg-@trangThaiHienThi.Item2">@trangThaiHienThi.Item1</span>
+        </div>
+
+        <h5>Danh sách phòng đã giữ</h5>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Phòng</th>
+                    <th>Loại phòng</th>
+                    <th>Đơn giá áp dụng</th>
+                    <th>Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var phong in Model.PhongDaGiu)
+                {
+                    <tr>
+                        <td>@phong.MaPhong</td>
+                        <td>@phong.LoaiHienThi</td>
+                        <td>@phong.DonGiaApDung.ToVnd()</td>
+                        <td>@phong.ThanhTien.ToVnd()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="card bg-light border-0 mb-4">
+            <div class="card-body">
+                <p class="mb-1">Tổng tiền dự kiến: <strong>@Model.TongTienDuKien.ToVnd()</strong></p>
+                @if (Model.TongKhuyenMai > 0)
+                {
+                    <p class="mb-1 text-success">Khuyến mãi: -@Model.TongKhuyenMai.ToVnd()</p>
+                }
+                <p class="mb-0 fs-5">Tiền cọc cần thanh toán: <strong>@Model.TienCoc.ToVnd()</strong></p>
+            </div>
+        </div>
+
+        @if (Model.TrangThai == "CHO_XAC_NHAN")
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="mb-1">Thanh toán tiền cọc</h5>
+                    <p class="text-muted small mb-3">
+                        Phòng được giữ cho bạn sau khi hệ thống nhận được tiền cọc.
+                    </p>
+                    <form asp-controller="Payment" asp-action="Start" method="post">
+                        <input type="hidden" name="maPhieuDat" value="@Model.MaPhieuDat" />
+                        <button type="submit" class="btn btn-primary">Thanh toán @Model.TienCoc.ToVnd() bằng chuyển khoản</button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <a asp-controller="Booking" asp-action="MyBookings" class="d-inline-block mt-3">Xem lịch sử đặt phòng của tôi</a>
+    </div>
+</div>

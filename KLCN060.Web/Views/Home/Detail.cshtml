@@ -4,58 +4,76 @@
     ViewData["Title"] = Model.TenLoai;
     // Dữ liệu tĩnh minh họa (Mục 5): tiện nghi, chính sách đặt cọc/hủy phòng, ảnh.
     // Bảng LoaiPhong chưa có cột lưu danh sách tiện nghi ở Giai đoạn 2 nên không lấy từ API.
-    var tienNghiTinh = new[] { "Wifi miễn phí", "Điều hòa", "TV màn hình phẳng", "Minibar", "Nước nóng" };
+    var tienNghiTinh = new (string Ten, string Icon)[]
+    {
+        ("Wifi miễn phí", "wifi"), ("Điều hòa", "wind"), ("TV màn hình phẳng", "tv"), ("Minibar", "coffee"), ("Nước nóng", "droplet")
+    };
 }
 
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted mb-2" style="height:360px;">
-            Ảnh lớn @Model.TenLoai
+<nav class="small mb-3" aria-label="breadcrumb">
+    <a asp-controller="Home" asp-action="Index">Trang chủ</a> <span class="text-muted">/</span>
+    <a asp-controller="Home" asp-action="Search">Tìm phòng</a> <span class="text-muted">/</span>
+    <span class="text-muted">@Model.TenLoai</span>
+</nav>
+
+<div class="row g-4 g-lg-5">
+    <div class="col-lg-7">
+        <div class="gallery-main reveal">
+            <partial name="_Photo" model='new PhotoViewModel(Model.MaLoai, "", "Phòng " + Model.TenLoai)' />
         </div>
-        <div class="row g-2">
+        <div class="row g-2 gallery-thumbs reveal" style="--d:100ms">
             @for (var i = 1; i <= 3; i++)
             {
                 <div class="col-4">
-                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted" style="height:100px;">
-                        Ảnh @i
-                    </div>
+                    <partial name="_Photo" model='new PhotoViewModel(Model.MaLoai + "-" + i, "")' />
                 </div>
             }
         </div>
-    </div>
 
-    <div class="col-md-6">
-        <h1 class="h3">@Model.TenLoai</h1>
-        <p class="text-muted">Sức chứa tiêu chuẩn: @Model.SoNguoiTieuChuan khách</p>
-
-        <div class="mb-3">
-            @foreach (var tienNghi in tienNghiTinh)
-            {
-                <span class="badge rounded-pill bg-light text-dark border me-1 mb-1">@tienNghi</span>
-            }
-        </div>
-
-        <div class="card bg-light border-0 mb-3">
-            <div class="card-body">
-                <p class="fs-4 fw-bold mb-1">@Model.DonGia.ToVnd() <span class="fs-6 fw-normal text-muted">/ đêm</span></p>
-                @if (Model.PhuThu > 0)
+        <div class="mt-4 reveal">
+            <span class="eyebrow">Loại phòng</span>
+            <h1 class="mt-1 mb-2">@Model.TenLoai</h1>
+            <div class="meta-row mb-3">
+                <span><partial name="_Icon" model='"users"' /> Sức chứa tiêu chuẩn: @Model.SoNguoiTieuChuan khách</span>
+                <span><partial name="_Icon" model='"moon"' /> Giá tính theo đêm</span>
+            </div>
+            <div class="amenities">
+                @foreach (var tn in tienNghiTinh)
                 {
-                    <p class="text-muted mb-0">Phụ thu: @Model.PhuThu.ToVnd()</p>
+                    <div class="amenity"><partial name="_Icon" model='tn.Icon' /> @tn.Ten</div>
                 }
             </div>
         </div>
+    </div>
 
-        <h5>Chính sách đặt cọc &amp; hủy phòng</h5>
-        <p class="text-muted">Đặt cọc 50% giá trị đặt phòng. Hủy phòng trước 30 ngày sẽ được hoàn lại tiền cọc.</p>
+    <div class="col-lg-5">
+        <div class="card booking-card reveal" style="--d:120ms">
+            <div class="mb-1 text-muted small">Giá từ</div>
+            <div class="price-big">@Model.DonGia.ToVnd() <small>/ đêm</small></div>
+            @if (Model.PhuThu > 0)
+            {
+                <p class="text-muted small mt-2 mb-0">Phụ thu: @Model.PhuThu.ToVnd()</p>
+            }
 
-        <div class="d-flex gap-2 mt-4">
-            <button type="button" class="btn btn-primary" disabled title="Chức năng đang được hoàn thiện, vui lòng quay lại sau">
-                Đặt phòng cá nhân
-            </button>
-            <button type="button" class="btn btn-outline-primary" disabled title="Chức năng đang được hoàn thiện, vui lòng quay lại sau">
-                Đặt theo đoàn
-            </button>
+            <hr class="my-4" />
+
+            <div class="policy">
+                <partial name="_Icon" model='"shield"' />
+                <div>
+                    <h5>Chính sách đặt cọc &amp; hủy phòng</h5>
+                    <p>Đặt cọc 50% giá trị đặt phòng. Hủy phòng trước 30 ngày sẽ được hoàn lại tiền cọc.</p>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <a asp-controller="Booking" asp-action="Book" asp-route-maLoai="@Model.MaLoai" class="btn btn-primary btn-lg">
+                    Đặt phòng cá nhân <partial name="_Icon" model='"arrow"' />
+                </a>
+                <a asp-controller="Booking" asp-action="BookGroup" class="btn btn-outline-primary">
+                    Đặt theo đoàn
+                </a>
+            </div>
+            <p class="text-center text-muted small mt-3 mb-0"><partial name="_Icon" model='"phone"' /> Cần tư vấn? Gọi 1900 0001</p>
         </div>
-        <p class="text-muted small mt-2">Chức năng đặt phòng đang được hoàn thiện, vui lòng quay lại sau.</p>
     </div>
 </div>

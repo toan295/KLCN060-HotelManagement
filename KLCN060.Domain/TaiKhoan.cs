@@ -1,4 +1,4 @@
-using KLCN060.Domain.Enums;
+﻿using KLCN060.Domain.Enums;
 
 namespace KLCN060.Domain;
 
@@ -12,6 +12,9 @@ public class TaiKhoan
     public string? MaKhach { get; set; }
     public TrangThaiTaiKhoan TrangThai { get; set; } = TrangThaiTaiKhoan.HOAT_DONG;
     public int SoLanDangNhapSai { get; set; }
+
+    /// <summary>Lần đăng nhập thành công gần nhất.</summary>
+    public DateTime? LanDangNhapCuoi { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiry { get; set; }
 
@@ -19,6 +22,4 @@ public class TaiKhoan
     public Khach? Khach { get; set; }
     public ICollection<NhatKyThaoTac> NhatKyThaoTacs { get; set; } = new List<NhatKyThaoTac>();
     public ICollection<LichSuSaoLuu> LichSuSaoLuus { get; set; } = new List<LichSuSaoLuu>();
-    public ICollection<NhatKyBanGiaoCa> NhatKyBanGiaoCaGiaos { get; set; } = new List<NhatKyBanGiaoCa>();
-    public ICollection<NhatKyBanGiaoCa> NhatKyBanGiaoCaNhans { get; set; } = new List<NhatKyBanGiaoCa>();
 }

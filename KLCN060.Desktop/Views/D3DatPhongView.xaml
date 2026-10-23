@@ -1,83 +1,153 @@
 <UserControl x:Class="KLCN060.Desktop.Views.D3DatPhongView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Background="#F5F6F0" Margin="28">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ctl="clr-namespace:KLCN060.Desktop.Controls">
+    <Grid Margin="32,28,32,28">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel>
-            <TextBlock Text="Đặt phòng" FontSize="26" FontWeight="Bold" Foreground="#123328" />
-            <TextBlock Text="Chọn khách hàng, thời gian lưu trú và loại phòng cần đặt." Margin="0,5,0,0" Foreground="#647A6C" />
-        </StackPanel>
+        <ctl:PageHeader Title="Đặt phòng" Subtitle="Bước 1: chọn khách và ngày ở. Bước 2: chọn loại phòng và số phòng. Sau đó bấm Tạo đặt phòng." />
 
-        <Grid Grid.Row="1" Margin="0,22,0,18">
+        <Grid Grid.Row="1" Margin="0,20,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="White" CornerRadius="10" Padding="20" BorderBrush="#D7DDCE" BorderThickness="1">
-                <Border.Effect><DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.08" /></Border.Effect>
+            <!-- Bước 1: khách hàng + thời gian lưu trú -->
+            <Border Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" MinHeight="72" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Text="1. Chọn khách hàng" FontSize="18" FontWeight="SemiBold" Foreground="#123328" />
-                    <Grid Grid.Row="1" Margin="0,14,0,12">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="112" /></Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding TuKhoaKhach, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0" />
-                        <Button Grid.Column="1" Content="Tìm khách" Command="{Binding TimKhachCommand}" Margin="0" />
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{StaticResource StepBadgeStyle}"><TextBlock Text="1" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                        <TextBlock Text="Chọn khách hàng và ngày ở" Style="{StaticResource CardTitleStyle}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,14,0,10">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <HeaderedContentControl Header="Tìm khách đã có hồ sơ (họ tên hoặc số điện thoại)">
+                            <TextBox Text="{Binding TuKhoaKhach, UpdateSourceTrigger=PropertyChanged}" ToolTip="Gõ họ tên hoặc số điện thoại của khách rồi nhấn Enter hoặc bấm Tìm khách. Để trống rồi tìm để xem danh sách khách.">
+                                <TextBox.InputBindings><KeyBinding Key="Return" Command="{Binding TimKhachCommand}" /></TextBox.InputBindings>
+                            </TextBox>
+                        </HeaderedContentControl>
+                        <Button Grid.Column="2" Content="Tìm khách" Command="{Binding TimKhachCommand}" Margin="0" MinWidth="110" VerticalAlignment="Bottom" />
                     </Grid>
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding DanhSachKhach}" SelectedItem="{Binding KhachDaChon}" AutoGenerateColumns="False">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Họ tên" Binding="{Binding HoTen}" Width="*" />
-                            <DataGridTextColumn Header="Số điện thoại" Binding="{Binding SoDT}" Width="*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                    <Grid Grid.Row="3" Margin="0,18,0,0">
+                    <Grid Grid.Row="2">
+                        <DataGrid ItemsSource="{Binding DanhSachKhach}" SelectedItem="{Binding KhachDaChon}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Họ tên" Binding="{Binding HoTen}" Width="*" MinWidth="120" />
+                                <DataGridTextColumn Header="Số điện thoại" Binding="{Binding SoDT}" Width="130" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="{Binding GoiYKhach}" Style="{StaticResource HintTextStyle}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12" IsHitTestVisible="False" />
+                    </Grid>
+                    <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource InsetStyle}" Padding="14,10">
+                        <StackPanel>
+                            <TextBlock Text="Không tìm thấy khách? Tạo hồ sơ khách mới" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource MauChuPhu}" Margin="0,0,0,8" TextWrapping="Wrap" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <HeaderedContentControl Header="Họ tên khách mới *"><TextBox Text="{Binding HoTenKhachMoi, UpdateSourceTrigger=PropertyChanged}" MaxLength="100" ToolTip="Họ và tên đầy đủ của khách chưa có hồ sơ" /></HeaderedContentControl>
+                                <HeaderedContentControl Grid.Column="2" Header="Số điện thoại khách mới *"><TextBox Text="{Binding SoDTKhachMoi, UpdateSourceTrigger=PropertyChanged}" MaxLength="15" ToolTip="Số điện thoại liên hệ của khách" /></HeaderedContentControl>
+                                <Button Grid.Column="4" Content="Tạo khách mới" Command="{Binding TaoKhachMoiCommand}" Margin="0" MinWidth="120" VerticalAlignment="Bottom" Style="{StaticResource OutlineButtonStyle}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Grid Grid.Row="4" Margin="0,12,0,0">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                        <StackPanel><TextBlock Text="Ngày nhận" Foreground="#3C4C40" /><DatePicker SelectedDate="{Binding NgayNhan}" /></StackPanel>
-                        <StackPanel Grid.Column="2"><TextBlock Text="Ngày trả" Foreground="#3C4C40" /><DatePicker SelectedDate="{Binding NgayTra}" /></StackPanel>
+                        <HeaderedContentControl Header="Ngày nhận (từ 14:00)"><DatePicker SelectedDate="{Binding NgayNhan}" /></HeaderedContentControl>
+                        <HeaderedContentControl Grid.Column="2" Header="Ngày trả (trước 12:00)"><DatePicker SelectedDate="{Binding NgayTra}" /></HeaderedContentControl>
                     </Grid>
+                    <TextBlock Grid.Row="5" Text="{Binding TomTatLuuTru}" Style="{StaticResource HintTextStyle}" TextWrapping="Wrap" Margin="0,6,0,0" />
                 </Grid>
             </Border>
 
-            <Border Grid.Column="2" Background="White" CornerRadius="10" Padding="20" BorderBrush="#D7DDCE" BorderThickness="1">
-                <Border.Effect><DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.08" /></Border.Effect>
+            <!-- Bước 2: loại phòng và số lượng -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                 <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                    <TextBlock Text="2. Chọn phòng" FontSize="18" FontWeight="SemiBold" Foreground="#123328" />
-                    <Grid Grid.Row="1" Margin="0,14,0,12">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="100" /><ColumnDefinition Width="118" /></Grid.ColumnDefinitions>
-                        <StackPanel><TextBlock Text="Loại phòng" Foreground="#3C4C40" /><ComboBox ItemsSource="{Binding DanhSachLoaiPhong}" DisplayMemberPath="TenLoai" SelectedItem="{Binding LoaiPhongDaChon}" Height="34" /></StackPanel>
-                        <StackPanel Grid.Column="2"><TextBlock Text="Số lượng" Foreground="#3C4C40" /><TextBox Text="{Binding SoLuong}" /></StackPanel>
-                        <Button Grid.Column="3" Content="Thêm phòng" Command="{Binding ThemPhongCommand}" VerticalAlignment="Bottom" Margin="10,0,0,0" />
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{StaticResource StepBadgeStyle}"><TextBlock Text="2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
+                        <TextBlock Text="Chọn phòng" Style="{StaticResource CardTitleStyle}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,16,0,6">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" /><ColumnDefinition Width="12" /><ColumnDefinition Width="90" /><ColumnDefinition Width="12" /><ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <HeaderedContentControl Header="Loại phòng">
+                            <ComboBox ItemsSource="{Binding DanhSachLoaiPhong}" DisplayMemberPath="TenLoai" SelectedItem="{Binding LoaiPhongDaChon}" />
+                        </HeaderedContentControl>
+                        <HeaderedContentControl Grid.Column="2" Header="Số phòng"><TextBox Text="{Binding SoLuong}" ToolTip="Số phòng cần đặt của loại này (từ 1 trở lên)" /></HeaderedContentControl>
+                        <Button Grid.Column="4" Content="Thêm phòng" Command="{Binding ThemPhongCommand}" VerticalAlignment="Bottom" Margin="0" MinWidth="118" />
+                        <TextBlock Grid.Row="1" Grid.ColumnSpan="5" Text="{Binding GoiYPhongTrong}" Style="{StaticResource HintTextStyle}" TextWrapping="Wrap" Margin="0,6,0,0" />
                     </Grid>
-                    <DataGrid Grid.Row="2" ItemsSource="{Binding DanhSachPhongDat}" AutoGenerateColumns="False">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Loại phòng" Binding="{Binding TenLoai}" Width="*" />
-                            <DataGridTextColumn Header="Số lượng" Binding="{Binding SoLuong}" Width="*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <Grid Grid.Row="2">
+                        <DataGrid ItemsSource="{Binding DanhSachPhongDat}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Loại phòng" Binding="{Binding TenLoai}" Width="*" MinWidth="120" />
+                                <DataGridTextColumn Header="Số phòng" Binding="{Binding SoLuong}" Width="90" />
+                                <DataGridTemplateColumn Header="Xử lý" Width="Auto">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Bỏ" Style="{StaticResource OutlineButtonStyle}" MinHeight="26" Padding="10,2" FontSize="12" Margin="0"
+                                                    Command="{Binding DataContext.BoPhongCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="Chưa chọn phòng nào. Chọn loại phòng, nhập số phòng rồi bấm Thêm phòng." Style="{StaticResource HintTextStyle}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12" IsHitTestVisible="False"
+                                   Visibility="{Binding ChuaChonPhong, Converter={StaticResource BoolToVis}}" />
+                    </Grid>
+                    <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                        <TextBlock Text="Khuyến mãi (không bắt buộc, tích chọn tối đa 3)" Style="{StaticResource HintTextStyle}" />
+                        <TextBlock Text="Hiện không có khuyến mãi nào đang áp dụng." Style="{StaticResource HintTextStyle}" Margin="0,4,0,0"
+                                   Visibility="{Binding KhongCoKhuyenMai, Converter={StaticResource BoolToVis}}" />
+                        <ItemsControl ItemsSource="{Binding DanhSachKhuyenMai}" Margin="0,4,0,0" Visibility="{Binding CoKhuyenMai, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding DuocChon, Mode=TwoWay}" Content="{Binding Ten}" Margin="0,2,0,2"
+                                              ToolTip="Điều kiện (số đêm, loại phòng, giá trị tối thiểu) được kiểm tra ngay ở phần báo giá bên dưới" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Style="{StaticResource InsetStyle}" Padding="14,10" Margin="0,10,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Báo giá (chưa giữ phòng)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource MauChuPhu}" Margin="0,0,0,4" />
+                                <TextBlock Text="{Binding BaoGiaHienThi}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>
 
-        <Border Grid.Row="2" Background="White" CornerRadius="10" Padding="18" BorderBrush="#D7DDCE" BorderThickness="1">
-            <StackPanel HorizontalAlignment="Center" MinWidth="500">
-                <TextBlock Text="{Binding ThongBao}" Foreground="#C8452F" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,14" MinHeight="22" />
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Content="Tạo đặt phòng" Command="{Binding TaoDatPhongCommand}" MinWidth="150" Margin="0,0,12,0" />
-                    <Button Content="Xác nhận đã thu cọc" Command="{Binding XacNhanCocCommand}" MinWidth="180" Background="#C08A3E" BorderBrush="#C08A3E" />
+        <!-- Thanh thao tác cuối trang: kết quả (nếu có) bên trái, nút hành động bên phải -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="18,14">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <ctl:NoticeBar Text="{Binding ThongBao}" VerticalAlignment="Center" Margin="0,0,16,0" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Xác nhận đã thu cọc" Command="{Binding XacNhanCocCommand}" MinWidth="180" Style="{StaticResource AccentButtonStyle}" />
+                    <Button Content="Tạo đặt phòng" Command="{Binding TaoDatPhongCommand}" IsEnabled="{Binding DangTaoDatPhong, Converter={StaticResource InverseBooleanConverter}}" MinWidth="160" Margin="0" />
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

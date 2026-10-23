@@ -3,7 +3,7 @@ using System.Security.Claims;
 
 namespace KLCN060.Api.Services;
 
-/// <summary>Thông tin người gọi API, đọc từ JWT claims (Mục 5, CLAUDE.md).</summary>
+/// <summary>Thông tin người gọi API, đọc từ JWT claims (Mục 5, tài liệu đặc tả).</summary>
 public record CurrentUser(string TenDN, string? MaNV, string? MaKhach, bool LaKhachHang)
 {
     public static CurrentUser From(ClaimsPrincipal user) => new(

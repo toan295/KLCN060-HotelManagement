@@ -3,48 +3,60 @@
     ViewData["Title"] = "Đăng ký tài khoản";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card">
-            <div class="card-body p-4">
-                <h1 class="h3 mb-4 text-center">Đăng ký tài khoản</h1>
-
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-                <form asp-controller="Account" asp-action="Register" method="post">
-                    <div class="mb-3">
-                        <label asp-for="HoTen" class="form-label"></label>
-                        <input asp-for="HoTen" class="form-control" autofocus />
-                        <span asp-validation-for="HoTen" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="SoDT" class="form-label"></label>
-                        <input asp-for="SoDT" class="form-control" />
-                        <span asp-validation-for="SoDT" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="Email" class="form-label"></label>
-                        <input asp-for="Email" class="form-control" />
-                        <span asp-validation-for="Email" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="MatKhau" class="form-label"></label>
-                        <input asp-for="MatKhau" class="form-control" placeholder="Tối thiểu 8 ký tự" />
-                        <span asp-validation-for="MatKhau" class="text-danger"></span>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Đăng ký</button>
-                </form>
-
-                <p class="text-center mt-3 mb-0">
-                    Đã có tài khoản? <a asp-controller="Account" asp-action="Login">Đăng nhập</a>
-                </p>
-            </div>
+<div class="auth-shell">
+    <aside class="auth-aside">
+        <partial name="_Pines" />
+        <div>
+            <span class="eyebrow" style="color:#f0c987;">Thành viên KLCN060</span>
+            <h2>Tạo tài khoản để đặt phòng dễ dàng hơn</h2>
+            <ul>
+                <li><partial name="_Icon" model='"check"' /> Đặt phòng cá nhân hoặc theo đoàn</li>
+                <li><partial name="_Icon" model='"check"' /> Theo dõi lịch sử và trạng thái đơn</li>
+                <li><partial name="_Icon" model='"check"' /> Hủy phòng và hoàn cọc theo chính sách</li>
+            </ul>
         </div>
-    </div>
+    </aside>
+
+    <section class="auth-form">
+        <h1>Đăng ký tài khoản</h1>
+        <p class="sub">Chỉ mất một phút để bắt đầu.</p>
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <form asp-controller="Account" asp-action="Register" method="post">
+            <div class="mb-3">
+                <label asp-for="HoTen" class="form-label"></label>
+                <input asp-for="HoTen" class="form-control" autofocus />
+                <span asp-validation-for="HoTen" class="text-danger"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="SoDT" class="form-label"></label>
+                    <input asp-for="SoDT" class="form-control" />
+                    <span asp-validation-for="SoDT" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="ten@example.com" autocomplete="email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                    <div class="form-text">Dùng để khôi phục mật khẩu khi bạn quên.</div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="MatKhau" class="form-label"></label>
+                <input asp-for="MatKhau" class="form-control" placeholder="Tối thiểu 8 ký tự" data-strength autocomplete="new-password" />
+                <span asp-validation-for="MatKhau" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">Đăng ký</button>
+        </form>
+
+        <p class="text-center mt-4 mb-0">
+            Đã có tài khoản? <a asp-controller="Account" asp-action="Login" class="fw-semibold">Đăng nhập</a>
+        </p>
+    </section>
 </div>
 
 @section Scripts {

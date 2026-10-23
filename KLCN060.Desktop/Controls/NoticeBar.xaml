@@ -1,0 +1,16 @@
+<UserControl x:Class="KLCN060.Desktop.Controls.NoticeBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root" Focusable="False" IsTabStop="False">
+    <!-- Thanh thông báo kết quả/lỗi: tự ẩn khi không có nội dung; đỏ (lỗi) hoặc xanh (thành công) - xem NoticeBar.xaml.cs. -->
+    <Border x:Name="Bar" CornerRadius="8" Padding="12,9" BorderThickness="3,0,0,0" Background="{StaticResource MauLoiNhat}" BorderBrush="{StaticResource MauNguyHiem}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="Icon" FontFamily="Segoe MDL2 Assets" FontSize="15" Text="&#xE783;" Foreground="{StaticResource MauNguyHiem}" VerticalAlignment="Top" Margin="0,1,10,0" />
+            <TextBlock Grid.Column="1" Text="{Binding Text, ElementName=Root}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource MauChu}" TextWrapping="Wrap" VerticalAlignment="Center" />
+        </Grid>
+    </Border>
+</UserControl>

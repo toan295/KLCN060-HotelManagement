@@ -1,44 +1,157 @@
 @using KLCN060.Web.Helpers
 @model List<KLCN060.Web.Models.Home.ServiceViewModel>
 @{
-    ViewData["Title"] = "Giới thiệu & Dịch vụ";
+    ViewData["Title"] = "Dịch vụ";
+
+    // Chọn icon theo tên dịch vụ (dữ liệu dịch vụ không có cột phân loại) - không khớp thì dùng icon "tag".
+    string IconDichVu(string ten)
+    {
+        var t = ten.ToLowerInvariant();
+        if (t.Contains("giặt")) return "shirt";
+        if (t.Contains("sân bay") || t.Contains("đưa đón")) return "plane";
+        if (t.Contains("xe")) return "nav";
+        if (t.Contains("ăn") || t.Contains("buffet") || t.Contains("sáng") || t.Contains("cà phê")) return "coffee";
+        if (t.Contains("nước") || t.Contains("bia") || t.Contains("rượu")) return "glass";
+        return "tag";
+    }
+
+    var tienNghi = new (string Ten, string Mota, string Icon)[]
+    {
+        ("Wifi miễn phí", "Phủ sóng toàn bộ khuôn viên", "wifi"),
+        ("Điều hòa", "Không gian mát mẻ, dễ chịu", "wind"),
+        ("TV màn hình phẳng", "Nhiều kênh giải trí", "tv"),
+        ("Minibar", "Đồ uống tiện lợi trong phòng", "coffee"),
+        ("Nước nóng", "Tắm nước nóng tiện nghi", "droplet")
+    };
 }
 
-<h1 class="h3 mb-3">Giới thiệu về khách sạn</h1>
-<p class="text-muted">
-    KLCN060 Hotel tọa lạc tại vị trí trung tâm thuận tiện di chuyển, mang đến không gian nghỉ dưỡng tiện nghi
-    cùng dịch vụ chuyên nghiệp, tận tâm cho mọi kỳ nghỉ và chuyến công tác của quý khách.
-</p>
-
-<h2 class="h4 mt-5 mb-3">Bảng giá dịch vụ</h2>
-
-@if (!Model.Any())
-{
-    <p class="text-muted">Hiện chưa tải được danh sách dịch vụ. Vui lòng thử lại sau.</p>
+@section Hero {
+    <section class="hero hero-page">
+        <partial name="_Photo" model='new PhotoViewModel("hero", "", null, "hero-photo")' />
+        <span class="hero-sun" aria-hidden="true"></span>
+        <partial name="_Pines" />
+        <div class="container hero-inner">
+            <nav class="crumbs" aria-label="breadcrumb"><a asp-controller="Home" asp-action="Index">Trang chủ</a> <span>/</span> <span>Dịch vụ</span></nav>
+            <h1>Dịch vụ &amp; <em>Tiện nghi</em></h1>
+            <p class="lead">Mọi thứ bạn cần cho một kỳ nghỉ trọn vẹn — từ tiện nghi trong phòng đến các dịch vụ đi kèm.</p>
+        </div>
+    </section>
 }
-else
+
+<section>
+    <div class="section-head reveal">
+        <span class="eyebrow">Trong mỗi phòng</span>
+        <h2>Tiện nghi đi kèm</h2>
+        <p>Các tiện nghi cơ bản có sẵn trong phòng, không tính thêm phí.</p>
+    </div>
+    <div class="row g-3">
+        @{ var i = 0; }
+        @foreach (var tn in tienNghi)
+        {
+            <div class="col-6 col-md-4 col-lg reveal" style="--d:@(i++ * 70)ms">
+                <div class="amenity-card">
+                    <span class="ico-wrap"><partial name="_Icon" model='tn.Icon' /></span>
+                    <div><strong>@tn.Ten</strong><span>@tn.Mota</span></div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="mt-5 pt-4">
+    <div class="section-head reveal">
+        <span class="eyebrow">Dịch vụ bổ sung</span>
+        <h2>Bảng giá dịch vụ</h2>
+        <p>Các dịch vụ được tính theo đơn vị bên dưới và cộng vào hóa đơn khi trả phòng.</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted text-center">Hiện chưa tải được danh sách dịch vụ. Vui lòng thử lại sau.</p>
+    }
+    else
+    {
+        <div class="row g-3">
+            @{ var j = 0; }
+            @foreach (var dichVu in Model)
+            {
+                <div class="col-md-6 col-lg-4 reveal" style="--d:@(j++ % 3 * 90)ms">
+                    <div class="svc-card">
+                        <div class="svc-main">
+                            <span class="ico-wrap"><partial name="_Icon" model='IconDichVu(dichVu.TenDV)' /></span>
+                            <div class="svc-body">
+                                <h3>@dichVu.TenDV</h3>
+                                <div class="svc-price">@dichVu.GiaDV.ToVnd() <small>/ @dichVu.DonViTinh</small></div>
+                            </div>
+                        </div>
+                        @if (dichVu.ChiTiets.Any())
+                        {
+                            <button type="button" class="svc-more" data-bs-toggle="modal" data-bs-target="#dv-@dichVu.MaDV">
+                                Xem chi tiết <partial name="_Icon" model='"arrow"' />
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@foreach (var dichVu in Model.Where(x => x.ChiTiets.Any()))
 {
-    <div class="card">
-        <div class="card-body p-0">
-            <table class="table table-striped align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Dịch vụ</th>
-                        <th>Đơn giá</th>
-                        <th>Đơn vị tính</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var dichVu in Model)
-                    {
-                        <tr>
-                            <td>@dichVu.TenDV</td>
-                            <td>@dichVu.GiaDV.ToVnd()</td>
-                            <td>@dichVu.DonViTinh</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    <div class="modal fade svc-modal" id="dv-@dichVu.MaDV" tabindex="-1" aria-labelledby="dv-@(dichVu.MaDV)-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="ico-wrap"><partial name="_Icon" model='IconDichVu(dichVu.TenDV)' /></span>
+                    <div class="flex-grow-1">
+                        <h3 class="modal-title" id="dv-@(dichVu.MaDV)-title">@dichVu.TenDV</h3>
+                        <div class="svc-price">@dichVu.GiaDV.ToVnd() <small>/ @dichVu.DonViTinh</small></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="svc-detail">
+                        @foreach (var ct in dichVu.ChiTiets)
+                        {
+                            <div class="svc-detail-row">
+                                <dt>@ct.TieuDe</dt>
+                                <dd>@ct.NoiDung</dd>
+                            </div>
+                        }
+                    </dl>
+                </div>
+            </div>
         </div>
     </div>
 }
+
+<section class="mt-5 pt-4 reveal">
+    <div class="notes">
+        <div class="note">
+            <span class="ico-wrap"><partial name="_Icon" model='"clock"' /></span>
+            <div><h3>Cách tính</h3><p>Dịch vụ được ghi nhận khi sử dụng và cộng vào hóa đơn lúc trả phòng, không phát sinh khoản nào ngoài bảng giá.</p></div>
+        </div>
+        <div class="note">
+            <span class="ico-wrap"><partial name="_Icon" model='"qr"' /></span>
+            <div><h3>Thanh toán linh hoạt</h3><p>Tiền mặt hoặc chuyển khoản quét mã QR.</p></div>
+        </div>
+        <div class="note">
+            <span class="ico-wrap"><partial name="_Icon" model='"phone"' /></span>
+            <div><h3>Đặt trước dịch vụ</h3><p>Gọi hotline 1900 0001 hoặc báo lễ tân để được sắp xếp.</p></div>
+        </div>
+    </div>
+</section>
+
+<section class="mt-5 pt-4 reveal">
+    <div class="cta-band">
+        <partial name="_Pines" />
+        <span class="eyebrow" style="color:#f0c987;">Sẵn sàng?</span>
+        <h2 class="mt-2">Chọn phòng và tận hưởng trọn vẹn kỳ nghỉ</h2>
+        <p>Xem các hạng phòng còn trống và giữ chỗ chỉ với vài bước.</p>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a class="btn btn-accent btn-lg" asp-controller="Home" asp-action="Search">Tìm phòng trống <partial name="_Icon" model='"arrow"' /></a>
+            <a class="btn btn-ghost-light btn-lg" asp-controller="Home" asp-action="About">Về khách sạn</a>
+        </div>
+    </div>
+</section>

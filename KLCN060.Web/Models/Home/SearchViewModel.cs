@@ -6,9 +6,12 @@ public class SearchViewModel
     public DateOnly? NgayTra { get; set; }
     public int SoKhach { get; set; } = 1;
 
+    /// <summary>Có ngày nhận/trả hợp lệ hay không -> dùng SoPhongTrong (tồn phòng thật) thay vì danh mục tĩnh.</summary>
+    public bool DaLocTheoNgay { get; set; }
+
     /// <summary>
-    /// Giai đoạn 2 CHƯA có /room-types/availability lọc theo tồn phòng thật (thuộc Giai đoạn 4)
-    /// -> đây là TOÀN BỘ danh mục loại phòng, lọc theo Loại phòng/Mức giá được thực hiện PHÍA CLIENT bằng JavaScript (Mục 5).
+    /// Khi DaLocTheoNgay = true: kết quả từ GET /room-types/availability (tồn phòng thật theo đúng khoảng ngày/số khách).
+    /// Khi false (chưa chọn ngày): toàn bộ danh mục loại phòng, SoPhongTrong = -1 (không xác định, không hiển thị badge tồn kho).
     /// </summary>
-    public List<RoomTypeViewModel> DanhSachLoaiPhong { get; set; } = new();
+    public List<RoomTypeAvailabilityViewModel> DanhSachLoaiPhong { get; set; } = new();
 }

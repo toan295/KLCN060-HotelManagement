@@ -15,6 +15,9 @@ public class CoSoVatChatConfiguration : IEntityTypeConfiguration<CoSoVatChat>
         entity.Property(x => x.SoLuong).IsRequired().HasDefaultValue(1);
         entity.Property(x => x.TinhTrang).HasMaxLength(30).IsRequired();
         entity.Property(x => x.MaPhong).HasMaxLength(10).IsUnicode(false);
+        entity.Property(x => x.GhiChu).HasMaxLength(255);
+        entity.Property(x => x.LyDoTinhTrang).HasMaxLength(255);
+        entity.Property(x => x.NguoiCapNhat).HasMaxLength(50).IsUnicode(false);
 
         entity.HasOne(x => x.Phong)
             .WithMany(x => x.CoSoVatChats)

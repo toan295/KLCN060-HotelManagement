@@ -12,9 +12,10 @@ public class RegisterViewModel
     [Display(Name = "Số điện thoại")]
     public string SoDT { get; set; } = null!;
 
+    [Required(ErrorMessage = "Vui lòng nhập email (dùng để khôi phục mật khẩu khi bạn quên).")]
     [Display(Name = "Email")]
     [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
-    public string? Email { get; set; }
+    public string Email { get; set; } = null!;
 
     [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
     [MinLength(8, ErrorMessage = "Mật khẩu phải có ít nhất 8 ký tự.")]

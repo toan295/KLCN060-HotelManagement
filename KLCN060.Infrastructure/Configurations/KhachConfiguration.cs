@@ -16,5 +16,7 @@ public class KhachConfiguration : IEntityTypeConfiguration<Khach>
         entity.Property(x => x.CCCD).HasMaxLength(20).IsUnicode(false);
         entity.Property(x => x.Email).HasMaxLength(100).IsUnicode(false);
         entity.Property(x => x.DiaChi).HasMaxLength(255);
+        entity.HasIndex(x => x.SoDT).IsUnique();
+        entity.HasIndex(x => x.CCCD).IsUnique().HasFilter("[CCCD] IS NOT NULL");
     }
 }

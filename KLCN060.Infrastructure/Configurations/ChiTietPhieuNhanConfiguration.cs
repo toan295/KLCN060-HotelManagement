@@ -15,9 +15,11 @@ public class ChiTietPhieuNhanConfiguration : IEntityTypeConfiguration<ChiTietPhi
 
         entity.Property(x => x.NgayNhan).HasColumnType("date").IsRequired();
         entity.Property(x => x.NgayTra).HasColumnType("date");
+        entity.Property(x => x.NgayTraDuKien).HasColumnType("date");
         entity.Property(x => x.SoNguoi).IsRequired();
         entity.Property(x => x.DonGia).HasColumnType("decimal(18,2)").IsRequired();
         entity.Property(x => x.TienPhuThu).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(0m);
+        entity.Property(x => x.PhuThuNguoiThemChot).HasColumnType("decimal(18,2)");
 
         entity.Property(x => x.TrangThai)
             .HasConversion<string>()

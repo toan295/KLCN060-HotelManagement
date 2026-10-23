@@ -53,7 +53,8 @@ public class ReportService : IReportService
         KiemTraKhoang(from, to);
         var homNay = DateOnly.FromDateTime(DateTime.Now);
 
-        var tongSoPhong = await _context.Phongs.CountAsync();
+        var ngayTaoPhong = await _context.Phongs.AsNoTracking().Select(p => p.NgayTao).ToListAsync();
+        var tongSoPhong = ngayTaoPhong.Count;
         var luotO = await _context.ChiTietPhieuNhans.AsNoTracking()
             .Where(x => x.NgayNhan <= to && (x.NgayTra == null || x.NgayTra >= from))
             .Select(x => new { x.MaPhieuNhan, x.MaPhong, x.NgayNhan, x.NgayTra })
@@ -74,11 +75,13 @@ public class ReportService : IReportService
         {
             var ngay = d;
             var soPhong = khoangO.Where(x => x.Bat <= ngay && ngay < x.Het).Select(x => x.MaPhong).Distinct().Count();
+            // Mẫu số = các phòng đã có trong danh mục vào ngày đó (thêm phòng hôm nay không làm đổi tỉ lệ của ngày cũ).
+            var phongCoTrongNgay = ngayTaoPhong.Count(n => n is null || DateOnly.FromDateTime(n.Value) <= ngay);
             ketQua.TheoNgay.Add(new OccupancyDayDto
             {
                 Ngay = d,
                 SoPhongCoKhach = soPhong,
-                TyLePhanTram = tongSoPhong == 0 ? 0 : Math.Round(soPhong * 100m / tongSoPhong, 2)
+                TyLePhanTram = phongCoTrongNgay == 0 ? 0 : Math.Round(soPhong * 100m / phongCoTrongNgay, 2)
             });
         }
         ketQua.TyLeTrungBinhPhanTram = ketQua.TheoNgay.Count == 0 ? 0 : Math.Round(ketQua.TheoNgay.Average(x => x.TyLePhanTram), 2);
@@ -87,7 +90,7 @@ public class ReportService : IReportService
 
     /// <summary>
     /// Khách mới = khách có lượt lưu trú đầu tiên (theo ngày nhận) rơi vào khoảng; khách quay lại = có lượt trong khoảng
-    /// và đã có lượt trước khoảng. Khách vãng lai không gắn với hồ sơ khách (phiếu nhận không có phiếu đặt) không được tính.
+    /// và đã có lượt trước khoảng. Khách nhận phòng trực tiếp (vãng lai) CÓ hồ sơ khách vẫn được tính; chỉ lượt không gắn hồ sơ nào mới bị bỏ.
     /// </summary>
     public async Task<GuestReportDto> GuestsAsync(DateOnly from, DateOnly to)
     {
@@ -96,8 +99,8 @@ public class ReportService : IReportService
         var denLuc = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
 
         var luot = await _context.PhieuNhanPhongs.AsNoTracking()
-            .Where(x => x.PhieuDatPhong != null && x.NgayNhan < denLuc)
-            .Select(x => new { x.PhieuDatPhong!.MaKhach, x.NgayNhan })
+            .Where(x => x.NgayNhan < denLuc && (x.MaKhach != null || x.PhieuDatPhong != null))
+            .Select(x => new { MaKhach = x.MaKhach ?? x.PhieuDatPhong!.MaKhach, x.NgayNhan })
             .ToListAsync();
 
         var moi = 0;

@@ -22,6 +22,106 @@ namespace KLCN060.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("KLCN060.Domain.AnhDoBoQuen", b =>
+                {
+                    b.Property<int>("MaAnh")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaAnh"));
+
+                    b.Property<long>("KichThuocByte")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MaDo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenFile")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(80)");
+
+                    b.Property<DateTime>("ThoiGian")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MaAnh");
+
+                    b.HasIndex("MaDo");
+
+                    b.ToTable("AnhDoBoQuens");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.CanhBaoTheoDoi", b =>
+                {
+                    b.Property<int>("MaTheoDoi")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaTheoDoi"));
+
+                    b.Property<DateTime?>("DaXuLyLuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GhiChuNhan")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("HanXuLy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Ma")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<string>("MucDo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("NguoiGiao")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NguoiNhan")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("NhanLuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("PhatHienLuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SoLuongHienTai")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuongLucPhatHien")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TieuDe")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("MaTheoDoi");
+
+                    b.HasIndex("Ma")
+                        .IsUnique()
+                        .HasDatabaseName("UX_CanhBaoTheoDoi_DangMo")
+                        .HasFilter("[DaXuLyLuc] IS NULL");
+
+                    b.HasIndex("DaXuLyLuc", "PhatHienLuc")
+                        .HasDatabaseName("IX_CanhBaoTheoDoi_DaXuLy");
+
+                    b.ToTable("CanhBaoTheoDois");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.CauHoiThuongGap", b =>
                 {
                     b.Property<int>("MaCauHoi")
@@ -43,6 +143,71 @@ namespace KLCN060.Infrastructure.Migrations
                     b.HasKey("MaCauHoi");
 
                     b.ToTable("CauHoiThuongGaps");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.ChiTietDichVu", b =>
+                {
+                    b.Property<string>("MaCTDV")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<bool>("ConHienThi")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("MaDV")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("ThuTu")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("TieuDe")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaCTDV");
+
+                    b.HasIndex("MaDV", "TieuDe")
+                        .IsUnique();
+
+                    b.ToTable("ChiTietDichVus");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.ChiTietGoiDichVu", b =>
+                {
+                    b.Property<string>("MaGoi")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MaDV")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<int>("SoLuong")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.HasKey("MaGoi", "MaDV");
+
+                    b.HasIndex("MaDV");
+
+                    b.ToTable("ChiTietGoiDichVus");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.ChiTietHoaDon", b =>
@@ -109,6 +274,79 @@ namespace KLCN060.Infrastructure.Migrations
                     b.ToTable("ChiTietKhuyenMais");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.ChiTietKiemPhong", b =>
+                {
+                    b.Property<int>("MaChiTiet")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaChiTiet"));
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("LyDo")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("LyDoBoQua")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int?>("MaChiTietDV")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaPhieuKiem")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MaVatDung")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("NguoiXuLy")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("SoLuongBoSung")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuongSau")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuongTinhPhi")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuongTruoc")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ThanhTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("ThoiGianXuLy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TrangThaiTinhPhi")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("MaChiTiet");
+
+                    b.HasIndex("MaPhieuKiem");
+
+                    b.HasIndex("MaVatDung");
+
+                    b.HasIndex("TrangThaiTinhPhi");
+
+                    b.ToTable("ChiTietKiemPhongs");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.ChiTietPhieuDat", b =>
                 {
                     b.Property<string>("MaPhieuDat")
@@ -160,7 +398,16 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Property<DateOnly?>("NgayTra")
                         .HasColumnType("date");
 
+                    b.Property<DateOnly?>("NgayTraDuKien")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("PhuThuNguoiThemChot")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("SoNguoi")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SoNguoiTieuChuanChot")
                         .HasColumnType("int");
 
                     b.Property<decimal>("TienPhuThu")
@@ -188,8 +435,17 @@ namespace KLCN060.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaChiTietDV"));
 
+                    b.Property<string>("DonViTinh")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("MaDV")
                         .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MaGoi")
                         .HasMaxLength(10)
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)");
@@ -200,13 +456,27 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(15)");
 
+                    b.Property<string>("MaPhong")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
                     b.Property<DateTime>("NgaySuDung")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiGhi")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("SoLuong")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(1);
+
+                    b.Property<string>("TenDichVu")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("ThanhTien")
                         .HasColumnType("decimal(18,2)");
@@ -214,6 +484,8 @@ namespace KLCN060.Infrastructure.Migrations
                     b.HasKey("MaChiTietDV");
 
                     b.HasIndex("MaDV");
+
+                    b.HasIndex("MaGoi");
 
                     b.HasIndex("MaPhieuNhan");
 
@@ -272,10 +544,29 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)");
 
+                    b.Property<DateTime?>("CapNhatLuc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("LyDoTinhTrang")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.Property<string>("MaPhong")
                         .HasMaxLength(10)
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)");
+
+                    b.Property<DateTime?>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiCapNhat")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int>("SoLuong")
                         .ValueGeneratedOnAdd()
@@ -291,6 +582,9 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("TinhTrangTuLuc")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("MaSo");
 
@@ -314,6 +608,19 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Property<decimal>("GiaDV")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("HoatDong")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("LoaiDoanhThu")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("DICH_VU");
+
                     b.Property<string>("TenDV")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -321,7 +628,258 @@ namespace KLCN060.Infrastructure.Migrations
 
                     b.HasKey("MaDV");
 
+                    b.HasIndex("TenDV")
+                        .IsUnique();
+
                     b.ToTable("DichVus");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.DoBoQuen", b =>
+                {
+                    b.Property<int>("MaDo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaDo"));
+
+                    b.Property<string>("GhiChuTra")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("GiayToNguoiNhan")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("KhuVuc")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Loai")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("LyDoThanhLy")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("MaPhieuNhan")
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<string>("MaPhong")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MoTa")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("NguoiGhiNhan")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NguoiNhanLai")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NguoiNhat")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NguoiThanhLy")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NguoiTra")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("ThoiGianPhatHien")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianThanhLy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianTra")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("ViTriLuuGiu")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaDo");
+
+                    b.HasIndex("MaPhong");
+
+                    b.HasIndex("ThoiGianPhatHien");
+
+                    b.HasIndex("TrangThai");
+
+                    b.ToTable("DoBoQuens");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.GiaDemDatPhong", b =>
+                {
+                    b.Property<string>("MaPhieuDat")
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<string>("MaPhong")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<DateOnly>("Dem")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DieuChinh")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<decimal>("Gia")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("GiaCoBan")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("MaQuyTac")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenQuyTac")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaPhieuDat", "MaPhong", "Dem");
+
+                    b.ToTable("GiaDemDatPhongs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.GiaoDichChuyenKhoan", b =>
+                {
+                    b.Property<string>("MaGiaoDich")
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<DateTime>("HanThanhToan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LoaiThamChieu")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("MaGiaoDichNganHang")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("MaNVThuNgan")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MaTaiKhoanTao")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("MaThamChieu")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayThanhToan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NoiDungChuyenKhoan")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<decimal>("SoTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("MaGiaoDich");
+
+                    b.HasIndex("MaNVThuNgan");
+
+                    b.HasIndex("MaTaiKhoanTao");
+
+                    b.HasIndex("NoiDungChuyenKhoan")
+                        .IsUnique();
+
+                    b.HasIndex("LoaiThamChieu", "MaThamChieu", "TrangThai");
+
+                    b.ToTable("GiaoDichChuyenKhoans");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.GoiDichVu", b =>
+                {
+                    b.Property<string>("MaGoi")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<decimal>("GiaGoi")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("HoatDong")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("MoTa")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TaoBoi")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("TenGoi")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaGoi");
+
+                    b.HasIndex("TenGoi")
+                        .IsUnique();
+
+                    b.ToTable("GoiDichVus");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.HoaDon", b =>
@@ -384,6 +942,131 @@ namespace KLCN060.Infrastructure.Migrations
                     b.ToTable("HoaDons");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.HoaDonDienTu", b =>
+                {
+                    b.Property<int>("MaHDDT")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaHDDT"));
+
+                    b.Property<string>("DiaChi")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("KyHieu")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("LienKetTraCuu")
+                        .HasMaxLength(500)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("MaCQT")
+                        .HasMaxLength(60)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<string>("MaHD")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<string>("MaSoThue")
+                        .HasMaxLength(14)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(14)");
+
+                    b.Property<string>("MaThamChieuNhaCungCap")
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("MaTraCuu")
+                        .HasMaxLength(60)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(60)");
+
+                    b.Property<string>("MauSo")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("NgayCapNhat")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayPhatHanh")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiYeuCau")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NhaCungCap")
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("SoHoaDon")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int>("SoLanThu")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenDonVi")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("TenNguoiMua")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ThongBaoLoi")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("ThueSuat")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("TienChuaThue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TienThue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TongThanhToan")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("MaHDDT");
+
+                    b.HasIndex("MaHD")
+                        .IsUnique();
+
+                    b.ToTable("HoaDonDienTus");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.Khach", b =>
                 {
                     b.Property<string>("MaKhach")
@@ -418,7 +1101,58 @@ namespace KLCN060.Infrastructure.Migrations
 
                     b.HasKey("MaKhach");
 
+                    b.HasIndex("CCCD")
+                        .IsUnique()
+                        .HasFilter("[CCCD] IS NOT NULL");
+
+                    b.HasIndex("SoDT")
+                        .IsUnique();
+
                     b.ToTable("Khachs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.KhachDiCung", b =>
+                {
+                    b.Property<int>("MaKhachDiCung")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaKhachDiCung"));
+
+                    b.Property<string>("CCCD")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("HoTen")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MaPhieuDat")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<string>("MaPhong")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<DateTime>("NgayThem")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiThem")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("MaKhachDiCung");
+
+                    b.HasIndex("MaPhieuDat");
+
+                    b.ToTable("KhachDiCungs");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.KhuyenMai", b =>
@@ -440,6 +1174,15 @@ namespace KLCN060.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("LyDoTamNgung")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("MaLoaiApDung")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
                     b.Property<DateOnly>("NgayBatDau")
                         .HasColumnType("date");
 
@@ -449,6 +1192,9 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Property<decimal?>("PhanTramKM")
                         .HasColumnType("decimal(5,2)");
 
+                    b.Property<int?>("SoDemToiThieu")
+                        .HasColumnType("int");
+
                     b.Property<int>("SoLuongDaSuDung")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -457,12 +1203,23 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Property<int?>("SoLuongGioiHan")
                         .HasColumnType("int");
 
+                    b.Property<bool>("TamNgung")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("TenKM")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<decimal?>("TongTienToiThieu")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("MaKM");
+
+                    b.HasIndex("TenKM")
+                        .IsUnique();
 
                     b.ToTable("KhuyenMais");
                 });
@@ -475,10 +1232,12 @@ namespace KLCN060.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaLichSu"));
 
+                    b.Property<bool?>("DaKiemTraHopLe")
+                        .HasColumnType("bit");
+
                     b.Property<string>("DuongDanFile")
                         .HasMaxLength(500)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("GhiChu")
                         .HasMaxLength(255)
@@ -489,10 +1248,20 @@ namespace KLCN060.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<long?>("KichThuocBytes")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("LoaiThaoTac")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("LyDo")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int?>("MaBanNguon")
+                        .HasColumnType("int");
 
                     b.Property<string>("MaTaiKhoan")
                         .IsRequired()
@@ -500,16 +1269,79 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(50)");
 
+                    b.Property<string>("NguonKichHoat")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("TenCSDL")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<DateTime>("ThoiGianThucHien")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int?>("ThoiLuongMs")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ThongBaoLoi")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("MaLichSu");
 
                     b.HasIndex("MaTaiKhoan");
 
                     b.ToTable("LichSuSaoLuus");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.LichSuTinhTrangPhong", b =>
+                {
+                    b.Property<long>("MaLichSu")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("MaLichSu"));
+
+                    b.Property<string>("DenTinhTrang")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(5)");
+
+                    b.Property<string>("LyDo")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("MaPhong")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MaTaiKhoan")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("ThoiGian")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TuTinhTrang")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(5)");
+
+                    b.HasKey("MaLichSu");
+
+                    b.HasIndex("ThoiGian");
+
+                    b.HasIndex("MaPhong", "ThoiGian");
+
+                    b.ToTable("LichSuTinhTrangPhongs");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.LoaiPhong", b =>
@@ -519,8 +1351,19 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)");
 
+                    b.Property<decimal?>("DienTich")
+                        .HasColumnType("decimal(6,1)");
+
                     b.Property<decimal>("DonGia")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("LoaiGiuong")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("MoTa")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<decimal>("PhuThu")
                         .ValueGeneratedOnAdd()
@@ -535,7 +1378,14 @@ namespace KLCN060.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("TienNghi")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.HasKey("MaLoai");
+
+                    b.HasIndex("TenLoai")
+                        .IsUnique();
 
                     b.ToTable("LoaiPhongs");
                 });
@@ -573,55 +1423,6 @@ namespace KLCN060.Infrastructure.Migrations
                     b.ToTable("NhanViens");
                 });
 
-            modelBuilder.Entity("KLCN060.Domain.NhatKyBanGiaoCa", b =>
-                {
-                    b.Property<int>("MaBanGiao")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaBanGiao"));
-
-                    b.Property<string>("GhiChu")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("MaTaiKhoanGiao")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<string>("MaTaiKhoanNhan")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<int>("SoLuongPhieuTrongCa")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<DateTime>("ThoiGianBanGiao")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<decimal>("TongTienMatCuoiCa")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("TongTienMatDauCa")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("MaBanGiao");
-
-                    b.HasIndex("MaTaiKhoanGiao");
-
-                    b.HasIndex("MaTaiKhoanNhan");
-
-                    b.ToTable("NhatKyBanGiaoCas");
-                });
-
             modelBuilder.Entity("KLCN060.Domain.NhatKyThaoTac", b =>
                 {
                     b.Property<long>("MaNhatKy")
@@ -633,6 +1434,11 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Property<string>("ChiTiet")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ChuKy")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
                     b.Property<string>("DiaChiIP")
                         .HasMaxLength(45)
                         .IsUnicode(false)
@@ -640,14 +1446,25 @@ namespace KLCN060.Infrastructure.Migrations
 
                     b.Property<string>("DoiTuongTacDong")
                         .HasMaxLength(100)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("HanhDong")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("KetQua")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("THANH_CONG");
+
+                    b.Property<string>("MaLoi")
+                        .HasMaxLength(80)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(80)");
 
                     b.Property<string>("MaTaiKhoan")
                         .IsRequired()
@@ -662,9 +1479,28 @@ namespace KLCN060.Infrastructure.Migrations
 
                     b.HasKey("MaNhatKy");
 
-                    b.HasIndex("MaTaiKhoan");
+                    b.HasIndex("DoiTuongTacDong")
+                        .HasDatabaseName("IX_NhatKyThaoTac_DoiTuong");
 
-                    b.ToTable("NhatKyThaoTacs");
+                    b.HasIndex("HanhDong")
+                        .HasDatabaseName("IX_NhatKyThaoTac_HanhDong");
+
+                    b.HasIndex("KetQua", "ThoiGian")
+                        .HasDatabaseName("IX_NhatKyThaoTac_KetQua_ThoiGian");
+
+                    b.HasIndex("MaTaiKhoan", "ThoiGian")
+                        .HasDatabaseName("IX_NhatKyThaoTac_TaiKhoan_ThoiGian");
+
+                    b.HasIndex("ThoiGian", "MaNhatKy")
+                        .IsDescending()
+                        .HasDatabaseName("IX_NhatKyThaoTac_ThoiGian");
+
+                    b.ToTable("NhatKyThaoTacs", t =>
+                        {
+                            t.HasTrigger("TR_NhatKyThaoTac_ChiThem");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("KLCN060.Domain.PhieuDatPhong", b =>
@@ -674,10 +1510,24 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(15)");
 
+                    b.Property<string>("HinhThucCoc")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("HuyBoi")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
                     b.Property<string>("LoaiDatPhong")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("LyDoHuy")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("MaKhach")
                         .IsRequired()
@@ -691,11 +1541,40 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Property<DateOnly>("NgayDonDuKien")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("NgayHuy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NgayNhanCoc")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateOnly>("NgayTraDuKien")
                         .HasColumnType("date");
 
+                    b.Property<string>("NguoiNhanCoc")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NguonDat")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("QUAY_LE_TAN");
+
+                    b.Property<decimal>("SoTienHoanCoc")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<decimal>("TienCoc")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TienCocGiuLai")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<string>("TrangThai")
                         .IsRequired()
@@ -753,12 +1632,113 @@ namespace KLCN060.Infrastructure.Migrations
                     b.ToTable("PhieuDoiPhongs");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.PhieuDonPhong", b =>
+                {
+                    b.Property<int>("MaPhieuDon")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhieuDon"));
+
+                    b.Property<string>("MaPhong")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("NguoiDon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NguoiPhanCong")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("ThoiGianBatDau")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianPhanCong")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianXong")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TinhTrangBanDau")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(5)");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("MaPhieuDon");
+
+                    b.HasIndex("MaPhong")
+                        .IsUnique()
+                        .HasFilter("[TrangThai] = 'DANG_DON'");
+
+                    b.HasIndex("ThoiGianXong");
+
+                    b.ToTable("PhieuDonPhongs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.PhieuKiemPhong", b =>
+                {
+                    b.Property<int>("MaPhieuKiem")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaPhieuKiem"));
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("MaPhieuNhan")
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<string>("MaPhong")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("NguoiKiem")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("ThoiGian")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MaPhieuKiem");
+
+                    b.HasIndex("MaPhong", "ThoiGian");
+
+                    b.ToTable("PhieuKiemPhongs");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.PhieuNhanPhong", b =>
                 {
                     b.Property<string>("MaPhieuNhan")
                         .HasMaxLength(15)
                         .IsUnicode(false)
                         .HasColumnType("varchar(15)");
+
+                    b.Property<string>("MaKhach")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
 
                     b.Property<string>("MaPhieuDat")
                         .HasMaxLength(15)
@@ -769,6 +1749,8 @@ namespace KLCN060.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("MaPhieuNhan");
+
+                    b.HasIndex("MaKhach");
 
                     b.HasIndex("MaPhieuDat")
                         .IsUnique()
@@ -790,6 +1772,9 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)");
 
+                    b.Property<DateTime?>("NgayTao")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("Tang")
                         .HasColumnType("int");
 
@@ -810,6 +1795,84 @@ namespace KLCN060.Infrastructure.Migrations
                     b.HasIndex("MaLoai");
 
                     b.ToTable("Phongs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.QuyTacGia", b =>
+                {
+                    b.Property<int>("MaQuyTac")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaQuyTac"));
+
+                    b.Property<string>("CacThuApDung")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateOnly?>("DenNgay")
+                        .HasColumnType("date");
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<decimal>("GiaTri")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("HoatDong")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("KieuDieuChinh")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("LoaiDatPhongApDung")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("LoaiQuyTac")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("MaLoai")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TaoBoi")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("TenQuyTac")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateOnly?>("TuNgay")
+                        .HasColumnType("date");
+
+                    b.Property<int>("UuTien")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("MaQuyTac");
+
+                    b.HasIndex("MaLoai");
+
+                    b.ToTable("QuyTacGias");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.Quyen", b =>
@@ -837,12 +1900,94 @@ namespace KLCN060.Infrastructure.Migrations
                     b.ToTable("Quyens");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.SuCoPhong", b =>
+                {
+                    b.Property<int>("MaSuCo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaSuCo"));
+
+                    b.Property<string>("GhiChuXuLy")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Loai")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<string>("MaPhong")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MoTa")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("MucDo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("NguoiBao")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NguoiDong")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NguoiXuLy")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("ThoiGianBao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianTiepNhan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ThoiGianXong")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TieuDe")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("TrangThai")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("MaSuCo");
+
+                    b.HasIndex("TrangThai");
+
+                    b.HasIndex("MaPhong", "TrangThai");
+
+                    b.ToTable("SuCoPhongs");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.TaiKhoan", b =>
                 {
                     b.Property<string>("TenDN")
                         .HasMaxLength(50)
                         .IsUnicode(false)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("LanDangNhapCuoi")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LoaiTaiKhoan")
                         .IsRequired()
@@ -897,6 +2042,91 @@ namespace KLCN060.Infrastructure.Migrations
                     b.ToTable("TaiKhoans");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.ThongBaoNganHang", b =>
+                {
+                    b.Property<int>("MaThongBao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaThongBao"));
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("GhiChuXuLy")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("HuongXuLy")
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("KetQua")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("MaGiaoDich")
+                        .HasMaxLength(15)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(15)");
+
+                    b.Property<string>("MaGiaoDichNganHang")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime?>("NgayXuLy")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiXuLy")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("SoTaiKhoanNhan")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<decimal>("SoTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("ThoiGianNganHang")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ThoiGianNhan")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TrangThaiXuLy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("KHONG_CAN");
+
+                    b.HasKey("MaThongBao");
+
+                    b.HasIndex("MaGiaoDich");
+
+                    b.HasIndex("MaGiaoDichNganHang")
+                        .IsUnique();
+
+                    b.HasIndex("TrangThaiXuLy");
+
+                    b.ToTable("ThongBaoNganHangs");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.VaiTro", b =>
                 {
                     b.Property<int>("MaVaiTro")
@@ -937,6 +2167,174 @@ namespace KLCN060.Infrastructure.Migrations
                     b.ToTable("VaiTro_Quyen", (string)null);
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.VatDung", b =>
+                {
+                    b.Property<string>("MaVatDung")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("CachTinh")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("MOI_PHONG");
+
+                    b.Property<string>("DonViTinh")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("HoatDong")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("MaDV")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Nhom")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int>("SoLuongChuan")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenVatDung")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("MaVatDung");
+
+                    b.HasIndex("MaDV");
+
+                    b.HasIndex("TenVatDung")
+                        .IsUnique();
+
+                    b.ToTable("VatDungs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.VatDungLoaiPhong", b =>
+                {
+                    b.Property<string>("MaVatDung")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MaLoai")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)");
+
+                    b.HasKey("MaVatDung", "MaLoai");
+
+                    b.HasIndex("MaLoai");
+
+                    b.ToTable("VatDungLoaiPhongs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.YeuCauDatLaiMatKhau", b =>
+                {
+                    b.Property<int>("MaYeuCau")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaYeuCau"));
+
+                    b.Property<string>("DiaChiIP")
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<DateTime>("HanDung")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MaXacNhanHash")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<DateTime?>("NgaySuDung")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SoLanNhapMa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("TenDN")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.HasKey("MaYeuCau");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("TenDN", "NgayTao");
+
+                    b.ToTable("YeuCauDatLaiMatKhaus");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.AnhDoBoQuen", b =>
+                {
+                    b.HasOne("KLCN060.Domain.DoBoQuen", "DoBoQuen")
+                        .WithMany("Anhs")
+                        .HasForeignKey("MaDo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DoBoQuen");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.ChiTietDichVu", b =>
+                {
+                    b.HasOne("KLCN060.Domain.DichVu", "DichVu")
+                        .WithMany("ChiTietDichVus")
+                        .HasForeignKey("MaDV")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DichVu");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.ChiTietGoiDichVu", b =>
+                {
+                    b.HasOne("KLCN060.Domain.DichVu", "DichVu")
+                        .WithMany("ChiTietGois")
+                        .HasForeignKey("MaDV")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KLCN060.Domain.GoiDichVu", "Goi")
+                        .WithMany("ChiTietGois")
+                        .HasForeignKey("MaGoi")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DichVu");
+
+                    b.Navigation("Goi");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.ChiTietHoaDon", b =>
                 {
                     b.HasOne("KLCN060.Domain.HoaDon", "HoaDon")
@@ -965,6 +2363,25 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("KhuyenMai");
 
                     b.Navigation("PhieuDatPhong");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.ChiTietKiemPhong", b =>
+                {
+                    b.HasOne("KLCN060.Domain.PhieuKiemPhong", "PhieuKiemPhong")
+                        .WithMany("ChiTiets")
+                        .HasForeignKey("MaPhieuKiem")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("KLCN060.Domain.VatDung", "VatDung")
+                        .WithMany("ChiTietKiemPhongs")
+                        .HasForeignKey("MaVatDung")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PhieuKiemPhong");
+
+                    b.Navigation("VatDung");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.ChiTietPhieuDat", b =>
@@ -1013,6 +2430,11 @@ namespace KLCN060.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("KLCN060.Domain.GoiDichVu", "Goi")
+                        .WithMany()
+                        .HasForeignKey("MaGoi")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("KLCN060.Domain.PhieuNhanPhong", "PhieuNhanPhong")
                         .WithMany("ChiTietSuDungDVs")
                         .HasForeignKey("MaPhieuNhan")
@@ -1020,6 +2442,8 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("DichVu");
+
+                    b.Navigation("Goi");
 
                     b.Navigation("PhieuNhanPhong");
                 });
@@ -1053,6 +2477,45 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("Phong");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.DoBoQuen", b =>
+                {
+                    b.HasOne("KLCN060.Domain.Phong", "Phong")
+                        .WithMany()
+                        .HasForeignKey("MaPhong")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Phong");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.GiaDemDatPhong", b =>
+                {
+                    b.HasOne("KLCN060.Domain.ChiTietPhieuDat", "ChiTietPhieuDat")
+                        .WithMany("GiaTheoDems")
+                        .HasForeignKey("MaPhieuDat", "MaPhong")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChiTietPhieuDat");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.GiaoDichChuyenKhoan", b =>
+                {
+                    b.HasOne("KLCN060.Domain.NhanVien", "NhanVienThuNgan")
+                        .WithMany()
+                        .HasForeignKey("MaNVThuNgan")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("KLCN060.Domain.TaiKhoan", "TaiKhoanTao")
+                        .WithMany()
+                        .HasForeignKey("MaTaiKhoanTao")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("NhanVienThuNgan");
+
+                    b.Navigation("TaiKhoanTao");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.HoaDon", b =>
                 {
                     b.HasOne("KLCN060.Domain.NhanVien", "NhanVien")
@@ -1072,6 +2535,28 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("PhieuNhanPhong");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.HoaDonDienTu", b =>
+                {
+                    b.HasOne("KLCN060.Domain.HoaDon", "HoaDon")
+                        .WithMany()
+                        .HasForeignKey("MaHD")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("HoaDon");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.KhachDiCung", b =>
+                {
+                    b.HasOne("KLCN060.Domain.PhieuDatPhong", "PhieuDatPhong")
+                        .WithMany("KhachDiCungs")
+                        .HasForeignKey("MaPhieuDat")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PhieuDatPhong");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.LichSuSaoLuu", b =>
                 {
                     b.HasOne("KLCN060.Domain.TaiKhoan", "TaiKhoan")
@@ -1083,6 +2568,17 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("TaiKhoan");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.LichSuTinhTrangPhong", b =>
+                {
+                    b.HasOne("KLCN060.Domain.Phong", "Phong")
+                        .WithMany("LichSuTinhTrangs")
+                        .HasForeignKey("MaPhong")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Phong");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.NhanVien", b =>
                 {
                     b.HasOne("KLCN060.Domain.VaiTro", "VaiTro")
@@ -1092,25 +2588,6 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("VaiTro");
-                });
-
-            modelBuilder.Entity("KLCN060.Domain.NhatKyBanGiaoCa", b =>
-                {
-                    b.HasOne("KLCN060.Domain.TaiKhoan", "TaiKhoanGiao")
-                        .WithMany("NhatKyBanGiaoCaGiaos")
-                        .HasForeignKey("MaTaiKhoanGiao")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("KLCN060.Domain.TaiKhoan", "TaiKhoanNhan")
-                        .WithMany("NhatKyBanGiaoCaNhans")
-                        .HasForeignKey("MaTaiKhoanNhan")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("TaiKhoanGiao");
-
-                    b.Navigation("TaiKhoanNhan");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.NhatKyThaoTac", b =>
@@ -1154,12 +2631,41 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("PhongMoi");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.PhieuDonPhong", b =>
+                {
+                    b.HasOne("KLCN060.Domain.Phong", "Phong")
+                        .WithMany()
+                        .HasForeignKey("MaPhong")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Phong");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.PhieuKiemPhong", b =>
+                {
+                    b.HasOne("KLCN060.Domain.Phong", "Phong")
+                        .WithMany()
+                        .HasForeignKey("MaPhong")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Phong");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.PhieuNhanPhong", b =>
                 {
+                    b.HasOne("KLCN060.Domain.Khach", "Khach")
+                        .WithMany()
+                        .HasForeignKey("MaKhach")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("KLCN060.Domain.PhieuDatPhong", "PhieuDatPhong")
                         .WithOne("PhieuNhanPhong")
                         .HasForeignKey("KLCN060.Domain.PhieuNhanPhong", "MaPhieuDat")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Khach");
 
                     b.Navigation("PhieuDatPhong");
                 });
@@ -1173,6 +2679,27 @@ namespace KLCN060.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("LoaiPhong");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.QuyTacGia", b =>
+                {
+                    b.HasOne("KLCN060.Domain.LoaiPhong", "LoaiPhong")
+                        .WithMany()
+                        .HasForeignKey("MaLoai")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("LoaiPhong");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.SuCoPhong", b =>
+                {
+                    b.HasOne("KLCN060.Domain.Phong", "Phong")
+                        .WithMany()
+                        .HasForeignKey("MaPhong")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Phong");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.TaiKhoan", b =>
@@ -1190,6 +2717,16 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("Khach");
 
                     b.Navigation("NhanVien");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.ThongBaoNganHang", b =>
+                {
+                    b.HasOne("KLCN060.Domain.GiaoDichChuyenKhoan", "GiaoDich")
+                        .WithMany("ThongBaoNganHangs")
+                        .HasForeignKey("MaGiaoDich")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("GiaoDich");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.VaiTroQuyen", b =>
@@ -1211,9 +2748,73 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("VaiTro");
                 });
 
+            modelBuilder.Entity("KLCN060.Domain.VatDung", b =>
+                {
+                    b.HasOne("KLCN060.Domain.DichVu", "DichVu")
+                        .WithMany()
+                        .HasForeignKey("MaDV")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("DichVu");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.VatDungLoaiPhong", b =>
+                {
+                    b.HasOne("KLCN060.Domain.LoaiPhong", "LoaiPhong")
+                        .WithMany()
+                        .HasForeignKey("MaLoai")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("KLCN060.Domain.VatDung", "VatDung")
+                        .WithMany("LoaiPhongApDungs")
+                        .HasForeignKey("MaVatDung")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LoaiPhong");
+
+                    b.Navigation("VatDung");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.YeuCauDatLaiMatKhau", b =>
+                {
+                    b.HasOne("KLCN060.Domain.TaiKhoan", "TaiKhoan")
+                        .WithMany()
+                        .HasForeignKey("TenDN")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.ChiTietPhieuDat", b =>
+                {
+                    b.Navigation("GiaTheoDems");
+                });
+
             modelBuilder.Entity("KLCN060.Domain.DichVu", b =>
                 {
+                    b.Navigation("ChiTietDichVus");
+
+                    b.Navigation("ChiTietGois");
+
                     b.Navigation("ChiTietSuDungDVs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.DoBoQuen", b =>
+                {
+                    b.Navigation("Anhs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.GiaoDichChuyenKhoan", b =>
+                {
+                    b.Navigation("ThongBaoNganHangs");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.GoiDichVu", b =>
+                {
+                    b.Navigation("ChiTietGois");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.HoaDon", b =>
@@ -1255,7 +2856,14 @@ namespace KLCN060.Infrastructure.Migrations
 
                     b.Navigation("ChiTietPhieuDats");
 
+                    b.Navigation("KhachDiCungs");
+
                     b.Navigation("PhieuNhanPhong");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.PhieuKiemPhong", b =>
+                {
+                    b.Navigation("ChiTiets");
                 });
 
             modelBuilder.Entity("KLCN060.Domain.PhieuNhanPhong", b =>
@@ -1275,6 +2883,8 @@ namespace KLCN060.Infrastructure.Migrations
 
                     b.Navigation("CoSoVatChats");
 
+                    b.Navigation("LichSuTinhTrangs");
+
                     b.Navigation("PhieuDoiPhongMois");
                 });
 
@@ -1287,10 +2897,6 @@ namespace KLCN060.Infrastructure.Migrations
                 {
                     b.Navigation("LichSuSaoLuus");
 
-                    b.Navigation("NhatKyBanGiaoCaGiaos");
-
-                    b.Navigation("NhatKyBanGiaoCaNhans");
-
                     b.Navigation("NhatKyThaoTacs");
                 });
 
@@ -1299,6 +2905,13 @@ namespace KLCN060.Infrastructure.Migrations
                     b.Navigation("NhanViens");
 
                     b.Navigation("VaiTroQuyens");
+                });
+
+            modelBuilder.Entity("KLCN060.Domain.VatDung", b =>
+                {
+                    b.Navigation("ChiTietKiemPhongs");
+
+                    b.Navigation("LoaiPhongApDungs");
                 });
 #pragma warning restore 612, 618
         }

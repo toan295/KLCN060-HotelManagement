@@ -4,19 +4,28 @@
   "libraries": [
     {
       "library": "twitter-bootstrap@5.3.3",
-      "destination": "wwwroot/lib/bootstrap/"
+      "destination": "wwwroot/lib/bootstrap/",
+      "files": [ "css/bootstrap.min.css", "css/bootstrap.min.css.map", "js/bootstrap.bundle.min.js", "js/bootstrap.bundle.min.js.map" ]
     },
     {
       "library": "jquery@3.7.1",
-      "destination": "wwwroot/lib/jquery/"
+      "destination": "wwwroot/lib/jquery/",
+      "files": [ "jquery.min.js", "jquery.min.map" ]
     },
     {
       "library": "jquery-validate@1.19.5",
-      "destination": "wwwroot/lib/jquery-validation/"
+      "destination": "wwwroot/lib/jquery-validation/",
+      "files": [ "jquery.validate.min.js" ]
     },
     {
       "library": "jquery-validation-unobtrusive@4.0.0",
-      "destination": "wwwroot/lib/jquery-validation-unobtrusive/"
+      "destination": "wwwroot/lib/jquery-validation-unobtrusive/",
+      "files": [ "jquery.validate.unobtrusive.min.js" ]
+    },
+    {
+      "library": "flatpickr@4.6.13",
+      "destination": "wwwroot/lib/flatpickr/",
+      "files": [ "flatpickr.min.js", "flatpickr.min.css", "l10n/vn.js" ]
     }
   ]
 }

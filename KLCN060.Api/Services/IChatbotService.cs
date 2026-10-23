@@ -1,6 +1,8 @@
+using KLCN060.Api.Services.Chatbot;
+
 namespace KLCN060.Api.Services;
 
 public interface IChatbotService
 {
-    Task<string> AskAsync(string cauHoi);
+    Task<ChatbotAnswer> AskAsync(string cauHoi);
 }

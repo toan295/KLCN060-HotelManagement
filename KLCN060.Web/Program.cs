@@ -29,6 +29,9 @@ builder.Services.AddHttpClient<ApiClient>(client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Danh sách ảnh phòng (do quản lý tải lên qua Desktop) để partial _Photo biết vị trí nào đã có ảnh.
+builder.Services.AddScoped<IRoomImageCatalog, RoomImageCatalog>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -1,3 +1,5 @@
+using KLCN060.Api.Authorization;
+using KLCN060.Domain;
 using KLCN060.Api.DTOs.Common;
 using KLCN060.Api.DTOs.Promotions;
 using KLCN060.Api.Services;
@@ -26,15 +28,50 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "QUAN_LY")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
     public async Task<IActionResult> GetAll()
     {
         var result = await _promotionService.GetAllAsync();
         return Ok(ApiResponse<List<PromotionDto>>.Ok(result));
     }
 
+    [HttpGet("{id}")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
+    public async Task<IActionResult> GetById(string id)
+        => Ok(ApiResponse<PromotionDto>.Ok(await _promotionService.GetByIdAsync(id)));
+
+    /// <summary>Các đặt phòng đã dùng khuyến mãi này (ai, lúc nào, giảm bao nhiêu).</summary>
+    [HttpGet("{id}/usage")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
+    public async Task<IActionResult> Usage(string id)
+        => Ok(ApiResponse<List<PromotionUsageDto>>.Ok(await _promotionService.GetUsageAsync(id)));
+
+    /// <summary>Giải thích vì sao một đặt phòng được / không được hưởng khuyến mãi này (từng điều kiện đạt hay không).</summary>
+    [HttpGet("{id}/check")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
+    public async Task<IActionResult> Check(string id, [FromQuery] string maPhieuDat)
+        => Ok(ApiResponse<PromotionCheckDto>.Ok(await _promotionService.KiemTraBookingAsync(id, maPhieuDat)));
+
+    [HttpPost("{id}/pause")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
+    public async Task<IActionResult> Pause(string id, [FromBody] PausePromotionRequest request)
+        => Ok(ApiResponse<PromotionDto>.Ok(await _promotionService.TamNgungAsync(id, request.LyDo ?? "")));
+
+    [HttpPost("{id}/resume")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
+    public async Task<IActionResult> Resume(string id)
+        => Ok(ApiResponse<PromotionDto>.Ok(await _promotionService.TiepTucAsync(id)));
+
+    [HttpDelete("{id}")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
+    public async Task<IActionResult> Delete(string id)
+    {
+        await _promotionService.DeleteAsync(id);
+        return NoContent();
+    }
+
     [HttpPost]
-    [Authorize(Roles = "QUAN_LY")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
     public async Task<IActionResult> Create([FromBody] PromotionRequest request)
     {
         var result = await _promotionService.CreateAsync(request);
@@ -42,7 +79,7 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "QUAN_LY")]
+    [HasPermission(Permissions.QuanLyKhuyenMai)]
     public async Task<IActionResult> Update(string id, [FromBody] PromotionRequest request)
     {
         var result = await _promotionService.UpdateAsync(id, request);

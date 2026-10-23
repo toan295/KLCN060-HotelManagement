@@ -1,0 +1,166 @@
+@model KLCN060.Web.Models.Payment.TransferViewModel
+@{
+    ViewData["Title"] = "Thanh toán chuyển khoản";
+    var xacNhanUrl = Url.Action("Confirmation", "Booking", new { maPhieuDat = Model.MaThamChieu });
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <partial name="_BookingSteps" model="2" />
+        <h1 class="h3 mb-1">Thanh toán tiền cọc bằng chuyển khoản</h1>
+        <p class="text-muted mb-3">Phiếu đặt phòng <strong class="mono">@Model.MaThamChieu</strong> · Mã giao dịch <strong class="mono">@Model.MaGiaoDich</strong></p>
+
+        @if (TempData["ErrorMessage"] is string loi)
+        {
+            <div class="alert alert-danger">@loi</div>
+        }
+        @if (Model.CheDoThuNghiem && Model.TrangThai == "CHO_THANH_TOAN")
+        {
+            if (Model.DungTaiKhoanMau)
+            {
+                <div class="alert alert-warning">
+                    <strong>Chế độ thử nghiệm.</strong> Tài khoản bên dưới là tài khoản MẪU, mã QR không dùng để chuyển tiền thật.
+                    Sau khi bạn (giả định) đã chuyển khoản, bấm <em>Tôi đã chuyển khoản</em> để hệ thống ghi nhận như khi ngân hàng báo tiền về.
+                </div>
+            }
+        }
+
+        @* Trạng thái: đang chờ *@
+        <div id="panel-waiting" class="@(Model.TrangThai == "CHO_THANH_TOAN" ? "" : "d-none")">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-5 text-center">
+                            @if (!string.IsNullOrEmpty(Model.QrPngBase64))
+                            {
+                                <img src="data:image/png;base64,@Model.QrPngBase64" alt="Mã QR chuyển khoản" width="260" height="260"
+                                     style="image-rendering:pixelated;border:1px solid var(--border);border-radius:12px;padding:8px;background:#fff;" />
+                            }
+                            <div class="small text-muted mt-2">Quét bằng ứng dụng ngân hàng (chuẩn VietQR)</div>
+                        </div>
+                        <div class="col-md-7">
+                            <dl class="row mb-3">
+                                <dt class="col-sm-4 text-muted fw-normal">Ngân hàng</dt>
+                                <dd class="col-sm-8">@Model.NganHang.TenNganHang</dd>
+
+                                <dt class="col-sm-4 text-muted fw-normal">Số tài khoản</dt>
+                                <dd class="col-sm-8"><span class="mono">@Model.NganHang.SoTaiKhoan</span>
+                                    <button type="button" class="btn btn-link btn-sm p-0 ms-2 copy-btn" data-copy="@Model.NganHang.SoTaiKhoan">Sao chép</button></dd>
+
+                                <dt class="col-sm-4 text-muted fw-normal">Chủ tài khoản</dt>
+                                <dd class="col-sm-8">@Model.NganHang.TenChuTaiKhoan</dd>
+
+                                <dt class="col-sm-4 text-muted fw-normal">Số tiền</dt>
+                                <dd class="col-sm-8"><strong class="fs-5">@Model.SoTien.ToVnd()</strong>
+                                    <button type="button" class="btn btn-link btn-sm p-0 ms-2 copy-btn" data-copy="@((long)Model.SoTien)">Sao chép</button></dd>
+
+                                <dt class="col-sm-4 text-muted fw-normal">Nội dung</dt>
+                                <dd class="col-sm-8"><span class="mono">@Model.NoiDungChuyenKhoan</span>
+                                    <button type="button" class="btn btn-link btn-sm p-0 ms-2 copy-btn" data-copy="@Model.NoiDungChuyenKhoan">Sao chép</button>
+                                    <div class="small text-muted">Phải nhập <em>đúng</em> nội dung này để hệ thống nhận biết khoản thanh toán.</div></dd>
+                            </dl>
+
+                            <div class="d-flex align-items-center gap-2 mb-3 p-2 rounded" style="background:var(--surface-2);">
+                                <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                                <span>Đang chờ tiền về… còn <strong id="countdown" class="mono">--:--</strong></span>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (Model.CheDoThuNghiem)
+                                {
+                                    <form asp-action="SimulatePaid" method="post" class="d-inline">
+                                        <input type="hidden" name="maGiaoDich" value="@Model.MaGiaoDich" />
+                                        <button type="submit" class="btn btn-primary">Tôi đã chuyển khoản</button>
+                                    </form>
+                                }
+                                <form asp-action="Cancel" method="post" class="d-inline">
+                                    <input type="hidden" name="maGiaoDich" value="@Model.MaGiaoDich" />
+                                    <input type="hidden" name="maPhieuDat" value="@Model.MaThamChieu" />
+                                    <button type="submit" class="btn btn-outline-secondary">Hủy giao dịch</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Trạng thái: thành công *@
+        <div id="panel-success" class="@(Model.TrangThai == "THANH_CONG" ? "" : "d-none")">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <div class="display-5 text-success mb-2">&#10003;</div>
+                    <h2 class="h4">Thanh toán thành công</h2>
+                    <p class="mb-1">Đã nhận <strong>@Model.SoTien.ToVnd()</strong>. Phiếu đặt phòng <span class="mono">@Model.MaThamChieu</span> đã được xác nhận.</p>
+                    @if (!string.IsNullOrEmpty(Model.MaGiaoDichNganHang))
+                    {
+                        <p class="small text-muted mb-3">Mã giao dịch ngân hàng: <span class="mono" id="bank-ref">@Model.MaGiaoDichNganHang</span></p>
+                    }
+                    <a class="btn btn-primary" href="@xacNhanUrl">Xem phiếu đặt phòng</a>
+                    <div class="small text-muted mt-2">Tự động chuyển trang sau vài giây…</div>
+                </div>
+            </div>
+        </div>
+
+        @* Trạng thái: hết hạn / đã hủy *@
+        <div id="panel-expired" class="@(Model.TrangThai is "HET_HAN" or "DA_HUY" ? "" : "d-none")">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <h2 class="h4" id="expired-title">@(Model.TrangThai == "DA_HUY" ? "Giao dịch đã bị hủy" : "Giao dịch đã hết hạn")</h2>
+                    <p class="text-muted">Nếu bạn đã chuyển tiền sau khi giao dịch hết hạn, hãy liên hệ khách sạn để được hoàn tiền hoặc xử lý.</p>
+                    <form asp-action="Start" method="post" class="d-inline">
+                        <input type="hidden" name="maPhieuDat" value="@Model.MaThamChieu" />
+                        <button type="submit" class="btn btn-primary">Tạo mã thanh toán mới</button>
+                    </form>
+                    <a class="btn btn-outline-secondary ms-2" href="@xacNhanUrl">Quay lại phiếu đặt phòng</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const ma = '@Model.MaGiaoDich';
+            let conLai = @Model.SoGiayConLai;
+            let trangThai = '@Model.TrangThai';
+            const $ = id => document.getElementById(id);
+
+            function hienThi(ten) {
+                ['waiting', 'success', 'expired'].forEach(t => $('panel-' + t).classList.toggle('d-none', t !== ten));
+            }
+            function dinhDangGio(s) {
+                const p = n => String(n).padStart(2, '0');
+                return p(Math.floor(s / 60)) + ':' + p(s % 60);
+            }
+            function veTrangPhieu() { window.location.href = '@Html.Raw(xacNhanUrl)'; }
+
+            document.querySelectorAll('.copy-btn').forEach(b => b.addEventListener('click', async () => {
+                try { await navigator.clipboard.writeText(b.dataset.copy); const t = b.textContent; b.textContent = 'Đã chép'; setTimeout(() => b.textContent = t, 1200); } catch (e) { }
+            }));
+
+            if (trangThai === 'THANH_CONG') { setTimeout(veTrangPhieu, 4000); return; }
+            if (trangThai !== 'CHO_THANH_TOAN') return;
+
+            // Đồng hồ đếm ngược chạy phía trình duyệt; thời điểm hết hạn thật sự do máy chủ quyết định.
+            $('countdown').textContent = dinhDangGio(conLai);
+            const dongHo = setInterval(() => {
+                if (conLai > 0) conLai--;
+                $('countdown').textContent = dinhDangGio(conLai);
+            }, 1000);
+
+            // Cứ 2 giây hỏi máy chủ một lần: tiền đã về (THANH_CONG) hay đã hết hạn / bị hủy chưa.
+            const hoi = setInterval(async () => {
+                try {
+                    const r = await fetch('@Url.Action("Status", "Payment")?maGiaoDich=' + encodeURIComponent(ma), { headers: { 'Accept': 'application/json' } });
+                    if (!r.ok) return;
+                    const d = await r.json();
+                    conLai = d.soGiayConLai;
+                    if (d.trangThai === 'THANH_CONG') { clearInterval(hoi); clearInterval(dongHo); hienThi('success'); setTimeout(veTrangPhieu, 4000); }
+                    else if (d.trangThai !== 'CHO_THANH_TOAN') { clearInterval(hoi); clearInterval(dongHo); hienThi('expired'); }
+                } catch (e) { /* mất mạng tạm thời: lần hỏi sau sẽ thử lại */ }
+            }, 2000);
+        })();
+    </script>
+}

@@ -1,0 +1,16 @@
+@model int
+@* Thanh các bước của luồng đặt phòng: 1 = Chọn phòng, 2 = Đặt cọc, 3 = Hoàn tất. Model = bước hiện tại. *@
+@{
+    var ten = new[] { "Chọn phòng", "Đặt cọc", "Hoàn tất" };
+}
+<div class="steps" aria-label="Các bước đặt phòng">
+    @for (var i = 1; i <= ten.Length; i++)
+    {
+        var lop = i < Model ? "done" : i == Model ? "current" : "";
+        <span class="step @lop"><span class="n">@(i < Model ? "\u2713" : i.ToString())</span>@ten[i - 1]</span>
+        @if (i < ten.Length)
+        {
+            <span class="bar @(i < Model ? "done" : "")"></span>
+        }
+    }
+</div>

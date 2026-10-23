@@ -1,0 +1,42 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{yml,yaml,json,xml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+# ===== C# =====
+[*.cs]
+indent_size = 4
+
+# --- Style rules (khuyến nghị — mức warning, không chặn build) ---
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_new_line_before_open_brace = all
+csharp_prefer_braces = true:suggestion
+
+# --- .NET code-quality analyzer rules (CAxxxx) — mức warning ---
+# Mục tiêu Khối 4 (Static Testing): bật phân tích tĩnh có công cụ thay vì chỉ đọc mắt thường.
+# Giữ ở mức "suggestion"/"warning" (không phải "error") để không làm gãy build hiện tại —
+# nhóm rà soát dần các warning phát sinh, không bắt buộc sửa hết ngay trước khi build được.
+dotnet_diagnostic.CA1062.severity = suggestion   # Validate arguments of public methods
+dotnet_diagnostic.CA2007.severity = none         # ConfigureAwait - không cần thiết cho ASP.NET Core/WPF (không có SynchronizationContext kiểu ASP.NET cũ)
+dotnet_diagnostic.CA1031.severity = suggestion   # Do not catch general exception types
+dotnet_diagnostic.CA1848.severity = none         # LoggerMessage delegates - không bắt buộc ở quy mô khóa luận
+dotnet_diagnostic.CA1303.severity = none         # Literal strings as localized parameters - hệ thống không đa ngôn ngữ
+
+# --- Security-relevant analyzers — giữ mức warning trở lên, không tắt ---
+dotnet_diagnostic.CA2100.severity = warning      # SQL injection review (liên quan trực tiếp đến các FromSql(...) trong CheckInService/BookingService)
+dotnet_diagnostic.CA5350.severity = warning      # Weak cryptographic algorithm
+dotnet_diagnostic.CA5351.severity = warning      # Broken cryptographic algorithm
