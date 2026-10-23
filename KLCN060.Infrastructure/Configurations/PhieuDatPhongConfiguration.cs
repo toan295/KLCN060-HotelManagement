@@ -27,6 +27,19 @@ public class PhieuDatPhongConfiguration : IEntityTypeConfiguration<PhieuDatPhong
             .HasMaxLength(10)
             .IsRequired();
 
+        entity.Property(x => x.NguonDat)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsUnicode(false)
+            .IsRequired()
+            .HasDefaultValue(Domain.Enums.NguonDatPhong.QUAY_LE_TAN);
+        entity.Property(x => x.LyDoHuy).HasMaxLength(500);
+        entity.Property(x => x.HuyBoi).HasMaxLength(50).IsUnicode(false);
+        entity.Property(x => x.SoTienHoanCoc).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(0m);
+        entity.Property(x => x.TienCocGiuLai).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(0m);
+        entity.Property(x => x.HinhThucCoc).HasConversion<string>().HasMaxLength(20).IsUnicode(false);
+        entity.Property(x => x.NguoiNhanCoc).HasMaxLength(50).IsUnicode(false);
+
         entity.HasOne(x => x.Khach)
             .WithMany(x => x.PhieuDatPhongs)
             .HasForeignKey(x => x.MaKhach)

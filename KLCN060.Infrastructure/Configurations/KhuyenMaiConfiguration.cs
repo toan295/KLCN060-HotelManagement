@@ -12,6 +12,7 @@ public class KhuyenMaiConfiguration : IEntityTypeConfiguration<KhuyenMai>
         entity.Property(x => x.MaKM).HasMaxLength(10).IsUnicode(false);
 
         entity.Property(x => x.TenKM).HasMaxLength(100).IsRequired();
+        entity.HasIndex(x => x.TenKM).IsUnique();
         entity.Property(x => x.PhanTramKM).HasColumnType("decimal(5,2)");
         entity.Property(x => x.NgayBatDau).HasColumnType("date").IsRequired();
         entity.Property(x => x.NgayKetThuc).HasColumnType("date").IsRequired();
@@ -25,5 +26,9 @@ public class KhuyenMaiConfiguration : IEntityTypeConfiguration<KhuyenMai>
         entity.Property(x => x.GiaTri).HasColumnType("decimal(18,2)");
         entity.Property(x => x.SoLuongGioiHan);
         entity.Property(x => x.SoLuongDaSuDung).IsRequired().HasDefaultValue(0);
+        entity.Property(x => x.TamNgung).IsRequired().HasDefaultValue(false);
+        entity.Property(x => x.LyDoTamNgung).HasMaxLength(255);
+        entity.Property(x => x.MaLoaiApDung).HasMaxLength(10).IsUnicode(false);
+        entity.Property(x => x.TongTienToiThieu).HasColumnType("decimal(18,2)");
     }
 }

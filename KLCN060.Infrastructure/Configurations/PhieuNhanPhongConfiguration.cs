@@ -14,9 +14,17 @@ public class PhieuNhanPhongConfiguration : IEntityTypeConfiguration<PhieuNhanPho
         entity.Property(x => x.MaPhieuDat).HasMaxLength(15).IsUnicode(false);
         entity.Property(x => x.NgayNhan).IsRequired();
 
+        // [FIX P1 — 24/09/2026] Xem ghi chú tại KLCN060.Domain.PhieuNhanPhong.MaKhach.
+        entity.Property(x => x.MaKhach).HasMaxLength(10).IsUnicode(false);
+
         entity.HasOne(x => x.PhieuDatPhong)
             .WithOne(x => x.PhieuNhanPhong)
             .HasForeignKey<PhieuNhanPhong>(x => x.MaPhieuDat)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(x => x.Khach)
+            .WithMany()
+            .HasForeignKey(x => x.MaKhach)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
