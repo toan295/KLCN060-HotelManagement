@@ -12,5 +12,4 @@ public interface IRoomService
     Task DeleteAsync(string maPhong);
     Task<RoomDto> UpdateStatusAsync(string maPhong, string tinhTrang, string? ghiChu, string tenDN, string? tinhTrangCu = null);
     Task<RoomDetailDto> GetDetailAsync(string maPhong);
-    Task<List<RoomStatusHistoryDto>> GetHistoryAsync(string maPhong);
 }

@@ -10,10 +10,10 @@ public class SessionExpiredFilter : IExceptionFilter
     {
         if (context.Exception is ApiSessionExpiredException)
         {
-            context.Result = new RedirectToActionResult(
-                "Login",
-                "Account",
-                new { returnUrl = context.HttpContext.Request.Path.Value });
+            // Chỉ trang xem (GET) mới quay lại được sau đăng nhập; giữ cả query để về đúng phiếu/giao dịch đang xem.
+            var request = context.HttpContext.Request;
+            var returnUrl = HttpMethods.IsGet(request.Method) ? request.Path.Value + request.QueryString.Value : null;
+            context.Result = new RedirectToActionResult("Login", "Account", new { returnUrl });
             context.ExceptionHandled = true;
         }
     }

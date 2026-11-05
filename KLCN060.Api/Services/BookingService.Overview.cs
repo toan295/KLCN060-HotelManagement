@@ -152,12 +152,28 @@ public partial class BookingService
         if (sua.Count > 0) { dto.NgaySuaCuoi = sua[0].ThoiGian; dto.NguoiSuaCuoi = Ten(sua[0].MaTaiKhoan); }
         dto.LichSuGanNhat = nhatKy.Take(8).Select(x => new BookingHistoryItemDto
         {
-            ThoiGian = x.ThoiGian, NguoiThucHien = Ten(x.MaTaiKhoan), HanhDong = AuditLogService.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
+            ThoiGian = x.ThoiGian, NguoiThucHien = Ten(x.MaTaiKhoan), HanhDong = MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
         }).ToList();
 
         dto.ThaoTac = await TinhThaoTacAsync(p, dto, user);
         return dto;
     }
+
+    private static string MoTaHanhDong(string hanhDong) => hanhDong switch
+    {
+        "TAO_DAT_PHONG" => "Tạo phiếu đặt phòng",
+        "SUA_DAT_PHONG" => "Sửa phiếu đặt phòng",
+        "XAC_NHAN_COC" => "Xác nhận tiền cọc",
+        "HUY_DAT_PHONG" => "Hủy phiếu đặt phòng",
+        "KHONG_DEN" => "Đánh dấu khách không đến",
+        "NHAN_PHONG" => "Nhận phòng",
+        "NHAN_PHONG_SOM" => "Nhận phòng sớm",
+        "NHAN_PHONG_VANG_LAI" => "Nhận phòng khách vãng lai",
+        "THEM_KHACH_DI_CUNG" => "Thêm người ở cùng",
+        "XOA_KHACH_DI_CUNG" => "Xóa người ở cùng",
+        "CAP_NHAT_CCCD_KHI_NHAN_PHONG" => "Cập nhật CCCD khi nhận phòng",
+        _ => hanhDong
+    };
 
     /// <summary>Số người đang ở (lượt DANG_O); nếu đã trả hết thì lấy các lượt trả muộn nhất. Null nếu chưa nhận phòng.</summary>
     private static int? SoNguoiThucTe(List<ChiTietPhieuNhan> luot)

@@ -10,6 +10,14 @@
     <p>Chọn loại phòng phù hợp, xem chi tiết rồi đặt phòng chỉ với vài bước.</p>
 </div>
 
+@if (Model.ThieuNgay)
+{
+    <div class="alert alert-warning" role="alert">
+        <strong>Bạn chưa chọn đủ ngày nhận và ngày trả phòng</strong> nên chưa thể biết phòng nào còn trống. Danh sách dưới đây là toàn bộ loại phòng của khách sạn;
+        <a href="@Url.Action("Index", "Home")">quay lại trang chủ để chọn ngày</a>.
+    </div>
+}
+
 @if (Model.NgayNhan is not null && Model.NgayTra is not null)
 {
     <div class="search-summary">
@@ -55,9 +63,13 @@
 
     <div class="col-lg-9">
         <div id="ketQuaContainer">
-            @if (!Model.DanhSachLoaiPhong.Any())
+            @if (!string.IsNullOrEmpty(Model.ThongBaoLoi))
             {
-                <p class="text-muted">Hiện chưa tải được danh sách loại phòng. Vui lòng thử lại sau.</p>
+                <div class="alert alert-warning" role="alert">@Model.ThongBaoLoi</div>
+            }
+            else if (!Model.DanhSachLoaiPhong.Any())
+            {
+                <p class="text-muted">@(Model.DaLocTheoNgay ? "Không có loại phòng nào chứa được số khách này trong khoảng ngày đã chọn." : "Hiện chưa tải được danh sách loại phòng. Vui lòng thử lại sau.")</p>
             }
             else
             {
@@ -87,7 +99,7 @@
                                         }
                                     </div>
                                     <div class="meta-row mb-3">
-                                        <span><partial name="_Icon" model='"users"' /> Sức chứa tiêu chuẩn: @loaiPhong.SoNguoiTieuChuan khách</span>
+                                        <span><partial name="_Icon" model='"users"' /> Sức chứa tiêu chuẩn: @loaiPhong.SoNguoiTieuChuan khách@(loaiPhong.SucChuaToiDa > loaiPhong.SoNguoiTieuChuan ? $" (tối đa {loaiPhong.SucChuaToiDa}, khách thêm có phụ thu)" : "")</span>
                                         <span><partial name="_Icon" model='"wifi"' /> Wifi miễn phí</span>
                                         <span><partial name="_Icon" model='"wind"' /> Điều hòa</span>
                                     </div>

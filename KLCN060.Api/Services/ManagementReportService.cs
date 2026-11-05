@@ -11,21 +11,15 @@ namespace KLCN060.Api.Services;
 
 public interface IManagementReportService
 {
-    Task<DashboardDto> GetDashboardAsync();
     Task<OverviewReportDto> GetOverviewAsync(DateOnly from, DateOnly to, string? nhomTheo);
     Task<RevenueBreakdownDto> GetRevenueBreakdownAsync(DateOnly from, DateOnly to);
-    Task<OperationsReportDto> GetOperationsAsync(DateOnly from, DateOnly to);
     Task<BookingReportDto> GetBookingReportAsync(DateOnly from, DateOnly to);
     Task<DebtReportDto> GetDebtsAsync();
-    List<ReportDefinitionDto> GetDefinitions();
-    Task<ReportReconciliationDto> GetReconciliationAsync(DateOnly from, DateOnly to);
-    Task<ReportInsightsDto> GetInsightsAsync(DateOnly from, DateOnly to);
-    Task<ReportDrillDto> GetDrilldownAsync(string loai, DateOnly from, DateOnly to, string? khoa);
 }
 
 /// <summary>
-/// Báo cáo cho Quản lý: bảng điều hành, KPI theo kỳ (Occupancy / ADR / RevPAR + so kỳ trước), doanh thu theo nhiều chiều,
-/// vận hành từng bộ phận, đặt phòng, công nợ. Chỉ đọc dữ liệu (không ghi gì).
+/// Báo cáo cho Quản lý: KPI theo kỳ (Occupancy / ADR / RevPAR + so kỳ trước), doanh thu theo nhiều chiều,
+/// đặt phòng, công nợ. Chỉ đọc dữ liệu (không ghi gì).
 /// Quy ước: "đêm phòng bán" tính theo đêm ở thực tế của lượt lưu trú (giống báo cáo công suất); doanh thu phòng = đơn giá áp dụng x đêm ở;
 /// "doanh thu" theo hóa đơn giữ nguyên định nghĩa của báo cáo doanh thu cũ (TongTien + TienDaCoc của hóa đơn đã thu được một phần, theo ngày lập).
 /// </summary>
@@ -33,10 +27,13 @@ public partial class ManagementReportService : IManagementReportService
 {
     private const int SoNgayToiDa = 366;
     private const int SoNgayNhomThang = 93;
-    public const int SoNgayCongNoQuaHan = 7;
+    private const int TuoiNoNhomDau = 7;
 
     private readonly KLCN060DbContext _context;
-    private readonly IAlertService _alerts;
+    private readonly FinanceOptions _finance;
+
+    /// <summary>Số ngày sau khi khách trả phòng mà hóa đơn còn nợ thì bị coi là quá hạn (cùng cấu hình với tab Hóa đơn và cảnh báo Điều hành).</summary>
+    private int NgayQuaHan => Math.Max(_finance.HoaDonQuaHanNgay, 0);
 
     /// <summary>Ngày thêm vào danh mục của những phòng có ghi nhận (phòng cũ không có ngày được coi là có từ trước mọi kỳ báo cáo).</summary>
     private List<DateOnly> _ngayTaoPhong = new();
@@ -68,10 +65,10 @@ public partial class ManagementReportService : IManagementReportService
         return khaDung;
     }
 
-    public ManagementReportService(KLCN060DbContext context, IAlertService alerts)
+    public ManagementReportService(KLCN060DbContext context, Microsoft.Extensions.Options.IOptions<FinanceOptions>? finance = null)
     {
         _context = context;
-        _alerts = alerts;
+        _finance = finance?.Value ?? new FinanceOptions();
     }
 
     private static DateOnly HomNay => DateOnly.FromDateTime(DateTime.Now);
@@ -287,97 +284,9 @@ public partial class ManagementReportService : IManagementReportService
     // Bảng điều hành
     // =====================================================================================================
 
-    public async Task<DashboardDto> GetDashboardAsync()
-    {
-        var bayGio = DateTime.Now;
-        var homNay = DateOnly.FromDateTime(bayGio);
-        var dauThang = new DateOnly(homNay.Year, homNay.Month, 1);
-        var soNgayThang = homNay.DayNumber - dauThang.DayNumber + 1;
-        var dauThangTruoc = dauThang.AddMonths(-1);
-        var cungKyTruocDen = dauThangTruoc.AddDays(Math.Min(soNgayThang, DateTime.DaysInMonth(dauThangTruoc.Year, dauThangTruoc.Month)) - 1);
+    private sealed record NoRut(string MaHD, string? HoTen, string? MaPhieuDat, string? MaKhach, DateTime NgayLap, decimal TongTien, decimal DaThu, decimal ConNo, bool DangO, DateOnly? NgayTraCuoi);
 
-        var phongs = await _context.Phongs.AsNoTracking().Select(x => new { x.MaPhong, x.Tang, x.TinhTrang, x.NgayTao }).ToListAsync();
-        _ngayTaoPhong = DanhSachNgayTao(phongs.Select(x => x.NgayTao));
-        var dto = new DashboardDto { ThoiDiem = bayGio };
-
-        // ----- Phòng -----
-        var theo = phongs.GroupBy(x => x.TinhTrang).ToDictionary(g => g.Key, g => g.Count());
-        int Dem(TinhTrangPhong t) => theo.GetValueOrDefault(t);
-        dto.Phong = new DashboardPhongDto
-        {
-            TongSoPhong = phongs.Count,
-            DangCoKhach = Dem(TinhTrangPhong.OC) + Dem(TinhTrangPhong.OD),
-            Trong = Dem(TinhTrangPhong.VC) + Dem(TinhTrangPhong.VI),
-            DangDon = Dem(TinhTrangPhong.VD) + Dem(TinhTrangPhong.OD),
-            BaoTri = Dem(TinhTrangPhong.OOO),
-            TheoTinhTrang = Enum.GetValues<TinhTrangPhong>().ToDictionary(t => t.ToString(), t => Dem(t)),
-            CongSuatPhanTram = PhanTram(Dem(TinhTrangPhong.OC) + Dem(TinhTrangPhong.OD), phongs.Count)
-        };
-        dto.TheoTang = phongs.GroupBy(x => x.Tang).OrderBy(g => g.Key).Select(g => new DashboardTangDto
-        {
-            Tang = g.Key,
-            TongSoPhong = g.Count(),
-            DangCoKhach = g.Count(x => x.TinhTrang is TinhTrangPhong.OC or TinhTrangPhong.OD),
-            Trong = g.Count(x => x.TinhTrang is TinhTrangPhong.VC or TinhTrangPhong.VI),
-            DangDon = g.Count(x => x.TinhTrang is TinhTrangPhong.VD or TinhTrangPhong.OD),
-            BaoTri = g.Count(x => x.TinhTrang == TinhTrangPhong.OOO)
-        }).ToList();
-
-        // ----- Hôm nay -----
-        var dauHomNay = DauNgay(homNay);
-        var cuoiHomNay = DauNgay(homNay.AddDays(1));
-        dto.HomNay = new DashboardHomNayDto
-        {
-            // Phiếu đang giữ phòng, đến hôm nay và chưa nhận phòng (hoặc đã nhận rồi thì tính vào "đã làm").
-            // Đơn vị là số PHÒNG (giống Check-out): phiếu đoàn 3 phòng tính 3, không tính 1 lượt.
-            CheckInDuKien = await _context.ChiTietPhieuDats.CountAsync(c => c.PhieuDatPhong.NgayDonDuKien == homNay
-                && (c.PhieuDatPhong.TrangThai == TrangThaiPhieuDat.DA_XAC_NHAN || c.PhieuDatPhong.TrangThai == TrangThaiPhieuDat.DA_NHAN_PHONG || c.PhieuDatPhong.TrangThai == TrangThaiPhieuDat.DA_TRA_PHONG)),
-            CheckInDaLam = await LuotNhanThat().CountAsync(x => x.NgayNhan == homNay),
-            CheckOutDuKien = await _context.ChiTietPhieuNhans.CountAsync(x => x.TrangThai == TrangThaiChiTietPhieuNhan.DANG_O
-                && (x.NgayTraDuKien ?? (x.PhieuNhanPhong.PhieuDatPhong != null ? x.PhieuNhanPhong.PhieuDatPhong.NgayTraDuKien : (DateOnly?)null)) == homNay),
-            CheckOutDaLam = await _context.ChiTietPhieuNhans.CountAsync(x => x.TrangThai == TrangThaiChiTietPhieuNhan.DA_TRA_PHONG && x.NgayTra == homNay),
-            BookingMoi = await _context.PhieuDatPhongs.CountAsync(x => x.NgayDat >= dauHomNay && x.NgayDat < cuoiHomNay),
-            BookingHuy = await _context.PhieuDatPhongs.CountAsync(x => x.TrangThai == TrangThaiPhieuDat.DA_HUY && x.NgayHuy >= dauHomNay && x.NgayHuy < cuoiHomNay)
-        };
-
-        // ----- Doanh thu + Occupancy/ADR/RevPAR -----
-        var hoaDonThang = await LayHoaDonAsync(dauThang, homNay);
-        var hoaDonCungKy = await LayHoaDonAsync(dauThangTruoc, cungKyTruocDen);
-        var demThang = await LayDemPhongAsync(dauThang, homNay);
-        var kpiThang = TinhKpi(demThang, KhaDung(phongs.Count, _ngayTaoPhong, dauThang, soNgayThang));
-        var kpiHomNay = TinhKpi(demThang.Where(x => x.Ngay == homNay).ToList(), KhaDung(phongs.Count, _ngayTaoPhong, homNay, 1));
-        dto.DoanhThu = new DashboardDoanhThuDto
-        {
-            HomNay = hoaDonThang.Where(x => x.Ngay == homNay).Sum(x => x.DoanhThu),
-            ThangNay = hoaDonThang.Sum(x => x.DoanhThu),
-            CungKyThangTruoc = hoaDonCungKy.Sum(x => x.DoanhThu),
-            CongSuatThangPhanTram = kpiThang.CongSuatPhanTram,
-            AdrThang = kpiThang.Adr,
-            RevParThang = kpiThang.RevPar,
-            CongSuatHomNayPhanTram = kpiHomNay.CongSuatPhanTram,
-            AdrHomNay = kpiHomNay.Adr,
-            RevParHomNay = kpiHomNay.RevPar
-        };
-        dto.DoanhThu.ThayDoiSoVoiThangTruocPhanTram = ThayDoi(dto.DoanhThu.ThangNay, dto.DoanhThu.CungKyThangTruoc);
-
-        // ----- Công nợ -----
-        var no = await LayHoaDonConNoAsync();
-        var hanQuaHan = bayGio.AddDays(-SoNgayCongNoQuaHan);
-        dto.CongNo = new DashboardCongNoDto
-        {
-            SoHoaDonConNo = no.Count,
-            TongConNo = no.Sum(x => x.ConNo),
-            SoHoaDonQuaHan = no.Count(x => x.NgayLap < hanQuaHan),
-            TongQuaHan = no.Where(x => x.NgayLap < hanQuaHan).Sum(x => x.ConNo)
-        };
-
-        var canhBao = await _alerts.GetAlertsAsync();
-        dto.CanhBao = new DashboardCanhBaoDto { NghiemTrong = canhBao.NghiemTrong, CanhBao = canhBao.CanhBao, ThongTin = canhBao.ThongTin };
-        await DienDashboardMoRongAsync(dto, homNay, dauThang, phongs.Count);
-        return dto;
-    }
-
-    private sealed record NoRut(string MaHD, string? HoTen, string? MaPhieuDat, string? MaKhach, DateTime NgayLap, decimal TongTien, decimal DaThu, decimal ConNo);
+    private (bool QuaHan, int SoNgay) QuaHan(NoRut x) => CongNoQuaHan.Tinh(x.TongTien, x.DaThu, x.DangO, x.NgayTraCuoi, HomNay, NgayQuaHan);
 
     private async Task<List<NoRut>> LayHoaDonConNoAsync()
     {
@@ -387,12 +296,14 @@ public partial class ManagementReportService : IManagementReportService
                 x.MaHD, x.NgayLap, x.TongTien, x.PhieuNhanPhong.MaPhieuDat,
                 MaKhach = x.PhieuNhanPhong.MaKhach ?? (x.PhieuNhanPhong.PhieuDatPhong != null ? x.PhieuNhanPhong.PhieuDatPhong.MaKhach : null),
                 DaThu = x.ChiTietThanhToans.Sum(t => (decimal?)t.SoTien) ?? 0,
+                DangO = x.PhieuNhanPhong.ChiTietPhieuNhans.Any(c => c.TrangThai == TrangThaiChiTietPhieuNhan.DANG_O),
+                NgayTraCuoi = x.PhieuNhanPhong.ChiTietPhieuNhans.Max(c => (DateOnly?)c.NgayTra),
                 HoTen = x.PhieuNhanPhong.Khach != null ? x.PhieuNhanPhong.Khach.HoTen
                     : x.PhieuNhanPhong.PhieuDatPhong != null ? x.PhieuNhanPhong.PhieuDatPhong.Khach.HoTen : null
             })
             .ToListAsync();
         return ds.Where(x => x.TongTien - x.DaThu > 0)
-            .Select(x => new NoRut(x.MaHD, x.HoTen, x.MaPhieuDat, x.MaKhach, x.NgayLap, x.TongTien, x.DaThu, x.TongTien - x.DaThu)).ToList();
+            .Select(x => new NoRut(x.MaHD, x.HoTen, x.MaPhieuDat, x.MaKhach, x.NgayLap, x.TongTien, x.DaThu, x.TongTien - x.DaThu, x.DangO, x.NgayTraCuoi)).ToList();
     }
 
     // =====================================================================================================
@@ -498,108 +409,6 @@ public partial class ManagementReportService : IManagementReportService
     // Vận hành các bộ phận
     // =====================================================================================================
 
-    public async Task<OperationsReportDto> GetOperationsAsync(DateOnly from, DateOnly to)
-    {
-        KiemTraKhoang(from, to);
-        var tuLuc = DauNgay(from);
-        var denLuc = DauNgay(to.AddDays(1));
-        var tongPhong = await TongPhongAsync();
-        var kpi = await TinhKyAsync(from, to, tongPhong);
-
-        var dto = new OperationsReportDto { TuNgay = from, DenNgay = to };
-
-        // ----- Lễ tân -----
-        dto.LeTan = new FrontOfficeReportDto
-        {
-            CheckIn = kpi.SoCheckIn,
-            CheckOut = kpi.SoCheckOut,
-            NoShow = kpi.SoKhongDen,
-            Huy = kpi.SoHuy,
-            KhachVangLai = await _context.PhieuNhanPhongs.CountAsync(x => x.MaPhieuDat == null && x.NgayNhan >= tuLuc && x.NgayNhan < denLuc),
-            DatPhongMoi = kpi.SoDatPhongMoi,
-            CongSuatTrungBinhPhanTram = kpi.CongSuatPhanTram
-        };
-
-        // ----- Lịch sử tình trạng phòng: buồng phòng + bảo trì -----
-        var lichSu = await _context.LichSuTinhTrangPhongs.AsNoTracking().OrderBy(x => x.ThoiGian).ThenBy(x => x.MaLichSu).ToListAsync();
-        var bayGio = DateTime.Now;
-        var phongHienTai = await _context.Phongs.AsNoTracking().Select(x => new { x.MaPhong, x.TinhTrang }).ToListAsync();
-
-        var daDon = lichSu.Count(x => x.ThoiGian >= tuLuc && x.ThoiGian < denLuc
-            && x.TuTinhTrang == TinhTrangPhong.VD && x.DenTinhTrang is TinhTrangPhong.VC or TinhTrangPhong.VI);
-        var vanDe = PhongDangOTinhTrang(phongHienTai.Where(x => x.TinhTrang == TinhTrangPhong.OOO).Select(x => x.MaPhong), lichSu, TinhTrangPhong.OOO, bayGio);
-        var canDon = phongHienTai.Where(x => x.TinhTrang is TinhTrangPhong.VD or TinhTrangPhong.OD).ToList();
-        dto.BuongPhong = new HousekeepingReportDto
-        {
-            PhongDaDon = daDon,
-            PhongDangCho = canDon.Count,
-            PhongCoVanDe = vanDe.Count,
-            DanhSachCanXuLy = vanDe.Concat(PhongDangOTinhTrang(canDon.Where(x => x.TinhTrang == TinhTrangPhong.VD).Select(x => x.MaPhong), lichSu, TinhTrangPhong.VD, bayGio))
-                .OrderByDescending(x => x.SoGio).ToList()
-        };
-
-        // Đợt bảo trì = từ lúc chuyển sang OOO tới lúc rời OOO (xét theo từng phòng).
-        var dot = new List<(DateTime Bat, DateTime? Het)>();
-        foreach (var g in lichSu.GroupBy(x => x.MaPhong))
-        {
-            DateTime? bat = null;
-            foreach (var h in g)
-            {
-                if (h.DenTinhTrang == TinhTrangPhong.OOO && h.TuTinhTrang != TinhTrangPhong.OOO) bat = h.ThoiGian;
-                else if (h.TuTinhTrang == TinhTrangPhong.OOO && bat is not null) { dot.Add((bat.Value, h.ThoiGian)); bat = null; }
-            }
-            if (bat is not null) dot.Add((bat.Value, null));
-        }
-        var xongTrongKy = dot.Where(x => x.Het is not null && x.Het >= tuLuc && x.Het < denLuc).ToList();
-        dto.BaoTri = new MaintenanceReportDto
-        {
-            SoSuCo = dot.Count(x => x.Bat >= tuLuc && x.Bat < denLuc),
-            DangXuLy = vanDe.Count,
-            DaXuLy = xongTrongKy.Count,
-            ThoiGianXuLyTrungBinhGio = xongTrongKy.Count == 0 ? null : Math.Round(xongTrongKy.Average(x => (x.Het!.Value - x.Bat).TotalHours), 1),
-            PhongDangBaoTri = vanDe
-        };
-
-        // ----- Kế toán -----
-        var thanhToan = await _context.ChiTietThanhToans.AsNoTracking().Where(x => x.ThoiGianThanhToan >= tuLuc && x.ThoiGianThanhToan < denLuc)
-            .Select(x => x.SoTien).ToListAsync();
-        var no = await LayHoaDonConNoAsync();
-        var huyTrongKy = await _context.PhieuDatPhongs.AsNoTracking()
-            .Where(x => (x.TrangThai == TrangThaiPhieuDat.DA_HUY || x.TrangThai == TrangThaiPhieuDat.KHONG_DEN) && x.NgayHuy >= tuLuc && x.NgayHuy < denLuc)
-            .Select(x => new { x.SoTienHoanCoc, x.TienCocGiuLai }).ToListAsync();
-        dto.KeToan = new AccountingReportDto
-        {
-            DoanhThu = kpi.DoanhThu,
-            ThanhToan = thanhToan.Sum(),
-            SoLanThanhToan = thanhToan.Count(x => x > 0),
-            CongNoHienTai = no.Sum(x => x.ConNo),
-            SoHoaDonConNo = no.Count,
-            HoanTien = huyTrongKy.Where(x => x.SoTienHoanCoc > 0).Sum(x => x.SoTienHoanCoc),
-            SoLanHoanTien = huyTrongKy.Count(x => x.SoTienHoanCoc > 0),
-            CocGiuLai = huyTrongKy.Sum(x => x.TienCocGiuLai)
-        };
-        return dto;
-    }
-
-    /// <summary>Với mỗi phòng đang ở tình trạng <paramref name="tinhTrang"/>: từ lúc nào (theo lần đổi gần nhất sang tình trạng đó), bao nhiêu giờ, lý do.</summary>
-    private static List<RoomIssueDto> PhongDangOTinhTrang(IEnumerable<string> maPhongs, List<LichSuTinhTrangPhong> lichSu, TinhTrangPhong tinhTrang, DateTime bayGio)
-    {
-        var ketQua = new List<RoomIssueDto>();
-        foreach (var ma in maPhongs)
-        {
-            var cuoi = lichSu.Where(x => x.MaPhong == ma && x.DenTinhTrang == tinhTrang).OrderByDescending(x => x.ThoiGian).ThenByDescending(x => x.MaLichSu).FirstOrDefault();
-            ketQua.Add(new RoomIssueDto
-            {
-                MaPhong = ma,
-                TinhTrang = tinhTrang.ToString(),
-                TuLuc = cuoi?.ThoiGian,
-                SoGio = cuoi is null ? null : Math.Round((bayGio - cuoi.ThoiGian).TotalHours, 1),
-                LyDo = cuoi?.LyDo
-            });
-        }
-        return ketQua.OrderByDescending(x => x.SoGio).ToList();
-    }
-
     // =====================================================================================================
     // Báo cáo đặt phòng
     // =====================================================================================================
@@ -679,14 +488,15 @@ public partial class ManagementReportService : IManagementReportService
         var bayGio = DateTime.Now;
         var no = await LayHoaDonConNoAsync();
 
-        // Nhóm theo THỜI ĐIỂM (không theo số ngày đã làm tròn xuống) để khớp cờ "quá hạn" (> 7 ngày) và cảnh báo "quá 30 ngày":
-        // nợ 7,5 ngày vừa là quá hạn vừa phải nằm ở nhóm "8-30 ngày".
-        static string Nhom(TimeSpan tuoi) => tuoi <= TimeSpan.FromDays(SoNgayCongNoQuaHan) ? "0-7 ngày" : tuoi <= TimeSpan.FromDays(30) ? "8-30 ngày" : "Trên 30 ngày";
+        // Nhóm tuổi nợ tính từ ngày lập hóa đơn, theo THỜI ĐIỂM (không theo số ngày đã làm tròn xuống): nợ 7,5 ngày nằm ở nhóm "8-30 ngày".
+        // Cờ "quá hạn" là khái niệm riêng (CongNoQuaHan: tính từ ngày khách trả phòng) nên có cột QuaHan riêng, không suy ra từ nhóm tuổi.
+        static string Nhom(TimeSpan tuoi) => tuoi <= TimeSpan.FromDays(TuoiNoNhomDau) ? "0-7 ngày" : tuoi <= TimeSpan.FromDays(30) ? "8-30 ngày" : "Trên 30 ngày";
         var chiTiet = no.Select(x =>
         {
             var soNgay = Math.Max(0, (int)Math.Floor((bayGio - x.NgayLap).TotalDays));
             return new DebtRowDto
             {
+                QuaHan = QuaHan(x).QuaHan,
                 MaHD = x.MaHD, HoTenKhach = x.HoTen, MaPhieuDat = x.MaPhieuDat, MaKhach = x.MaKhach, NgayLap = x.NgayLap, SoNgayNo = soNgay,
                 TongTien = x.TongTien, DaThanhToan = x.DaThu, ConNo = x.ConNo, NhomTuoiNo = Nhom(bayGio - x.NgayLap)
             };

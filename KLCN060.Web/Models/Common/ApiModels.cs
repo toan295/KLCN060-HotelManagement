@@ -34,4 +34,9 @@ public class ApiResult<T>
     public string? ErrorMessage { get; set; }
     public string? ErrorCode { get; set; }
     public string? ErrorField { get; set; }
+
+    public const string MaLoiKhongKetNoi = "API_KHONG_PHAN_HOI";
+
+    /// <summary>true = không kết nối được API (tắt, quá tải, hết thời gian chờ) chứ không phải API từ chối yêu cầu.</summary>
+    public bool KhongKetNoi => ErrorCode == MaLoiKhongKetNoi;
 }

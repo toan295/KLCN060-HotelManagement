@@ -6,7 +6,6 @@ namespace KLCN060.Desktop.Services;
 public sealed partial class ApiClient
 {
     public Task<CsvcTongQuanDto> GetCsvcTongQuanAsync() => GetAsync<CsvcTongQuanDto>("api/v1/facilities/overview");
-    public Task<List<CsvcLichSuDto>> GetCsvcLichSuAsync(string maSo) => GetAsync<List<CsvcLichSuDto>>($"api/v1/facilities/{Uri.EscapeDataString(maSo)}/history");
     public Task<CoSoVatChatDto> TaoCsvcAsync(YeuCauCoSoVatChat x) => PostAsync<YeuCauCoSoVatChat, CoSoVatChatDto>("api/v1/facilities", x);
     public Task<CoSoVatChatDto> DieuChuyenCsvcAsync(string maSo, YeuCauDieuChuyenCsvc x) => PostAsync<YeuCauDieuChuyenCsvc, CoSoVatChatDto>($"api/v1/facilities/{Uri.EscapeDataString(maSo)}/transfer", x);
     public Task XoaCsvcAsync(string maSo, string? lyDo) => SendKhongCoNoiDungAsync(HttpMethod.Delete, $"api/v1/facilities/{Uri.EscapeDataString(maSo)}" + (string.IsNullOrWhiteSpace(lyDo) ? "" : $"?lyDo={Uri.EscapeDataString(lyDo)}"));
@@ -87,13 +86,3 @@ public sealed class CsvcTongQuanDto
     public List<CsvcThietBiDto> ThietBis { get; init; } = [];
 }
 
-public sealed class CsvcLichSuDto
-{
-    public DateTime ThoiGian { get; init; }
-    public string NguoiThucHien { get; init; } = "";
-    public string HanhDong { get; init; } = "";
-    public string MoTaHanhDong { get; init; } = "";
-    public string? ChiTiet { get; init; }
-    public string HienThi => $"{ThoiGian:dd/MM/yyyy HH:mm} · {NguoiThucHien} · {MoTaHanhDong}";
-    public string ChiTietDoc => ChiTiet is null ? "" : ChiTiet.Replace("; ", "\n").Replace("->", "→");
-}

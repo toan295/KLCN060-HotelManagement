@@ -56,36 +56,6 @@ public class TransferDto
     public string? QrPngBase64 { get; set; }
 }
 
-public class TransferListQuery
-{
-    public string? TrangThai { get; set; }
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 20;
-}
-
-public class BankNoticeDto
-{
-    public int MaThongBao { get; set; }
-    public string MaGiaoDichNganHang { get; set; } = null!;
-    public string SoTaiKhoanNhan { get; set; } = null!;
-    [JsonConverter(typeof(VndMoneyJsonConverter))] public decimal SoTien { get; set; }
-    public string NoiDung { get; set; } = null!;
-    public DateTime ThoiGianNganHang { get; set; }
-    public DateTime ThoiGianNhan { get; set; }
-    public string KetQua { get; set; } = null!;
-    public string? MaGiaoDich { get; set; }
-    public string? GhiChu { get; set; }
-
-    /// <summary>KHONG_CAN (đã khớp), CAN_XU_LY (bất thường, chờ kế toán), DA_XU_LY.</summary>
-    public string TrangThaiXuLy { get; set; } = "KHONG_CAN";
-    public string? NguoiXuLy { get; set; }
-    public DateTime? NgayXuLy { get; set; }
-
-    /// <summary>DA_XU_LY_NGOAI hoặc BO_QUA (dữ liệu cũ có thể còn HOAN_TIEN).</summary>
-    public string? HuongXuLy { get; set; }
-    public string? GhiChuXuLy { get; set; }
-}
-
 /// <summary>Nội dung thông báo "tiền về" mà ngân hàng gửi tới webhook của hệ thống.</summary>
 public class BankNotificationRequest
 {

@@ -11,8 +11,6 @@ public interface IPaymentService
     Task<TransferDto> SimulatePaidAsync(string maGiaoDich, CurrentUser user);
     /// <summary>Các yêu cầu chuyển khoản đang chờ tiền về (chưa hết hạn) của một đối tượng (VD hóa đơn) - để lễ tân biết trước khi thu thêm.</summary>
     Task<List<TransferDto>> ListPendingForReferenceAsync(string loaiThamChieu, string maThamChieu);
-    Task<(List<TransferDto> Items, int Total)> ListTransfersAsync(TransferListQuery query);
-    Task<(List<BankNoticeDto> Items, int Total)> ListBankNoticesAsync(string? ketQua, int page, int pageSize, string? trangThaiXuLy = null);
 
     /// <summary>Điểm vào của webhook: ngân hàng báo "tiền về". Kiểm tra chữ ký, đối soát rồi ghi nhận thanh toán.</summary>
     Task<BankNotificationResultDto> HandleBankNotificationAsync(BankNotificationRequest request, string? signature);

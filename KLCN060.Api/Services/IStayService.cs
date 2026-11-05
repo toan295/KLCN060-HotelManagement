@@ -6,7 +6,6 @@ public interface IStayService
 {
     Task<List<StaySummaryDto>> SearchAsync(string? maPhong, string? trangThai);
     Task<StayServiceUsageDto> AddServiceAsync(string maPhieuNhan, string maPhong, AddStayServiceRequest request);
-    Task<List<StayServiceUsageDto>> AddServicePackageAsync(string maPhieuNhan, string maPhong, AddStayServicePackageRequest request);
     Task<StayServiceUsageDto> VoidServiceAsync(string maPhieuNhan, string maPhong, int maChiTietDV, string? lyDo);
     Task<List<StayServiceUsageDto>> GetServicesAsync(string maPhieuNhan, string maPhong);
     /// <summary>404 nếu không có lượt lưu trú (phiếu nhận + phòng) này.</summary>

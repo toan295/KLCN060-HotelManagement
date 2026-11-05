@@ -109,12 +109,11 @@ public class CheckInService : ICheckInService
                 throw new ApiException(StatusCodes.Status409Conflict, "ROOM_NOT_AVAILABLE",
                     $"Không nhận sớm được: phòng {string.Join(", ", vuong)} đang có khách/đã có đặt phòng khác trong {homNayNhan:dd/MM/yyyy} - {ngayDonCu:dd/MM/yyyy}.", "phongNhan");
 
-            var quyTac = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
             // Nhận sớm → tính lại giá từng đêm theo bảng giá hiện hành và chốt lại (lúc thứ hai giá được tính lại).
             await _context.GiaDemDatPhongs.Where(x => x.MaPhieuDat == maPhieuDat).ExecuteDeleteAsync();
             foreach (var ct in phieuDat.ChiTietPhieuDats)
             {
-                var gia = GiaPhongCalculator.Tinh(ct.Phong.LoaiPhong, homNayNhan, phieuDat.NgayTraDuKien, phieuDat.LoaiDatPhong, quyTac);
+                var gia = GiaPhongCalculator.Tinh(ct.Phong.LoaiPhong, homNayNhan, phieuDat.NgayTraDuKien);
                 ct.DonGiaApDung = gia.DonGiaBinhQuan;
                 ct.ThanhTien = gia.TongTien;
                 _context.GiaDemDatPhongs.AddRange(GiaPhongCalculator.TaoGiaChot(maPhieuDat, ct.MaPhong, ct.Phong.LoaiPhong, gia));
@@ -245,7 +244,6 @@ public class CheckInService : ICheckInService
         }
 
         // Khách vãng lai chưa biết số đêm ở nên tính đơn giá theo bảng giá của hôm nay (không có quy tắc nào thì là đơn giá loại phòng).
-        var quyTacGia = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
 
         var ketQua = new List<CheckedInRoomDto>();
         var phieuNhan = new PhieuNhanPhong
@@ -265,7 +263,7 @@ public class CheckInService : ICheckInService
         foreach (var phong in phongs)
         {
             var soNguoi = LaySoNguoi(thongTinKhach, phong);
-            var donGia = GiaPhongCalculator.GiaDem(phong.LoaiPhong, homNay, LoaiDatPhong.CA_NHAN, quyTacGia, out _);
+            var donGia = phong.LoaiPhong.DonGia;
             _context.ChiTietPhieuNhans.Add(new ChiTietPhieuNhan
             {
                 MaPhieuNhan = phieuNhan.MaPhieuNhan,
@@ -415,7 +413,7 @@ public class CheckInService : ICheckInService
             else if (p.TinhTrang is not (TinhTrangPhong.VC or TinhTrangPhong.VI))
                 lyDo = p.TinhTrang switch
                 {
-                    TinhTrangPhong.VD => "Chưa dọn xong – chờ buồng phòng hoặc chọn phòng khác (Đổi phòng).",
+                    TinhTrangPhong.VD => "Chưa dọn xong – chờ dọn phòng hoặc chọn phòng khác (Đổi phòng).",
                     TinhTrangPhong.OD => "Phòng còn khách đang ở – chờ trả phòng.",
                     TinhTrangPhong.OC => "Phòng đang có khách.",
                     TinhTrangPhong.OOO => "Phòng đang bảo trì/ngừng bán.",

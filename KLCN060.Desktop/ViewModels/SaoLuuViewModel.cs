@@ -27,68 +27,6 @@ public partial class SaoLuuViewModel : ObservableObject
     [ObservableProperty] private string thuMucMacDinh = "";
     [ObservableProperty] private string goiYThuMuc = "";
 
-    // Tình trạng sao lưu (lần cuối, số bản, kết quả kiểm tra gần nhất, cảnh báo quá lâu chưa sao lưu)
-    [ObservableProperty] private TinhTrangSaoLuuDto? tinhTrang;
-    public string TinhTrangTomTat => TinhTrang?.TomTat ?? "";
-    public string TinhTrangChiTiet => TinhTrang is null ? "" :
-        $"Tổng số bản sao lưu thành công: {TinhTrang.TongSoBanSaoLuuThanhCong}"
-        + (TinhTrang.LanSaoLuuThanhCongCuoi is { } l ? $" · gần nhất {l:dd/MM/yyyy HH:mm}" : "")
-        + (TinhTrang.LanKiemTraCuoi is { } k ? $"\nKiểm tra gần nhất {k:dd/MM/yyyy HH:mm}: {(TinhTrang.LanKiemTraCuoiHopLe == true ? "toàn vẹn" : "KHÔNG hợp lệ")}" : "\nChưa kiểm tra bản sao lưu nào")
-        + (TinhTrang.LanPhucHoiCuoi is { } p ? $"\nPhục hồi gần nhất: {p:dd/MM/yyyy HH:mm}" : "");
-
-    /// <summary>Bản sao lưu gần nhất: thời điểm, kết quả, đã kiểm tra chưa, dung lượng, còn file không.</summary>
-    public string BanGanNhatText
-    {
-        get
-        {
-            var t = TinhTrang; if (t is null) return "";
-            if (t.LanSaoLuuThanhCongCuoi is null) return "Chưa có bản sao lưu thành công nào.";
-            var kt = t.BanCuoiDaKiemTra == true ? "đã kiểm tra toàn vẹn: ĐẠT" : t.BanCuoiDaKiemTra == false ? "kiểm tra toàn vẹn: KHÔNG ĐẠT" : "CHƯA kiểm tra toàn vẹn";
-            return $"{t.LanSaoLuuThanhCongCuoi:dd/MM/yyyy HH:mm} (thành công) · {kt}"
-                + (t.BanCuoiKichThuocBytes is { } b ? $" · {SaoLuuDinhDang.Dung(b)}" : "")
-                + (t.BanCuoiConFile ? " · file còn đủ" : " · FILE ĐÃ MẤT")
-                + (t.LanSaoLuuCuoiThatBai ? $"\nLần thử gần nhất THẤT BẠI lúc {t.LanSaoLuuCuoi:dd/MM/yyyy HH:mm}: {t.LoiLanSaoLuuCuoi}" : "");
-        }
-    }
-
-    public string TuDongText
-    {
-        get
-        {
-            var t = TinhTrang; if (t is null) return "";
-            if (!t.TuDongBat) return "ĐANG TẮT - dữ liệu chỉ được bảo vệ khi có người bấm sao lưu. Bật ở mục \"Sao lưu tự động\" bên dưới.";
-            return $"BẬT, mỗi {t.ChuKyTuDongGio} giờ" + (t.HanTuDongKeTiep is { } han ? $" · hạn kế tiếp {han:dd/MM/yyyy HH:mm}" : "")
-                + (t.LanTuDongThanhCongCuoi is { } tc ? $" · lần tự động thành công gần nhất {tc:dd/MM HH:mm}" : " · chưa có lần tự động nào thành công")
-                + (t.LanTuDongThatBaiCuoi is { } tb ? $" · lần thất bại gần nhất {tb:dd/MM HH:mm}" : "")
-                + (t.TuDongQuaHan ? "\nĐÃ QUÁ HẠN so với chu kỳ - máy chủ API có thể đang tắt hoặc lần chạy gần nhất thất bại; hãy kiểm tra rồi bấm \"Sao lưu ngay\"." : "");
-        }
-    }
-
-    public string DungLuongText => TinhTrang is null ? "" :
-        (TinhTrang.GhiChuDungLuong ?? "")
-        + (TinhTrang.KichThuocCSDLBytes is { } d ? $"\nDữ liệu hiện tại: {SaoLuuDinhDang.Dung(d)}" : "")
-        + (TinhTrang.TongDungLuongCacBanBytes is { } tong && tong > 0 ? $" · các bản sao lưu còn file chiếm {SaoLuuDinhDang.Dung(tong)}" : "")
-        + (string.IsNullOrEmpty(TinhTrang.ThuMucSaoLuu) ? "" : $"\nNơi lưu: {TinhTrang.ThuMucSaoLuu}");
-    public bool DungLuongThap => TinhTrang?.MucDungLuong == "THAP";
-
-    public string PhucHoiKetLuan => TinhTrang?.KhaNangPhucHoi.KetLuan ?? "";
-    public string PhucHoiMucDoText => TinhTrang?.KhaNangPhucHoi.MucDo switch { "SAN_SANG" => "SẴN SÀNG PHỤC HỒI", "RUI_RO" => "CÓ RỦI RO", "KHONG_CO" => "KHÔNG THỂ PHỤC HỒI", _ => "" };
-    public bool PhucHoiSanSang => TinhTrang?.KhaNangPhucHoi.MucDo == "SAN_SANG";
-    public string CoCheBaoVeText => TinhTrang is null ? "" : string.Join("\n", TinhTrang.KhaNangPhucHoi.CoCheBaoVe.Select(x => "✔ " + x));
-    public string CanhBaoText => TinhTrang is null ? "" : string.Join("\n", TinhTrang.CanhBao.Select(x => "⚠ " + x));
-    public bool CoCanhBao => TinhTrang is { CanhBao.Count: > 0 };
-    public string CapNhatLucText => TinhTrang is null ? "" : $"Cập nhật {TinhTrang.CapNhatLuc:HH:mm:ss}" + (TinhTrang.TenCSDL.Length > 0 ? $" · CSDL {TinhTrang.TenCSDL}" : "");
-    public bool TinhTrangTot => TinhTrang?.TinhTrang == "TOT";
-    partial void OnTinhTrangChanged(TinhTrangSaoLuuDto? value)
-    {
-        OnPropertyChanged(nameof(TinhTrangTomTat));
-        OnPropertyChanged(nameof(TinhTrangChiTiet));
-        OnPropertyChanged(nameof(TinhTrangTot));
-        foreach (var n in new[] { nameof(BanGanNhatText), nameof(TuDongText), nameof(DungLuongText), nameof(DungLuongThap), nameof(PhucHoiKetLuan), nameof(PhucHoiMucDoText),
-                     nameof(PhucHoiSanSang), nameof(CoCheBaoVeText), nameof(CanhBaoText), nameof(CoCanhBao), nameof(CapNhatLucText) })
-            OnPropertyChanged(n);
-    }
-
     public SaoLuuViewModel(ApiClient api)
     {
         _api = api;
@@ -111,59 +49,7 @@ public partial class SaoLuuViewModel : ObservableObject
     {
         try { ThuMucMacDinh = (await _api.GetCaiDatSaoLuuAsync()).ThuMucMacDinh; }
         catch (LoiYeuCauApi) { /* chỉ để gợi ý - không có cũng không sao */ }
-        await TaiLichTuDongAsync();
         await TaiLichSuAsync();
-    }
-
-    // ===== Bật / tắt sao lưu tự động ngay trên màn hình (không phải sửa cấu hình API) =====
-    public IReadOnlyList<LuaChon> ChuKyTuyChon { get; } =
-    [
-        new("1", "Mỗi 1 giờ"), new("6", "Mỗi 6 giờ"), new("12", "Mỗi 12 giờ"), new("24", "Mỗi 24 giờ (hằng ngày)"), new("48", "Mỗi 2 ngày"), new("72", "Mỗi 3 ngày"), new("168", "Mỗi tuần")
-    ];
-    [ObservableProperty] private bool tuDongBatChon;
-    [ObservableProperty] private string chuKyChon = "24";
-    private bool _tuDongBatDaLuu; private string _chuKyDaLuu = "24";
-    public bool CoThayDoiLich => TuDongBatChon != _tuDongBatDaLuu || (TuDongBatChon && ChuKyChon != _chuKyDaLuu);
-    public string GhiChuLich => TuDongBatChon
-        ? $"Khi bật: cứ {ChuKyTuyChon.FirstOrDefault(x => x.Ma == ChuKyChon)?.Ten.ToLowerInvariant() ?? ChuKyChon + " giờ"}, nếu bản sao lưu thành công gần nhất đã quá chu kỳ thì hệ thống tự sao lưu (máy chủ kiểm tra khoảng 10 phút một lần), không cần mở ứng dụng nhưng máy chủ API phải đang chạy. Bản tự động nằm trong lịch sử bên dưới."
-        : "Đang tắt: hệ thống không tự sao lưu. Bật để dữ liệu luôn có bản sao lưu gần đây ngay cả khi không ai bấm \"Sao lưu ngay\".";
-    partial void OnTuDongBatChonChanged(bool value) { OnPropertyChanged(nameof(CoThayDoiLich)); OnPropertyChanged(nameof(GhiChuLich)); }
-    partial void OnChuKyChonChanged(string value) { OnPropertyChanged(nameof(CoThayDoiLich)); OnPropertyChanged(nameof(GhiChuLich)); }
-
-    private async Task TaiLichTuDongAsync()
-    {
-        try
-        {
-            var l = await _api.GetLichSaoLuuTuDongAsync();
-            _tuDongBatDaLuu = l.TuDongBat; _chuKyDaLuu = l.ChuKyGio.ToString();
-            TuDongBatChon = l.TuDongBat;
-            ChuKyChon = ChuKyTuyChon.Any(x => x.Ma == _chuKyDaLuu) ? _chuKyDaLuu : "24";
-            OnPropertyChanged(nameof(CoThayDoiLich));
-        }
-        catch (LoiYeuCauApi) { /* chỉ là thông tin phụ */ }
-        catch (HttpRequestException) { }
-    }
-
-    [RelayCommand]
-    private async Task LuuLichTuDongAsync()
-    {
-        if (!CoThayDoiLich) { DatKetQua("Cài đặt sao lưu tự động chưa thay đổi.", false); return; }
-        try
-        {
-            var l = await _api.DatLichSaoLuuTuDongAsync(TuDongBatChon, int.Parse(ChuKyChon));
-            _tuDongBatDaLuu = l.TuDongBat; _chuKyDaLuu = l.ChuKyGio.ToString();
-            OnPropertyChanged(nameof(CoThayDoiLich));
-            DatKetQua(l.TuDongBat ? $"Đã BẬT sao lưu tự động, chu kỳ {l.ChuKyGio} giờ. Bản đầu tiên sẽ chạy trong khoảng {Math.Max(l.KiemTraMoiPhut, 1)} phút nếu chưa có bản nào trong chu kỳ." : "Đã TẮT sao lưu tự động.", false);
-            await TaiTinhTrangAsync();
-        }
-        catch (LoiYeuCauApi loi) { DatKetQua(loi.Message, true); }
-    }
-
-    private async Task TaiTinhTrangAsync()
-    {
-        try { TinhTrang = await _api.GetTinhTrangSaoLuuAsync(); }
-        catch (LoiYeuCauApi) { /* chỉ là thông tin phụ */ }
-        catch (HttpRequestException) { }
     }
 
     /// <summary>Kiểm tra toàn vẹn (RESTORE VERIFYONLY) một bản sao lưu trong lịch sử - không đụng vào dữ liệu đang chạy.</summary>
@@ -394,7 +280,6 @@ public partial class SaoLuuViewModel : ObservableObject
             LichSu.Clear();
             foreach (var banSaoLuu in await _api.GetLichSuSaoLuuAsync())
                 LichSu.Add(banSaoLuu);
-            await TaiTinhTrangAsync();
         }
         catch (LoiYeuCauApi loi)
         {

@@ -63,70 +63,6 @@ public partial class StayService : IStayService
     }
 
     /// <summary>
-    /// Ghi một gói dịch vụ cho lượt lưu trú: mỗi dịch vụ trong gói thành một dòng sử dụng (số lượng = số lượng trong gói × số gói), tổng các dòng đúng bằng
-    /// giá gói × số gói; giá gói được chia theo tỷ lệ giá lẻ, dòng cuối nhận phần làm tròn còn dư. Giá chốt tại thời điểm ghi.
-    /// </summary>
-    public async Task<List<StayServiceUsageDto>> AddServicePackageAsync(string maPhieuNhan, string maPhong, AddStayServicePackageRequest request)
-    {
-        if (request.SoLuong < 1 || request.SoLuong > SoLuongToiDa)
-            throw new ApiException(StatusCodes.Status400BadRequest, "SO_LUONG_KHONG_HOP_LE", $"Số lượng gói phải từ 1 đến {SoLuongToiDa}.", "soLuong");
-
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-        await KhoaPhieuNhanAsync(maPhieuNhan);
-
-        var luotO = await TimLuotLuuTruAsync(maPhieuNhan, maPhong);
-        if (luotO.TrangThai != TrangThaiChiTietPhieuNhan.DANG_O)
-            throw new ApiException(StatusCodes.Status409Conflict, "LUOT_LUU_TRU_DA_KET_THUC", "Lượt lưu trú này đã trả phòng, không thể thêm dịch vụ.");
-        await KiemTraChuaLapHoaDonAsync(maPhieuNhan);
-
-        var goi = await _context.GoiDichVus.Include(x => x.ChiTietGois).ThenInclude(c => c.DichVu).FirstOrDefaultAsync(x => x.MaGoi == request.MaGoi)
-            ?? throw new ApiException(StatusCodes.Status404NotFound, "KHONG_TIM_THAY_GOI_DICH_VU", "Không tìm thấy gói dịch vụ.", "maGoi");
-        if (!goi.HoatDong)
-            throw new ApiException(StatusCodes.Status409Conflict, "GOI_DICH_VU_NGUNG_BAN", $"Gói \"{goi.TenGoi}\" đã ngừng bán.", "maGoi");
-        var ngung = goi.ChiTietGois.Where(x => !x.DichVu.HoatDong).Select(x => x.DichVu.TenDV).ToList();
-        if (ngung.Count > 0)
-            throw new ApiException(StatusCodes.Status409Conflict, "DICH_VU_TRONG_GOI_NGUNG_PHUC_VU", $"Gói có dịch vụ đã ngừng phục vụ: {string.Join(", ", ngung)}.", "maGoi");
-
-        var tongTienGoi = goi.GiaGoi * request.SoLuong;
-        var dongs = goi.ChiTietGois.OrderBy(x => x.MaDV, StringComparer.Ordinal).ToList();
-        var giaLe = dongs.Select(x => x.DichVu.GiaDV * x.SoLuong * request.SoLuong).ToList();
-        var tongLe = giaLe.Sum();
-        var bayGio = DateTime.Now;
-
-        var chiTiets = new List<ChiTietSuDungDV>();
-        decimal daChia = 0;
-        for (var i = 0; i < dongs.Count; i++)
-        {
-            var thanhTien = i == dongs.Count - 1
-                ? tongTienGoi - daChia
-                : Math.Round(tongLe > 0 ? tongTienGoi * giaLe[i] / tongLe : tongTienGoi / dongs.Count, 0, MidpointRounding.AwayFromZero);
-            daChia += thanhTien;
-            chiTiets.Add(new ChiTietSuDungDV
-            {
-                MaPhieuNhan = maPhieuNhan,
-                MaDV = dongs[i].MaDV,
-                SoLuong = dongs[i].SoLuong * request.SoLuong,
-                NgaySuDung = bayGio,
-                TenDichVu = dongs[i].DichVu.TenDV,
-                DonViTinh = dongs[i].DichVu.DonViTinh,
-                ThanhTien = thanhTien,
-                MaGoi = goi.MaGoi,
-                MaPhong = maPhong,
-                NguoiGhi = _audit.TenDN
-            });
-        }
-
-        _context.ChiTietSuDungDVs.AddRange(chiTiets);
-        _audit.Ghi("GHI_GOI_DICH_VU", maPhieuNhan, $"phong={maPhong}; goi={goi.MaGoi} {goi.TenGoi}; soGoi={request.SoLuong}; tongTien={Math.Round(tongTienGoi, 0)}; giaLe={Math.Round(tongLe, 0)}");
-        await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        var dtos = chiTiets.Select((x, i) => ToDto(x, dongs[i].DichVu)).ToList();
-        await GanTenNguoiGhiAsync(dtos);
-        return dtos;
-    }
-
-    /// <summary>
     /// Hủy một dòng dịch vụ đã ghi nhầm (sai dịch vụ/số lượng): chỉ khi phiếu nhận CHƯA lập hóa đơn (sau đó phải qua giảm giá/điều chỉnh có Quản lý duyệt),
     /// bắt buộc ghi lý do, nhật ký lưu dịch vụ/số lượng/thành tiền bị hủy.
     /// </summary>
@@ -151,17 +87,8 @@ public partial class StayService : IStayService
         await GanTenNguoiGhiAsync(new[] { dto });
         _context.ChiTietSuDungDVs.Remove(dong);
 
-        // Dòng này do lễ tân tính phí từ minibar buồng phòng ghi nhận: quay lại hàng chờ để xử lý lại (tính phí lại hoặc bỏ qua có lý do).
-        var tuMinibar = await _context.ChiTietKiemPhongs.Where(c => c.MaChiTietDV == maChiTietDV).ToListAsync();
-        foreach (var c in tuMinibar)
-        {
-            c.TrangThaiTinhPhi = TrangThaiTinhPhi.CHO_TINH_PHI;
-            c.MaChiTietDV = null;
-            c.NguoiXuLy = null;
-            c.ThoiGianXuLy = null;
-        }
         _audit.Ghi("HUY_DICH_VU", maPhieuNhan,
-            $"phong={maPhong}; dichVu={dong.MaDV} {dong.DichVu.TenDV}; soLuong={dong.SoLuong}; thanhTien={Math.Round(dong.ThanhTien, 0)}; goi={dong.MaGoi ?? "khong"}; nguoiGhi={dong.NguoiGhi ?? "khong ro"}; ngayGhi={dong.NgaySuDung:yyyy-MM-dd HH:mm}; lyDo={lyDo.Trim()}");
+            $"phong={maPhong}; dichVu={dong.MaDV} {dong.DichVu.TenDV}; soLuong={dong.SoLuong}; thanhTien={Math.Round(dong.ThanhTien, 0)}; nguoiGhi={dong.NguoiGhi ?? "khong ro"}; ngayGhi={dong.NgaySuDung:yyyy-MM-dd HH:mm}; lyDo={lyDo.Trim()}");
         await _context.SaveChangesAsync();
         await transaction.CommitAsync();
         return dto;
@@ -240,7 +167,6 @@ public partial class StayService : IStayService
         DonViTinh = x.DonViTinh ?? dichVu.DonViTinh,
         SoLuong = x.SoLuong,
         NgaySuDung = x.NgaySuDung,
-        MaGoi = x.MaGoi,
         ThanhTien = x.ThanhTien,
         MaPhong = x.MaPhong,
         DonGia = x.SoLuong == 0 ? 0 : Math.Round(x.ThanhTien / x.SoLuong, 0, MidpointRounding.AwayFromZero),

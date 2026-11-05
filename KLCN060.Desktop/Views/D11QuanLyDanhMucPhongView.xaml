@@ -104,7 +104,7 @@
                                     </HeaderedContentControl>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
                                         <Button Content="Xóa lọc" Command="{Binding XoaBoLocCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
-                                        <Button Content="Tải lại" Command="{Binding LoadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0" />
+                                        <Button Content="Tải lại" ToolTip="Lấy lại dữ liệu mới nhất từ máy chủ (để thấy thay đổi do người khác vừa làm). Không sửa hay xóa dữ liệu." Command="{Binding LoadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0" />
                                     </StackPanel>
                                 </WrapPanel>
                             </StackPanel>
@@ -226,11 +226,13 @@
                                         </Grid>
                                         <Grid Margin="0,8,0,0">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="90" /><ColumnDefinition Width="8" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                            <HeaderedContentControl Header="Tiền tố"><TextBox Text="{Binding HangLoatTienTo, UpdateSourceTrigger=PropertyChanged}" MaxLength="4" ToolTip="Tùy chọn, VD A → A501" /></HeaderedContentControl>
+                                            <HeaderedContentControl Header="Tiền tố"><TextBox Text="{Binding HangLoatTienTo, UpdateSourceTrigger=PropertyChanged}" MaxLength="4" ToolTip="Chữ ghép vào TRƯỚC số phòng khi tạo hàng loạt. Tùy chọn: để trống thì tên phòng chỉ là số (501, 502...). VD tiền tố A + từ 501 đến 505 → A501, A502... A505. Tối đa 4 ký tự; cả tên phòng tối đa 9 ký tự." /></HeaderedContentControl>
                                             <HeaderedContentControl Grid.Column="2" Header="Loại phòng">
                                                 <ComboBox ItemsSource="{Binding RoomTypes}" DisplayMemberPath="TenLoai" SelectedValuePath="MaLoai" SelectedValue="{Binding HangLoatLoai}" />
                                             </HeaderedContentControl>
                                         </Grid>
+                                        <TextBlock Style="{StaticResource HintTextStyle}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0"
+                                                   Text="Tiền tố (tùy chọn) là chữ ghép trước số phòng: tiền tố A, từ 501 đến 505 → A501 ... A505. Để trống thì tên phòng chỉ là số." />
                                         <TextBlock Text="{Binding HangLoatXemTruoc}" Style="{StaticResource HintTextStyle}" FontSize="12" TextWrapping="Wrap" Margin="0,6,0,0" />
                                         <Button Content="Tạo các phòng" Command="{Binding ThemHangLoatCommand}" Style="{StaticResource OutlineButtonStyle}" HorizontalAlignment="Left" Margin="0,8,0,0" />
                                     </StackPanel>

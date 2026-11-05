@@ -131,8 +131,7 @@ public partial class InvoiceService : IInvoiceService
         if (dto.ConNo > 0)
             throw new ApiException(StatusCodes.Status409Conflict, "HOA_DON_CHUA_THANH_TOAN_DU",
                 $"Hóa đơn còn nợ {Math.Round(dto.ConNo, 0):N0} VNĐ, chỉ xuất PDF khi đã thanh toán đủ.");
-        var hddt = await _context.HoaDonDienTus.AsNoTracking().FirstOrDefaultAsync(x => x.MaHD == maHD);
-        return (InvoicePdfBuilder.Build(dto, hddt), TenTepXuat.Tao("HoaDon", "pdf", maHD));
+        return (InvoicePdfBuilder.Build(dto), TenTepXuat.Tao("HoaDon", "pdf", maHD));
     }
 
     private async Task<InvoiceDto> LayAsync(string maHD)
@@ -164,6 +163,7 @@ public partial class InvoiceService : IInvoiceService
             TienDV = hoaDon.TienDV,
             PhuThu = hoaDon.PhuThu,
             TienDaCoc = hoaDon.TienDaCoc,
+            TienKhuyenMai = hoaDon.TienKhuyenMai,
             TongTien = hoaDon.TongTien,
             DaThanhToan = daThu,
             ConNo = Math.Max(0, hoaDon.TongTien - daThu),

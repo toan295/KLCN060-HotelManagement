@@ -6,14 +6,7 @@ namespace KLCN060.Desktop.Services;
 public sealed partial class ApiClient
 {
     // ---------------- Gói dịch vụ ----------------
-    public Task<List<GoiDichVuDto>> GetGoiDichVuAsync(bool tatCa = false) => GetAsync<List<GoiDichVuDto>>($"api/v1/service-packages?tatCa={tatCa.ToString().ToLowerInvariant()}");
-    public Task<GoiDichVuDto> TaoGoiDichVuAsync(YeuCauGoiDichVu x) => PostAsync<YeuCauGoiDichVu, GoiDichVuDto>("api/v1/service-packages", x);
-    public Task<GoiDichVuDto> SuaGoiDichVuAsync(string maGoi, YeuCauGoiDichVu x) => PutAsync<YeuCauGoiDichVu, GoiDichVuDto>($"api/v1/service-packages/{Uri.EscapeDataString(maGoi)}", x);
-    public Task XoaGoiDichVuAsync(string maGoi) => SendKhongCoNoiDungAsync(HttpMethod.Delete, $"api/v1/service-packages/{Uri.EscapeDataString(maGoi)}");
 
-    /// <summary>Ghi một gói dịch vụ cho lượt lưu trú (mỗi dịch vụ trong gói thành một dòng sử dụng, tổng đúng bằng giá gói).</summary>
-    public Task<List<DichVuSuDungDto>> GhiGoiDichVuAsync(string maPhieuNhan, string maPhong, string maGoi, int soLuong)
-        => PostAsync<object, List<DichVuSuDungDto>>($"api/v1/stays/{maPhieuNhan}/{maPhong}/service-packages", new { maGoi, soLuong });
 
     // ---------------- Sửa phiếu đặt phòng (lễ tân hoặc Quản lý): đổi ngày, đổi phòng, đổi loại phòng ----------------
     public Task<ThongTinNhanPhongDto> GetThongTinNhanPhongAsync(string maPhieuDat)
@@ -91,42 +84,5 @@ public sealed class XemTruocSuaPhieuDto
 }
 
 // ---------------- Gói dịch vụ ----------------
-public sealed record YeuCauGoiDong(string MaDV, int SoLuong);
-public sealed record YeuCauGoiDichVu(string TenGoi, string? MoTa, decimal GiaGoi, bool? HoatDong, List<YeuCauGoiDong> DichVus);
-
-public sealed class GoiDichVuDongDto
-{
-    public string MaDV { get; init; } = "";
-    public string TenDV { get; init; } = "";
-    public string DonViTinh { get; init; } = "";
-    public bool DichVuConPhucVu { get; init; }
-    public decimal GiaDV { get; init; }
-    public int SoLuong { get; init; }
-    public decimal PhanBo { get; init; }
-    public decimal GiaLeDong => GiaDV * SoLuong;
-}
-
-public sealed class GoiDichVuDto
-{
-    public string MaGoi { get; init; } = "";
-    public string TenGoi { get; init; } = "";
-    public string? MoTa { get; init; }
-    public decimal GiaGoi { get; init; }
-    public decimal GiaLe { get; init; }
-    public decimal TietKiem { get; init; }
-    public bool HoatDong { get; init; }
-    public bool CoTheBan { get; init; }
-    public int SoLanDaBan { get; init; }
-    public bool CoTheXoa { get; init; }
-    public string? NguoiSuaCuoi { get; init; }
-    public DateTime? ThoiGianSuaCuoi { get; init; }
-    public decimal GiaLeTong => GiaLe;
-    public string BanHienThi => SoLanDaBan == 0 ? "Chưa bán lần nào" : $"Đã bán {SoLanDaBan} lần";
-    public string SuaCuoiHienThi => NguoiSuaCuoi is null ? "" : $"Thay đổi gần nhất: {NguoiSuaCuoi} lúc {ThoiGianSuaCuoi:dd/MM/yyyy HH:mm}";
-    public List<GoiDichVuDongDto> DichVus { get; init; } = [];
-    public string TrangThaiHienThi => !HoatDong ? "Ngừng bán" : CoTheBan ? "Đang bán" : "Tạm ngừng (có dịch vụ ngừng phục vụ)";
-    public string NoiDungTomTat => string.Join(", ", DichVus.Select(x => $"{x.SoLuong} {x.TenDV}"));
-}
-
 // ---------------- Sửa đặt phòng ----------------
 public sealed record YeuCauSuaDatPhong(DateOnly? NgayDonDuKien, DateOnly? NgayTraDuKien, List<YeuCauDoiPhongDat>? DoiPhong, string LyDo);

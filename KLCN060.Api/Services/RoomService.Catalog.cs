@@ -65,12 +65,6 @@ public partial class RoomService
         foreach (var c in await _context.CoSoVatChats.AsNoTracking().Where(c => c.MaPhong != null && maPhongs.Contains(c.MaPhong)).GroupBy(c => c.MaPhong!)
                      .Select(g => new { MaPhong = g.Key, N = g.Count() }).ToListAsync())
             kq[c.MaPhong].CoSoVatChat = c.N;
-        foreach (var c in await _context.PhieuDonPhongs.AsNoTracking().Where(c => maPhongs.Contains(c.MaPhong)).GroupBy(c => c.MaPhong).Select(g => new { MaPhong = g.Key, N = g.Count() }).ToListAsync())
-            kq[c.MaPhong].KhacLienQuan += c.N;
-        foreach (var c in await _context.SuCoPhongs.AsNoTracking().Where(c => maPhongs.Contains(c.MaPhong)).GroupBy(c => c.MaPhong).Select(g => new { MaPhong = g.Key, N = g.Count() }).ToListAsync())
-            kq[c.MaPhong].KhacLienQuan += c.N;
-        foreach (var c in await _context.DoBoQuens.AsNoTracking().Where(c => c.MaPhong != null && maPhongs.Contains(c.MaPhong)).GroupBy(c => c.MaPhong!).Select(g => new { MaPhong = g.Key, N = g.Count() }).ToListAsync())
-            kq[c.MaPhong].KhacLienQuan += c.N;
         foreach (var c in await _context.PhieuDoiPhongs.AsNoTracking().Where(c => maPhongs.Contains(c.MaPhongCu) || maPhongs.Contains(c.MaPhongMoi))
                      .Select(c => new { c.MaPhongCu, c.MaPhongMoi }).ToListAsync())
         {

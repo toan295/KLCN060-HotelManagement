@@ -277,10 +277,6 @@ public class FacilityService : IFacilityService
             };
         }).ToList();
 
-        var suCoMo = (await _context.SuCoPhongs.AsNoTracking()
-            .Where(s => s.TrangThai != TrangThaiSuCo.DA_XU_LY && s.TrangThai != TrangThaiSuCo.DA_HUY)
-            .GroupBy(s => s.MaPhong).Select(g => new { MaPhong = g.Key, N = g.Count() }).ToListAsync()).ToDictionary(x => x.MaPhong, x => x.N);
-
         var phongCanChuY = items.Where(i => i.CanXuLy && i.MaPhong != null).GroupBy(i => i.MaPhong!)
             .Select(g =>
             {
@@ -288,7 +284,7 @@ public class FacilityService : IFacilityService
                 return new FacilityRoomIssueDto
                 {
                     MaPhong = p.MaPhong, TenPhong = p.TenPhong, Tang = p.Tang, TinhTrangPhong = p.TinhTrang.ToString(), SoThietBiHong = g.Sum(i => i.SoLuong),
-                    SuCoDangMo = suCoMo.GetValueOrDefault(p.MaPhong), ThietBi = string.Join(", ", g.Select(i => $"{i.Ten} ({TinhTrangCsvc.HienThi(i.TinhTrang).ToLower()})"))
+                    ThietBi = string.Join(", ", g.Select(i => $"{i.Ten} ({TinhTrangCsvc.HienThi(i.TinhTrang).ToLower()})"))
                 };
             }).OrderByDescending(r => r.SoThietBiHong).ThenBy(r => r.MaPhong).ToList();
 
@@ -327,7 +323,7 @@ public class FacilityService : IFacilityService
         if (rows.Count == 0) await TimCoSoVatChatAsync(maSo);
         return rows.Select(x => new FacilityHistoryEntryDto
         {
-            ThoiGian = x.ThoiGian, NguoiThucHien = x.MaTaiKhoan, HanhDong = x.HanhDong, MoTaHanhDong = AuditLogService.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
+            ThoiGian = x.ThoiGian, NguoiThucHien = x.MaTaiKhoan, HanhDong = x.HanhDong, MoTaHanhDong = NhatKyMoTa.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
         }).ToList();
     }
 

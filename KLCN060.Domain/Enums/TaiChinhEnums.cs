@@ -16,12 +16,3 @@ public enum TrangThaiXuLyDoiSoat
     CAN_XU_LY,
     DA_XU_LY
 }
-
-/// <summary>Cách kế toán xử lý một thông báo tiền về bất thường.</summary>
-public enum HuongXuLyDoiSoat
-{
-    /// <summary>Đã xử lý bên ngoài hệ thống (ghi nhận tay vào hóa đơn, liên hệ khách...), bắt buộc ghi chú.</summary>
-    DA_XU_LY_NGOAI,
-    /// <summary>Không phải tiền của khách sạn / giao dịch thử, bỏ qua.</summary>
-    BO_QUA
-}

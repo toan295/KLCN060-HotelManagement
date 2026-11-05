@@ -245,7 +245,7 @@ public partial class GuestService
         {
             ThoiGian = x.ThoiGian,
             NguoiThucHien = ten.TryGetValue(x.MaTaiKhoan, out var n) && !string.IsNullOrEmpty(n.HoTen) ? $"{n.HoTen} ({x.MaTaiKhoan})" : x.MaTaiKhoan,
-            HanhDong = AuditLogService.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
+            HanhDong = NhatKyMoTa.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
         }).ToList();
         return dto;
     }

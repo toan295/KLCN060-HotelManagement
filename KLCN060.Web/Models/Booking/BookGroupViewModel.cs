@@ -16,6 +16,11 @@ public class BookGroupViewModel
     [DataType(DataType.Date)]
     public DateOnly? NgayTra { get; set; }
 
+    [Required(ErrorMessage = "Vui lòng nhập số khách.")]
+    [Range(1, 200, ErrorMessage = "Số khách phải từ 1 đến 200.")]
+    [Display(Name = "Tổng số khách của đoàn")]
+    public int? SoKhach { get; set; } = 1;
+
     public List<BookGroupRoomLineViewModel> PhongCanDat { get; set; } = new();
 
     /// <summary>Danh sách loại phòng để đổ vào dropdown chọn ở mỗi dòng (lấy từ GET /room-types).</summary>

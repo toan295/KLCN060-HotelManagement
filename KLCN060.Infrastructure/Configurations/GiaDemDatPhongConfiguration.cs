@@ -13,10 +13,8 @@ public class GiaDemDatPhongConfiguration : IEntityTypeConfiguration<GiaDemDatPho
         entity.Property(x => x.MaPhong).HasMaxLength(10).IsUnicode(false);
         entity.Property(x => x.GiaCoBan).HasColumnType("decimal(18,2)").IsRequired();
         entity.Property(x => x.Gia).HasColumnType("decimal(18,2)").IsRequired();
-        entity.Property(x => x.TenQuyTac).HasMaxLength(100);
-        entity.Property(x => x.DieuChinh).HasMaxLength(60);
 
-        // Xóa dòng phòng của phiếu (đổi phòng) thì bỏ luôn giá từng đêm của dòng đó; quy tắc giá chỉ lưu mã + tên, không có khóa ngoại.
+        // Xóa dòng phòng của phiếu (đổi phòng) thì bỏ luôn giá từng đêm của dòng đó.
         entity.HasOne(x => x.ChiTietPhieuDat)
             .WithMany(x => x.GiaTheoDems)
             .HasForeignKey(x => new { x.MaPhieuDat, x.MaPhong })

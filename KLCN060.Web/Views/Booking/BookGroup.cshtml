@@ -11,7 +11,7 @@
 
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <form asp-controller="Booking" asp-action="BookGroup" method="post" id="formDatDoan">
+        <form data-chong-gui-doi asp-controller="Booking" asp-action="BookGroup" method="post" id="formDatDoan">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="NgayNhan" class="form-label"></label>
@@ -23,6 +23,12 @@
                     <input asp-for="NgayTra" type="text" autocomplete="off" class="form-control date-picker-vi-linked" data-min="@homNay" />
                     <span asp-validation-for="NgayTra" class="text-danger"></span>
                 </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SoKhach" class="form-label"></label>
+                <input asp-for="SoKhach" type="number" min="1" max="200" class="form-control" />
+                <span asp-validation-for="SoKhach" class="text-danger"></span>
             </div>
 
             <h5 class="mt-3">Các loại phòng cần đặt</h5>
@@ -83,11 +89,19 @@
     <script>
         // Ô ngày dùng flatpickr để LUÔN hiển thị dd/mm/yyyy bất kể ngôn ngữ trình duyệt (input[type=date] gốc
         // của HTML5 theo locale trình duyệt, không nghe theo lang="vi" của trang).
+        // Ô ngày thật bị flatpickr ẩn (type=hidden) nên jQuery Validate mặc định bỏ qua → cho kiểm tra cả ô đó để báo "bắt buộc" ngay phía client.
+        $.validator.setDefaults({ ignore: ':hidden:not(.flatpickr-input)' });
         (function () {
             var ngayNhanEl = document.getElementById('NgayNhan');
             var ngayTraEl = document.getElementById('NgayTra');
             var fpNhan = flatpickr(ngayNhanEl, { locale: 'vn', disableMobile: true, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', altInputClass: 'form-control', minDate: ngayNhanEl.dataset.min, allowInput: true });
             var fpTra = flatpickr(ngayTraEl, { locale: 'vn', disableMobile: true, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', altInputClass: 'form-control', minDate: ngayTraEl.dataset.min, allowInput: true });
+            // Gợi ý định dạng + tên cho trình đọc màn hình (ô nhập thấy được là ô phụ do flatpickr tạo).
+            [[fpNhan, 'Ngày nhận phòng'], [fpTra, 'Ngày trả phòng']].forEach(function (x) {
+                x[0].altInput.setAttribute('placeholder', 'dd/mm/yyyy');
+                x[0].altInput.setAttribute('aria-label', x[1]);
+                x[0].altInput.setAttribute('inputmode', 'numeric');
+            });
             fpNhan.config.onChange.push(function (selectedDates) {
                 if (selectedDates[0]) {
                     var minTra = new Date(selectedDates[0]);

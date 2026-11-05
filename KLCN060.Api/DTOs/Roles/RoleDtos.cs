@@ -33,7 +33,7 @@ public class RoleDto
     public int SoNhanVien { get; set; }
     public List<PermissionDto> Quyen { get; set; } = new();
 
-    /// <summary>Vai trò hệ thống (QUAN_LY, LE_TAN, BUONG_PHONG, KE_TOAN, KHACH_HANG): không đổi tên được.</summary>
+    /// <summary>Vai trò hệ thống (QUAN_LY, LE_TAN, KHACH_HANG): không đổi tên được.</summary>
     public bool LaVaiTroHeThong { get; set; }
     public int SoQuyenNhayCam { get; set; }
 

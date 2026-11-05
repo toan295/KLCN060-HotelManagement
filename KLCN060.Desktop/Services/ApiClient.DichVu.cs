@@ -6,8 +6,6 @@ namespace KLCN060.Desktop.Services;
 public sealed partial class ApiClient
 {
     public Task<DichVuCatalogDto> GetDichVuCatalogAsync() => GetAsync<DichVuCatalogDto>("api/v1/services/catalog");
-    public Task<List<LichSuThayDoiDichVuDto>> GetLichSuDichVuAsync(string maDV) => GetAsync<List<LichSuThayDoiDichVuDto>>($"api/v1/services/{Uri.EscapeDataString(maDV)}/history");
-    public Task<List<LichSuThayDoiDichVuDto>> GetLichSuGoiDichVuAsync(string maGoi) => GetAsync<List<LichSuThayDoiDichVuDto>>($"api/v1/service-packages/{Uri.EscapeDataString(maGoi)}/history");
 }
 
 public sealed class DichVuQuanLyDto
@@ -60,13 +58,3 @@ public sealed class DichVuCatalogDto
     public List<DichVuQuanLyDto> DichVus { get; init; } = [];
 }
 
-public sealed class LichSuThayDoiDichVuDto
-{
-    public DateTime ThoiGian { get; init; }
-    public string NguoiThucHien { get; init; } = "";
-    public string HanhDong { get; init; } = "";
-    public string MoTaHanhDong { get; init; } = "";
-    public string? ChiTiet { get; init; }
-    public string HienThi => $"{ThoiGian:dd/MM/yyyy HH:mm} · {NguoiThucHien} · {MoTaHanhDong}";
-    public string ChiTietDoc => ChiTiet is null ? "" : ChiTiet.Replace("; ", "\n").Replace("->", "→");
-}

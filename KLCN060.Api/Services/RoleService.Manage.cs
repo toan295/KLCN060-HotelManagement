@@ -33,8 +33,6 @@ public partial class RoleService
             ds.Add("Vừa thu tiền / thao tác lễ tân vừa có quyền Quản lý nghiệp vụ (hủy phiếu, sửa phiếu đặc biệt): người thao tác tự quyết định ngoại lệ của chính mình - nên tách thành hai vai trò.");
         if (Co(Permissions.QuanTriHeThong) && tenVaiTro != "QUAN_LY")
             ds.Add("Quyền quản trị hệ thống (phân quyền, tài khoản, sao lưu) đang được gán cho vai trò không phải Quản lý.");
-        if (Co(Permissions.XuLyDoiSoat) && Co(Permissions.ThaoTacLeTan))
-            ds.Add("Quyền xử lý đối soát đi cùng thao tác lễ tân: người nhận tiền có thể tự xử lý chênh lệch đối soát.");
         return ds;
     }
 
@@ -107,7 +105,7 @@ public partial class RoleService
         var ten = await TenNguoiDung.HienThiAsync(_context, rows.Select(x => (string?)x.MaTaiKhoan).Distinct());
         return rows.Select(x => new RoleHistoryEntryDto
         {
-            ThoiGian = x.ThoiGian, NguoiThucHien = ten.GetValueOrDefault(x.MaTaiKhoan, x.MaTaiKhoan), HanhDong = x.HanhDong, MoTaHanhDong = AuditLogService.MoTaHanhDong(x.HanhDong), DoiTuong = x.DoiTuongTacDong, ChiTiet = x.ChiTiet
+            ThoiGian = x.ThoiGian, NguoiThucHien = ten.GetValueOrDefault(x.MaTaiKhoan, x.MaTaiKhoan), HanhDong = x.HanhDong, MoTaHanhDong = NhatKyMoTa.MoTaHanhDong(x.HanhDong), DoiTuong = x.DoiTuongTacDong, ChiTiet = x.ChiTiet
         }).ToList();
     }
 

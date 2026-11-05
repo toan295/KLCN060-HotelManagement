@@ -10,6 +10,8 @@ public class PhieuDatPhong
     public DateOnly NgayDonDuKien { get; set; }
     public DateOnly NgayTraDuKien { get; set; }
     public decimal TienCoc { get; set; }
+    /// <summary>Số khách khách khai khi đặt (để tính phụ thu dự kiến); null = không khai (đặt đoàn, đặt tại quầy).</summary>
+    public int? SoKhach { get; set; }
     /// <summary>Thời điểm tiền cọc thực sự được nhận (lễ tân thu tiền mặt hoặc ngân hàng báo tiền về); null = chưa nhận cọc.</summary>
     public DateTime? NgayNhanCoc { get; set; }
     public HinhThucThanhToan? HinhThucCoc { get; set; }

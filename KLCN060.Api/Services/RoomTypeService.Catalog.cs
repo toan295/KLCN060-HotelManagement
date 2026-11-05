@@ -46,9 +46,6 @@ public partial class RoomTypeService
         var soPhong = await _context.Phongs.CountAsync(x => x.MaLoai == maLoai);
         if (soPhong > 0)
             return (false, $"Còn {soPhong} phòng thuộc loại này - hãy chuyển các phòng sang loại khác (hoặc xóa phòng) trước. Loại phòng không bao giờ bị xóa khi còn phòng để giữ nguyên lịch sử và giá.");
-        var soQuyTac = await _context.QuyTacGias.CountAsync(x => x.MaLoai == maLoai);
-        if (soQuyTac > 0)
-            return (false, $"Còn {soQuyTac} quy tắc giá gắn với loại phòng này - hãy xử lý ở màn hình Bảng giá phòng trước.");
         // Khuyến mãi trỏ MaLoaiApDung không có khóa ngoại: xóa loại phòng sẽ để lại khuyến mãi "mồ côi".
         var tenKm = await _context.KhuyenMais.AsNoTracking().Where(x => x.MaLoaiApDung == maLoai).OrderBy(x => x.MaKM).Select(x => x.TenKM).Take(3).ToListAsync();
         if (tenKm.Count > 0)
@@ -65,24 +62,21 @@ public partial class RoomTypeService
                 .Where(c => (c.PhieuDatPhong.TrangThai == TrangThaiPhieuDat.CHO_XAC_NHAN || c.PhieuDatPhong.TrangThai == TrangThaiPhieuDat.DA_XAC_NHAN) && c.PhieuDatPhong.NgayTraDuKien >= homNay)
                 .Select(c => new { c.Phong.MaLoai, c.MaPhieuDat }).ToListAsync())
             .GroupBy(x => x.MaLoai).ToDictionary(g => g.Key, g => g.Select(x => x.MaPhieuDat).Distinct().Count());
-        var quyTac = (await _context.QuyTacGias.AsNoTracking().Where(x => x.MaLoai != null).Select(x => x.MaLoai!).ToListAsync())
-            .GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count());
 
         var kq = new List<RoomTypeCatalogDto>();
         foreach (var l in loais)
         {
             var cuaLoai = phongs.Where(p => p.MaLoai == l.MaLoai).ToList();
-            var soQuyTac = quyTac.GetValueOrDefault(l.MaLoai);
             var lyDo = cuaLoai.Count > 0
                 ? $"Còn {cuaLoai.Count} phòng thuộc loại này - chuyển hoặc xóa các phòng trước."
-                : soQuyTac > 0 ? $"Còn {soQuyTac} quy tắc giá gắn với loại phòng này." : null;
+                : null;
             kq.Add(new RoomTypeCatalogDto
             {
                 MaLoai = l.MaLoai, TenLoai = l.TenLoai, SoNguoiTieuChuan = l.SoNguoiTieuChuan, DonGia = l.DonGia, PhuThu = l.PhuThu,
                 DienTich = l.DienTich, LoaiGiuong = l.LoaiGiuong, TienNghi = l.TienNghi, MoTa = l.MoTa,
                 SoPhong = cuaLoai.Count, SoPhongBaoTri = cuaLoai.Count(p => p.TinhTrang == TinhTrangPhong.OOO),
                 SoPhongCoKhach = cuaLoai.Count(p => p.TinhTrang is TinhTrangPhong.OC or TinhTrangPhong.OD),
-                SoDatPhongTuongLai = datTuongLai.GetValueOrDefault(l.MaLoai), SoQuyTacGia = soQuyTac,
+                SoDatPhongTuongLai = datTuongLai.GetValueOrDefault(l.MaLoai),
                 CoTheXoa = lyDo is null, LyDoKhongXoa = lyDo
             });
         }

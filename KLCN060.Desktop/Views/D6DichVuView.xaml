@@ -92,32 +92,6 @@
                 </ScrollViewer>
             </Border>
 
-            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- Gói dịch vụ: ghi nhiều dịch vụ một lần với giá gói ưu đãi (do Quản lý thiết lập ở Quản lý dịch vụ) -->
-                        <TextBlock Text="Hoặc ghi một gói dịch vụ" Style="{StaticResource SubTitleStyle}" />
-                        <HeaderedContentControl Header="Gói dịch vụ" Margin="0,8,0,0">
-                            <ComboBox ItemsSource="{Binding Goi}" DisplayMemberPath="TenGoi" SelectedItem="{Binding GoiDaChon}" IsEnabled="{Binding CoLuotDaChon}" />
-                        </HeaderedContentControl>
-                        <Border Margin="0,10,0,0" Padding="14,10">
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource InsetStyle}">
-                                    <Style.Triggers><DataTrigger Binding="{Binding GoiDaChon}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="{Binding GoiDaChon.NoiDungTomTat, StringFormat=Gồm: {0}}" TextWrapping="Wrap" Foreground="{StaticResource MauChuPhu}" FontSize="12.5" />
-                        </Border>
-                        <HeaderedContentControl Header="Số lượng gói (1 - 999)" Margin="0,12,0,0">
-                            <TextBox Text="{Binding SoLuongGoi, UpdateSourceTrigger=PropertyChanged}" />
-                        </HeaderedContentControl>
-                        <TextBlock Text="{Binding TinhTienGoi}" FontWeight="Bold" Foreground="{StaticResource MauChinhDam}" Margin="0,6,0,0" TextWrapping="Wrap" />
-                        <Button Content="Ghi gói dịch vụ" Command="{Binding ThemGoiCommand}" HorizontalAlignment="Right" MinWidth="170" Margin="0,14,0,0" Style="{StaticResource AccentButtonStyle}"
-                                IsEnabled="{Binding DangThemGoi, Converter={StaticResource InverseBooleanConverter}}" />
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
-
             <Border Grid.Row="2" Grid.ColumnSpan="3" Style="{StaticResource CardStyle}" Margin="0,16,0,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
@@ -126,7 +100,6 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Width="120" Header="Lúc ghi" Binding="{Binding ThoiGianHienThi}" />
                                 <DataGridTextColumn Width="*" MinWidth="130" Header="Dịch vụ" Binding="{Binding TenDV}" />
-                                <DataGridTextColumn Width="90" Header="Gói" Binding="{Binding GoiHienThi}" />
                                 <DataGridTextColumn Width="60" Header="SL" Binding="{Binding SoLuong}" />
                                 <DataGridTextColumn Width="110" Header="Đơn giá" Binding="{Binding DonGiaHienThi}" />
                                 <DataGridTextColumn Width="125" Header="Thành tiền" Binding="{Binding ThanhTien, Converter={StaticResource VndMoneyConverter}}" />
@@ -154,20 +127,6 @@
                                     IsEnabled="{Binding HuyDuoc}" />
                         </Grid>
 
-                        <Border Style="{StaticResource DividerStyle}" Margin="0,18,0,12" />
-                        <TextBlock Text="4. Nhật ký ghi / hủy dịch vụ (ai - lúc nào - lý do)" Style="{StaticResource SubTitleStyle}" />
-                        <ItemsControl ItemsSource="{Binding NhatKyDichVu}" Margin="0,6,0,0">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="0,0,0,8">
-                                        <TextBlock TextWrapping="Wrap" FontWeight="SemiBold">
-                                            <Run Text="{Binding ThoiGian, StringFormat='{}{0:dd/MM HH:mm}', Mode=OneWay}" /> · <Run Text="{Binding HoTenNguoiThucHien, Mode=OneWay}" /> (<Run Text="{Binding TaiKhoan, Mode=OneWay}" />) · <Run Text="{Binding MoTaHanhDong, Mode=OneWay}" />
-                                        </TextBlock>
-                                        <TextBlock Text="{Binding ChiTiet}" TextWrapping="Wrap" Style="{StaticResource HintTextStyle}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
                     </StackPanel>
                 </ScrollViewer>
             </Border>

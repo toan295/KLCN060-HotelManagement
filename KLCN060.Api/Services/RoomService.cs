@@ -14,14 +14,12 @@ public partial class RoomService : IRoomService
     private readonly KLCN060DbContext _context;
     private readonly IAuditTrail _audit;
     private readonly IPermissionService _permissions;
-    private readonly AlertOptions _alert;
 
-    public RoomService(KLCN060DbContext context, IAuditTrail audit, IPermissionService permissions, IOptions<AlertOptions>? alert = null)
+    public RoomService(KLCN060DbContext context, IAuditTrail audit, IPermissionService permissions)
     {
         _context = context;
         _audit = audit;
         _permissions = permissions;
-        _alert = alert?.Value ?? new AlertOptions();
     }
 
     public async Task<List<RoomDto>> GetAllAsync()
@@ -48,29 +46,6 @@ public partial class RoomService : IRoomService
         }).ToList();
         await BoSungThongTinSoDoAsync(ketQua);
         return ketQua;
-    }
-
-    public async Task<List<RoomStatusHistoryDto>> GetHistoryAsync(string maPhong)
-    {
-        await TimPhongAsync(maPhong);
-        var dong = await _context.LichSuTinhTrangPhongs.AsNoTracking().Where(x => x.MaPhong == maPhong)
-            .OrderByDescending(x => x.ThoiGian).ThenByDescending(x => x.MaLichSu).Take(500).ToListAsync();
-
-        var tenDNs = dong.Where(x => x.MaTaiKhoan != null).Select(x => x.MaTaiKhoan!).Distinct().ToList();
-        var hoTen = await _context.TaiKhoans.AsNoTracking().Where(x => tenDNs.Contains(x.TenDN))
-            .Select(x => new { x.TenDN, HoTen = x.NhanVien != null ? x.NhanVien.HoTen : null }).ToDictionaryAsync(x => x.TenDN, x => x.HoTen);
-
-        return dong.Select(x => new RoomStatusHistoryDto
-        {
-            MaLichSu = x.MaLichSu,
-            MaPhong = x.MaPhong,
-            TuTinhTrang = x.TuTinhTrang.ToString(),
-            DenTinhTrang = x.DenTinhTrang.ToString(),
-            ThoiGian = x.ThoiGian,
-            MaTaiKhoan = x.MaTaiKhoan,
-            HoTenNguoiThucHien = x.MaTaiKhoan is null ? null : hoTen.GetValueOrDefault(x.MaTaiKhoan),
-            LyDo = x.LyDo
-        }).ToList();
     }
 
     public async Task<RoomDto> CreateAsync(RoomRequest request)
@@ -146,13 +121,10 @@ public partial class RoomService : IRoomService
         if (tinhTrangMoi is not null)
         {
             await KiemTraChuyenTrangThaiAsync(phong, tinhTrangMoi.Value);
-            await KiemTraQuyenXacNhanDonAsync(phong.TinhTrang, tinhTrangMoi.Value, tenDN);
             await KiemTraQuyenKhoaMoAsync(phong.TinhTrang, tinhTrangMoi.Value, tenDN);
             KiemTraLyDoBaoTri(tinhTrangMoi.Value, request.GhiChu);
-            KiemTraLyDoDonLai(phong.TinhTrang, tinhTrangMoi.Value, request.GhiChu);
             _audit.LyDoTinhTrangPhong = request.GhiChu?.Trim();
             _audit.Ghi("DOI_TINH_TRANG_PHONG", maPhong, ChiTietDoiTinhTrang(phong.TinhTrang, tinhTrangMoi.Value, request.GhiChu));
-            await CapNhatViecDonAsync(maPhong, phong.TinhTrang, tinhTrangMoi.Value, tenDN);
         }
 
         phong.TenPhong = request.TenPhong;
@@ -215,13 +187,10 @@ public partial class RoomService : IRoomService
                 $"Phòng {maPhong} vừa được người khác đổi sang {cu} (bạn đang thấy {tinhTrangCu.Trim().ToUpperInvariant()}). Hãy tải lại sơ đồ phòng rồi thao tác lại.", "tinhTrang");
 
         await KiemTraChuyenTrangThaiAsync(phong, moi);
-        await KiemTraQuyenXacNhanDonAsync(cu, moi, tenDN);
         await KiemTraQuyenKhoaMoAsync(cu, moi, tenDN);
         KiemTraLyDoBaoTri(moi, ghiChu);
-        KiemTraLyDoDonLai(cu, moi, ghiChu);
 
         phong.TinhTrang = moi;
-        await CapNhatViecDonAsync(maPhong, cu, moi, tenDN);
 
         // Lịch sử tình trạng phòng (kèm lý do) do bộ chặn SaveChanges ghi; nhật ký thao tác ghi cùng transaction.
         _audit.LyDoTinhTrangPhong = ghiChu?.Trim();
@@ -231,25 +200,6 @@ public partial class RoomService : IRoomService
         await _context.SaveChangesAsync();
         if (transaction is not null) await transaction.CommitAsync();
         return await LayTheoMaAsync(maPhong);
-    }
-
-    /// <summary>
-    /// Xác nhận "đã dọn / đã kiểm tra" (→ VC, → VI, OD → OC) là việc của buồng phòng/quản lý (quyền XAC_NHAN_DON_PHONG). Lễ tân KHÔNG đổi tình trạng phòng
-    /// (không có DOI_TINH_TRANG_PHONG): trả phòng tự đặt phòng thành VD, còn dọn / kiểm tra / khóa phòng là nghiệp vụ của buồng phòng và quản lý.
-    /// </summary>
-    private async Task KiemTraQuyenXacNhanDonAsync(TinhTrangPhong cu, TinhTrangPhong moi, string? tenDN)
-    {
-        var laXacNhanDon = moi is TinhTrangPhong.VC or TinhTrangPhong.VI || (cu == TinhTrangPhong.OD && moi == TinhTrangPhong.OC);
-        if (!laXacNhanDon) return;
-        if (string.IsNullOrEmpty(tenDN) || !await _permissions.CoQuyenAsync(tenDN, Permissions.XacNhanDonPhong))
-            throw new ApiException(StatusCodes.Status403Forbidden, "CAN_BUONG_PHONG_XAC_NHAN",
-                $"Chuyển phòng từ {cu} sang {moi} là xác nhận đã dọn/kiểm tra phòng, chỉ buồng phòng và quản lý (quyền XAC_NHAN_DON_PHONG) mới thực hiện được.", "tinhTrang");
-
-        // Quản lý kiểm tra chất lượng (VC → VI) chứ không tự dọn: phòng đang bẩn (VD/OD) phải do buồng phòng xác nhận đã dọn xong.
-        var dangBan = cu is TinhTrangPhong.VD or TinhTrangPhong.OD;
-        if (dangBan && await _permissions.CoQuyenAsync(tenDN, Permissions.DuyetNghiepVu))
-            throw new ApiException(StatusCodes.Status403Forbidden, "QUAN_LY_KHONG_TU_DON_PHONG",
-                $"Quản lý không tự xác nhận phòng {cu} đã dọn xong: hãy giao việc cho nhân viên buồng phòng, sau khi họ dọn xong thì kiểm tra (VC → VI).", "tinhTrang");
     }
 
     /// <summary>
@@ -266,53 +216,11 @@ public partial class RoomService : IRoomService
                     : "Đưa phòng vào bảo trì / khóa phòng cần quyền KHOA_MO_PHONG (chỉ quản lý). Buồng phòng hãy báo sự cố để quản lý quyết định.", "tinhTrang");
     }
 
-    /// <summary>
-    /// Việc dọn phòng: khi phòng rời trạng thái bẩn (VD/OD) thì đóng phiếu dọn đang mở (đã xong nếu phòng thành sạch, hủy nếu phòng bị khóa bảo trì);
-    /// nếu chưa ai "nhận dọn" mà phòng được xác nhận sạch thì ghi một phiếu đã xong (không có giờ bắt đầu) để biết ai đã dọn.
-    /// </summary>
-    private async Task CapNhatViecDonAsync(string maPhong, TinhTrangPhong cu, TinhTrangPhong moi, string? tenDN)
-    {
-        static bool Ban(TinhTrangPhong t) => t is TinhTrangPhong.VD or TinhTrangPhong.OD;
-        if (!Ban(cu) || Ban(moi)) return;
-
-        var xong = moi is TinhTrangPhong.VC or TinhTrangPhong.VI or TinhTrangPhong.OC;
-        var bayGio = DateTime.Now;
-        var dangDon = await _context.PhieuDonPhongs.Where(x => x.MaPhong == maPhong && x.TrangThai == TrangThaiPhieuDon.DANG_DON).ToListAsync();
-        var huyViecDuocGiao = false;
-        foreach (var phieu in dangDon)
-        {
-            // Việc được giao cho người A nhưng A chưa bắt đầu, người B xác nhận phòng sạch: ghi công cho B, việc của A coi như hủy.
-            if (xong && phieu.ThoiGianBatDau is null && !string.IsNullOrEmpty(tenDN) && phieu.NguoiDon != tenDN)
-            {
-                phieu.ThoiGianXong = bayGio;
-                phieu.TrangThai = TrangThaiPhieuDon.DA_HUY;
-                huyViecDuocGiao = true;
-                continue;
-            }
-            phieu.ThoiGianXong = bayGio;
-            phieu.TrangThai = xong ? TrangThaiPhieuDon.DA_XONG : TrangThaiPhieuDon.DA_HUY;
-        }
-        if ((dangDon.Count == 0 || huyViecDuocGiao) && xong && !string.IsNullOrEmpty(tenDN))
-        {
-            _context.PhieuDonPhongs.Add(new PhieuDonPhong
-            {
-                MaPhong = maPhong, NguoiDon = tenDN, TinhTrangBanDau = cu, ThoiGianXong = bayGio, TrangThai = TrangThaiPhieuDon.DA_XONG
-            });
-        }
-    }
-
     /// <summary>Đưa phòng vào bảo trì / khóa phòng (OOO) là thay đổi ảnh hưởng vận hành: bắt buộc ghi lý do để truy vết.</summary>
     private static void KiemTraLyDoBaoTri(TinhTrangPhong moi, string? ghiChu)
     {
         if (moi == TinhTrangPhong.OOO && string.IsNullOrWhiteSpace(ghiChu))
             throw new ApiException(StatusCodes.Status400BadRequest, "THIEU_LY_DO_BAO_TRI", "Cần nhập lý do khi đưa phòng vào bảo trì / khóa phòng (OOO).", "ghiChu");
-    }
-
-    /// <summary>Đưa phòng đã dọn / đã kiểm tra (VC, VI) trở lại bẩn (VD) là việc làm lại, ảnh hưởng buồng phòng và khách sắp đến: bắt buộc ghi lý do (Desktop cũng bắt, API phải bắt để không qua mặt được).</summary>
-    private static void KiemTraLyDoDonLai(TinhTrangPhong cu, TinhTrangPhong moi, string? ghiChu)
-    {
-        if (moi == TinhTrangPhong.VD && cu is TinhTrangPhong.VC or TinhTrangPhong.VI && string.IsNullOrWhiteSpace(ghiChu))
-            throw new ApiException(StatusCodes.Status400BadRequest, "THIEU_LY_DO_DON_LAI", "Cần nhập lý do khi đưa phòng đã dọn / đã kiểm tra trở lại bẩn (VD: còn tóc trong phòng tắm).", "ghiChu");
     }
 
     private static string ChiTietDoiTinhTrang(TinhTrangPhong cu, TinhTrangPhong moi, string? ghiChu)

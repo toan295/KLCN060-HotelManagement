@@ -13,7 +13,7 @@
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
         <div class="card"><div class="card-body p-4">
-            <form asp-controller="Booking" asp-action="Book" method="post">
+            <form asp-controller="Booking" asp-action="Book" asp-route-maLoai="@Model.MaLoai" method="post" data-chong-gui-doi>
             <input type="hidden" asp-for="MaLoai" />
 
             <div class="mb-3">
@@ -46,11 +46,19 @@
         // Ngày trả phải sau ngày nhận (validate phía client) - Mục 5B. Ô ngày dùng flatpickr để LUÔN hiển thị
         // dd/mm/yyyy bất kể ngôn ngữ trình duyệt (input[type=date] gốc của HTML5 theo locale trình duyệt,
         // không nghe theo lang="vi" của trang - không sửa được bằng CSS/HTML thuần).
+        // Ô ngày thật bị flatpickr ẩn (type=hidden) nên jQuery Validate mặc định bỏ qua → cho kiểm tra cả ô đó để báo "bắt buộc" ngay phía client.
+        $.validator.setDefaults({ ignore: ':hidden:not(.flatpickr-input)' });
         document.addEventListener('DOMContentLoaded', function () {
             var ngayNhanEl = document.getElementById('NgayNhan');
             var ngayTraEl = document.getElementById('NgayTra');
             var fpNhan = flatpickr(ngayNhanEl, { locale: 'vn', disableMobile: true, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', altInputClass: 'form-control', minDate: ngayNhanEl.dataset.min, allowInput: true });
             var fpTra = flatpickr(ngayTraEl, { locale: 'vn', disableMobile: true, dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', altInputClass: 'form-control', minDate: ngayTraEl.dataset.min, allowInput: true });
+            // Gợi ý định dạng + tên cho trình đọc màn hình (ô nhập thấy được là ô phụ do flatpickr tạo).
+            [[fpNhan, 'Ngày nhận phòng'], [fpTra, 'Ngày trả phòng']].forEach(function (x) {
+                x[0].altInput.setAttribute('placeholder', 'dd/mm/yyyy');
+                x[0].altInput.setAttribute('aria-label', x[1]);
+                x[0].altInput.setAttribute('inputmode', 'numeric');
+            });
             fpNhan.config.onChange.push(function (selectedDates) {
                 if (selectedDates[0]) {
                     var minTra = new Date(selectedDates[0]);

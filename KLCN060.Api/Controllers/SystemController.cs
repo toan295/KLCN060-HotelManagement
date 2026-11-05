@@ -29,11 +29,6 @@ public class SystemController : ControllerBase
     public async Task<IActionResult> GetHistory()
         => Ok(ApiResponse<List<BackupHistoryDto>>.Ok(await _backupService.GetHistoryAsync()));
 
-    /// <summary>Tình trạng sao lưu: lần cuối, số bản, kết quả kiểm tra gần nhất, cảnh báo quá lâu chưa sao lưu.</summary>
-    [HttpGet("status")]
-    public async Task<IActionResult> GetStatus()
-        => Ok(ApiResponse<BackupStatusDto>.Ok(await _backupService.GetStatusAsync()));
-
     /// <summary>Kiểm tra toàn vẹn một bản sao lưu trong lịch sử (RESTORE VERIFYONLY) mà không phục hồi.</summary>
     [HttpPost("{maLichSu:int}/verify")]
     public async Task<IActionResult> Verify(int maLichSu)
@@ -43,16 +38,6 @@ public class SystemController : ControllerBase
     [HttpPost("verify-file")]
     public async Task<IActionResult> VerifyFile([FromBody] RestoreFileRequest request)
         => Ok(ApiResponse<BackupVerifyResultDto>.Ok(await _backupService.VerifyFileAsync(request, CurrentUser.From(User))));
-
-    /// <summary>Cài đặt sao lưu tự động hiện tại (bật / tắt, chu kỳ).</summary>
-    [HttpGet("schedule")]
-    public async Task<IActionResult> GetSchedule()
-        => Ok(ApiResponse<BackupScheduleDto>.Ok(await _backupService.GetScheduleAsync()));
-
-    /// <summary>Bật / tắt sao lưu tự động và đặt chu kỳ (giờ) - có hiệu lực ngay, được ghi vào nhật ký.</summary>
-    [HttpPut("schedule")]
-    public async Task<IActionResult> SetSchedule([FromBody] BackupScheduleRequest request)
-        => Ok(ApiResponse<BackupScheduleDto>.Ok(await _backupService.SetScheduleAsync(request, CurrentUser.From(User))));
 
     /// <summary>Thư mục sao lưu mặc định hiện tại (dùng để gợi ý trên giao diện).</summary>
     [HttpGet("settings")]

@@ -12,7 +12,7 @@ public interface IManagementReportExporter
 }
 
 /// <summary>
-/// Xuất báo cáo quản trị (màn Báo cáo của Quản lý) ra Excel hoặc PDF: gom đúng các số liệu đang hiển thị trên màn hình (tổng quan, doanh thu, vận hành, đặt phòng,
+/// Xuất báo cáo quản trị (màn Báo cáo của Quản lý) ra Excel hoặc PDF: gom đúng các số liệu đang hiển thị trên màn hình (tổng quan, doanh thu, đặt phòng,
 /// công nợ, vấn đề cần chú ý, đối chiếu và cách tính) vào MỘT tài liệu có bố cục rõ ràng. Mỗi lần xuất được ghi nhật ký (ai xuất, kỳ nào, định dạng nào).
 /// </summary>
 public class ManagementReportExporter : IManagementReportExporter
@@ -40,12 +40,8 @@ public class ManagementReportExporter : IManagementReportExporter
 
         var tongQuan = await _bc.GetOverviewAsync(tu, den, null);
         var doanhThu = await _bc.GetRevenueBreakdownAsync(tu, den);
-        var vanHanh = await _bc.GetOperationsAsync(tu, den);
         var datPhong = await _bc.GetBookingReportAsync(tu, den);
         var congNo = await _bc.GetDebtsAsync();
-        var vanDe = await _bc.GetInsightsAsync(tu, den);
-        var doiChieu = await _bc.GetReconciliationAsync(tu, den);
-        var dinhNghia = _bc.GetDefinitions();
         var tenNguoiXuat = await TenNguoiDung.HienThiAsync(_context, user.TenDN) ?? user.TenDN;
 
         var tl = new TaiLieuBaoCao
@@ -58,11 +54,8 @@ public class ManagementReportExporter : IManagementReportExporter
         };
         tl.Phans.Add(PhanTongQuan(tongQuan));
         tl.Phans.Add(PhanDoanhThu(doanhThu));
-        tl.Phans.Add(PhanVanHanh(vanHanh));
         tl.Phans.Add(PhanDatPhong(datPhong));
         tl.Phans.Add(PhanCongNo(congNo));
-        tl.Phans.Add(PhanVanDe(vanDe));
-        tl.Phans.Add(PhanDoiChieu(doiChieu, dinhNghia));
 
         var (noi, loai) = dd == "pdf"
             ? (ManagementReportWriter.ToPdf(tl), "application/pdf")
@@ -96,13 +89,6 @@ public class ManagementReportExporter : IManagementReportExporter
         if (ds.Count > 0) b.Tong = new object?[] { "TỔNG", ds.Sum(x => x.SoLuong), ds.Sum(x => x.DoanhThu), null };
         return new KhoiBang(b);
     }
-
-    private static string TenTinhTrangPhong(string? ma) => ma switch
-    {
-        "VC" => "Trống, đã dọn", "VD" => "Trống, chưa dọn", "VI" => "Trống, đã kiểm tra", "OC" => "Đang có khách", "OD" => "Có khách, cần dọn", "OOO" => "Ngừng phục vụ", _ => ma ?? ""
-    };
-
-    private static string MucDo(string? m) => m switch { "NGHIEM_TRONG" => "NGHIÊM TRỌNG", "CANH_BAO" => "CẢNH BÁO", _ => "THÔNG TIN" };
 
     // =====================================================================================================
     // Các phần của báo cáo
@@ -177,35 +163,7 @@ public class ManagementReportExporter : IManagementReportExporter
         return new PhanBaoCao("Doanh thu", "Doanh thu", "Doanh thu theo nhiều chiều: loại, loại phòng, nguồn đặt, dịch vụ, hình thức thanh toán và thời gian.", khois);
     }
 
-    private static PhanBaoCao PhanVanHanh(OperationsReportDto v)
-    {
-        var lt = Bang("Lễ tân (Front Office)", "", C("Chỉ số"), C("Giá trị", KieuCot.So));
-        lt.ThemDong("Check-in", v.LeTan.CheckIn); lt.ThemDong("Check-out", v.LeTan.CheckOut); lt.ThemDong("Khách vãng lai (walk-in)", v.LeTan.KhachVangLai);
-        lt.ThemDong("Đặt phòng mới", v.LeTan.DatPhongMoi); lt.ThemDong("Không đến (no-show)", v.LeTan.NoShow); lt.ThemDong("Hủy đặt phòng", v.LeTan.Huy);
-        lt.ThemDong("Công suất trung bình", Pt(v.LeTan.CongSuatTrungBinhPhanTram));
-
-        var kt = Bang("Kế toán (Accounting)", "", C("Chỉ số"), C("Giá trị (đ)", KieuCot.Tien), C("Số lần / số hóa đơn", KieuCot.So));
-        var k = v.KeToan;
-        kt.ThemDong("Doanh thu", k.DoanhThu, null);
-        kt.ThemDong("Thu tiền trong kỳ", k.ThanhToan, k.SoLanThanhToan);
-        kt.ThemDong("Công nợ hiện tại", k.CongNoHienTai, k.SoHoaDonConNo);
-        kt.ThemDong("Hoàn cọc", k.HoanTien, k.SoLanHoanTien);
-        kt.ThemDong("Cọc giữ lại (hủy / không đến)", k.CocGiuLai, null);
-        var khois = new List<KhoiBaoCao> { new KhoiBang(lt), new KhoiBang(kt) };
-
-        var bp = Bang("Buồng phòng (Housekeeping)", $"Phòng đã dọn trong kỳ: {v.BuongPhong.PhongDaDon} · đang chờ dọn: {v.BuongPhong.PhongDangCho} · có vấn đề: {v.BuongPhong.PhongCoVanDe}",
-            C("Phòng"), C("Tình trạng"), C("Từ lúc", KieuCot.NgayGio), C("Số giờ", KieuCot.So), C("Lý do"));
-        foreach (var p in v.BuongPhong.DanhSachCanXuLy) bp.ThemDong(p.MaPhong, TenTinhTrangPhong(p.TinhTrang), p.TuLuc, p.SoGio is { } g ? Math.Round(g, 1) : null, p.LyDo ?? "");
-        khois.Add(new KhoiBang(bp));
-
-        var bt = Bang("Bảo trì (Maintenance)", $"Sự cố trong kỳ: {v.BaoTri.SoSuCo} · đang xử lý: {v.BaoTri.DangXuLy} · đã xử lý: {v.BaoTri.DaXuLy} · thời gian xử lý trung bình: {(v.BaoTri.ThoiGianXuLyTrungBinhGio is { } h ? $"{h:0.#} giờ" : "chưa có")}",
-            C("Phòng đang bảo trì"), C("Từ lúc", KieuCot.NgayGio), C("Số giờ", KieuCot.So), C("Lý do"));
-        foreach (var p in v.BaoTri.PhongDangBaoTri) bt.ThemDong(p.MaPhong, p.TuLuc, p.SoGio is { } g ? Math.Round(g, 1) : null, p.LyDo ?? "");
-        khois.Add(new KhoiBang(bt));
-        return new PhanBaoCao("Vận hành", "Vận hành các bộ phận", "Lễ tân, kế toán, buồng phòng và bảo trì trong kỳ.", khois);
-    }
-
-    private static PhanBaoCao PhanDatPhong(BookingReportDto d)
+        private static PhanBaoCao PhanDatPhong(BookingReportDto d)
     {
         var khois = new List<KhoiBaoCao>
         {
@@ -263,45 +221,4 @@ public class ManagementReportExporter : IManagementReportExporter
         return new PhanBaoCao("Công nợ", "Công nợ", "Hóa đơn còn nợ theo tuổi nợ, theo khách và theo booking.", khois);
     }
 
-    private static PhanBaoCao PhanVanDe(ReportInsightsDto v)
-    {
-        var khois = new List<KhoiBaoCao>();
-        var nghiemTrong = v.Items.Count(x => x.MucDo == "NGHIEM_TRONG"); var canhBao = v.Items.Count(x => x.MucDo == "CANH_BAO");
-        khois.Add(new KhoiThe(new List<TheSo>
-        {
-            new("Tổng số vấn đề", v.Items.Count.ToString("N0"), v.Items.Count == 0 ? "Không có vấn đề nào cần chú ý" : $"{nghiemTrong} nghiêm trọng · {canhBao} cảnh báo · {v.Items.Count - nghiemTrong - canhBao} thông tin", v.Items.Count == 0 ? "tot" : nghiemTrong > 0 ? "xau" : "")
-        }));
-        var b = Bang("Danh sách vấn đề và cách xử lý", "Sắp theo mức độ nghiêm trọng.", C("Mức độ"), C("Vấn đề"), C("Số liệu"), C("Mô tả"), C("Hành động đề xuất"));
-        foreach (var x in v.Items.OrderBy(x => x.MucDo == "NGHIEM_TRONG" ? 0 : x.MucDo == "CANH_BAO" ? 1 : 2))
-            b.ThemDong(MucDo(x.MucDo), x.TieuDe, x.SoLieu, x.MoTa, x.HanhDong);
-        khois.Add(new KhoiBang(b));
-        var chiTiet = v.Items.Where(x => x.ChiTiet.Count > 0).ToList();
-        if (chiTiet.Count > 0)
-        {
-            var d = Bang("Chi tiết từng vấn đề", "", C("Vấn đề"), C("Chi tiết"));
-            foreach (var x in chiTiet) foreach (var dong in x.ChiTiet) d.ThemDong(x.TieuDe, dong);
-            khois.Add(new KhoiBang(d));
         }
-        return new PhanBaoCao("Vấn đề cần chú ý", "Vấn đề cần chú ý", "Các điểm bất thường trong kỳ kèm gợi ý hành động.", khois);
-    }
-
-    private static PhanBaoCao PhanDoiChieu(ReportReconciliationDto r, List<ReportDefinitionDto> dinhNghia)
-    {
-        var khois = new List<KhoiBaoCao>();
-        var lech = r.KiemTra.Count(x => !x.Khop);
-        khois.Add(new KhoiThe(new List<TheSo>
-        {
-            new("Kết quả kiểm tra nhất quán", r.KiemTra.Count == 0 ? "—" : lech == 0 ? $"{r.KiemTra.Count}/{r.KiemTra.Count} khớp" : $"{lech}/{r.KiemTra.Count} LỆCH", "Tổng = chi tiết", lech == 0 ? "tot" : "xau"),
-            new("Doanh thu hóa đơn", Dong(r.DoanhThuHoaDon), "Theo ngày lập hóa đơn"),
-            new("Doanh thu phòng theo đêm ở", Dong(r.DoanhThuPhongTheoDem), $"{r.SoDemPhongBan:N0} đêm phòng đã bán")
-        }));
-        if (!string.IsNullOrWhiteSpace(r.GiaiThich)) khois.Add(new KhoiGhiChu("Vì sao doanh thu hóa đơn khác doanh thu phòng theo đêm ở?", new[] { r.GiaiThich }));
-        var kt = Bang("Các phép kiểm tra nhất quán", "", C("Phép kiểm tra"), C("Vế trái"), C("Vế phải"), C("Kết quả"), C("Ghi chú"));
-        foreach (var x in r.KiemTra) kt.ThemDong(x.Ten, x.VeTrai, x.VePhai, x.Khop ? "Khớp" : "LỆCH", x.GhiChu);
-        khois.Add(new KhoiBang(kt));
-        var dn = Bang("Cách tính các chỉ số", "", C("Chỉ số"), C("Công thức"), C("Nguồn dữ liệu"), C("Ghi chú"));
-        foreach (var x in dinhNghia) dn.ThemDong(x.Ten, x.CongThuc, x.NguonDuLieu, x.GhiChu);
-        khois.Add(new KhoiBang(dn));
-        return new PhanBaoCao("Đối chiếu và cách tính", "Đối chiếu và cách tính", "Số liệu được kiểm tra chéo và định nghĩa từng chỉ số để người đọc tự kiểm chứng.", khois);
-    }
-}

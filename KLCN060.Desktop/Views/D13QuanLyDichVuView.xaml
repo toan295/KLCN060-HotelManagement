@@ -65,7 +65,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <ctl:PageHeader Title="Quản lý dịch vụ" Subtitle="Danh mục dịch vụ và gói dịch vụ bán kèm giá ưu đãi." />
+        <ctl:PageHeader Title="Quản lý dịch vụ" Subtitle="Danh mục dịch vụ bán kèm cho khách đang ở: giá, đơn vị, nhóm doanh thu và trạng thái phục vụ." />
         <ctl:NoticeBar Grid.Row="1" Text="{Binding Message}" IsError="{Binding MessageLaLoi}" Margin="0,8,0,0" />
         <StackPanel Grid.Row="2" Margin="0,8,0,0">
             <TextBlock Text="{Binding ThongKe}" FontWeight="SemiBold" Foreground="{StaticResource MauChinh}" TextWrapping="Wrap" />
@@ -73,7 +73,6 @@
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
             <Button Content="Danh mục dịch vụ" Tag="DICH_VU" Command="{Binding ChonTabCommand}" CommandParameter="DICH_VU" Style="{StaticResource NutTabStyle}" />
-            <Button Content="Gói dịch vụ" Tag="GOI" Command="{Binding ChonTabCommand}" CommandParameter="GOI" Style="{StaticResource NutTabStyle}" />
         </StackPanel>
 
         <!-- ================= Tab: Danh mục dịch vụ ================= -->
@@ -100,7 +99,7 @@
                             <HeaderedContentControl Header="Tìm theo tên hoặc mã dịch vụ"><TextBox Text="{Binding TuKhoa, UpdateSourceTrigger=PropertyChanged}" /></HeaderedContentControl>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
                                 <Button Content="Xóa lọc" Command="{Binding XoaBoLocCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
-                                <Button Content="Tải lại" Command="{Binding LoadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0" />
+                                <Button Content="Tải lại" ToolTip="Lấy lại dữ liệu mới nhất từ máy chủ (để thấy thay đổi do người khác vừa làm). Không sửa hay xóa dữ liệu." Command="{Binding LoadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0" />
                             </StackPanel>
                         </Grid>
                         <Grid Margin="0,8,0,0">
@@ -249,106 +248,5 @@
             </Border>
         </Grid>
 
-        <!-- ================= Tab: Gói dịch vụ ================= -->
-        <Grid Grid.Row="4" Margin="0,12,0,0" Tag="GOI" Style="{StaticResource NoiDungTabStyle}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="380" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="480" />
-            </Grid.ColumnDefinitions>
-
-            <Border Style="{StaticResource CardStyle}" Padding="14">
-                <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-                    <Grid Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="8" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <HeaderedContentControl Header="Tìm gói"><TextBox Text="{Binding TuKhoaGoi, UpdateSourceTrigger=PropertyChanged}" /></HeaderedContentControl>
-                        <Button Grid.Column="2" Content="Tải lại" Command="{Binding LoadCommand}" Style="{StaticResource OutlineButtonStyle}" VerticalAlignment="Bottom" Margin="0" />
-                    </Grid>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Goi}" SelectedItem="{Binding GoiDaChon}" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" RowHeight="NaN" CanUserSortColumns="False">
-                        <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Gói" Width="*" MinWidth="170">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="0,4">
-                                            <TextBlock FontWeight="SemiBold" TextWrapping="Wrap"><Run Text="{Binding TenGoi, Mode=OneWay}" /></TextBlock>
-                                            <TextBlock FontSize="11.5" Foreground="{StaticResource MauChuPhu}"><Run Text="{Binding MaGoi, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding BanHienThi, Mode=OneWay}" /></TextBlock>
-                                            <TextBlock Text="{Binding NoiDungTomTat}" FontSize="11" Foreground="{StaticResource MauChuNhat}" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Header="Giá / trạng thái" Width="190">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="0,4">
-                                            <TextBlock FontSize="12" FontWeight="SemiBold"><Run Text="{Binding GiaGoi, Mode=OneWay, StringFormat={}{0:N0}đ}" /></TextBlock>
-                                            <TextBlock FontSize="11.5" TextWrapping="Wrap" Foreground="{StaticResource MauChuPhu}"><Run Text="Giá lẻ " /><Run Text="{Binding GiaLe, Mode=OneWay, StringFormat={}{0:N0}đ}" /><Run Text=" · tiết kiệm " /><Run Text="{Binding TietKiem, Mode=OneWay, StringFormat={}{0:N0}đ}" /></TextBlock>
-                                            <TextBlock Text="{Binding TrangThaiHienThi}" FontSize="11.5" FontWeight="Bold" TextWrapping="Wrap" Foreground="{StaticResource MauChinh}" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding TieuDeGoi}" Style="{StaticResource CardTitleStyle}" VerticalAlignment="Center" />
-                            <Button Grid.Column="1" Content="＋ Gói mới" Command="{Binding GoiMoiCommand}" Padding="12,5" MinHeight="32" Margin="8,0,0,0" Visibility="{Binding CoTheQuanLy, Converter={StaticResource BoolToVis}}" />
-                        </Grid>
-                        <TextBlock Text="{Binding ThongTinGoi}" Style="{StaticResource GhiChuStyle}" />
-                        <TextBlock Style="{StaticResource HintTextStyle}" Margin="0,4,0,0"
-                                   Text="Gói gộp vài dịch vụ bán chung một giá thấp hơn mua lẻ. Lễ tân ghi gói cho khách ở màn Dịch vụ; tiền gói được chia vào từng dịch vụ theo tỷ lệ giá lẻ (cột &quot;Phân bổ&quot;)." />
-                        <HeaderedContentControl Header="Tên gói *" Margin="0,14,0,0"><TextBox Text="{Binding TenGoi, UpdateSourceTrigger=PropertyChanged}" MaxLength="100" /></HeaderedContentControl>
-                        <HeaderedContentControl Header="Mô tả" Margin="0,10,0,0"><TextBox Text="{Binding MoTaGoi, UpdateSourceTrigger=PropertyChanged}" MaxLength="255" /></HeaderedContentControl>
-                        <Grid Margin="0,10,0,0">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <HeaderedContentControl Header="Giá gói (VND) *"><TextBox ctl:MoneyInput.DinhDang="True" Text="{Binding GiaGoi, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}, TargetNullValue=0}" /></HeaderedContentControl>
-                            <CheckBox Grid.Column="2" Content="Đang bán" IsChecked="{Binding GoiDangBan}" VerticalAlignment="Bottom" Margin="0,0,0,9" />
-                        </Grid>
-
-                        <TextBlock Text="Dịch vụ trong gói" Style="{StaticResource SubTitleStyle}" Margin="0,16,0,6" />
-                        <DataGrid ItemsSource="{Binding DongGoi}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" MaxHeight="200" MinHeight="60" HeadersVisibility="Column">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Dịch vụ" Binding="{Binding TenDV}" IsReadOnly="True" Width="*" />
-                                <DataGridTextColumn Header="SL" Binding="{Binding SoLuong, UpdateSourceTrigger=LostFocus}" Width="46" />
-                                <DataGridTextColumn Header="Giá lẻ" Binding="{Binding GiaLeDong, StringFormat={}{0:N0}đ}" IsReadOnly="True" Width="84" />
-                                <DataGridTextColumn Header="Phân bổ" Binding="{Binding PhanBo, StringFormat={}{0:N0}đ}" IsReadOnly="True" Width="84" />
-                                <DataGridTemplateColumn Width="64">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="Bỏ" Style="{StaticResource SmallButtonStyle}" Margin="0" MinWidth="0" Padding="8,3" MinHeight="28" ToolTip="Bỏ dịch vụ này khỏi gói" Background="White" Foreground="{StaticResource MauNguyHiem}" BorderBrush="{StaticResource MauNguyHiem}"
-                                                    Command="{Binding DataContext.BoDichVuKhoiGoiCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                        <Grid Margin="0,10,0,0">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="10" /><ColumnDefinition Width="70" /><ColumnDefinition Width="10" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <ComboBox ItemsSource="{Binding DichVuChoGoi}" DisplayMemberPath="TenDV" SelectedItem="{Binding DichVuThemVaoGoi}" />
-                            <TextBox Grid.Column="2" Text="{Binding SoLuongThemVaoGoi}" ToolTip="Số lượng" />
-                            <Button Grid.Column="4" Content="Thêm vào gói" Command="{Binding ThemDichVuVaoGoiCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
-                        </Grid>
-                        <TextBlock Text="{Binding GhiChuGia}" FontWeight="SemiBold" Foreground="{StaticResource MauChinh}" TextWrapping="Wrap" Margin="0,10,0,0" />
-
-                        <WrapPanel Margin="0,16,0,0">
-                            <Button Content="Lưu gói" Command="{Binding LuuGoiCommand}" MinWidth="100" />
-                            <Button Content="Hoàn tác" Command="{Binding HoanTacGoiCommand}" Style="{StaticResource OutlineButtonStyle}" />
-                            <Button Content="Xóa" Command="{Binding XoaGoiCommand}" Style="{StaticResource DangerOutlineButtonStyle}" MinWidth="70" Visibility="{Binding CoTheXoaGoi, Converter={StaticResource BoolToVis}}" />
-                        </WrapPanel>
-                        <TextBlock Text="{Binding LyDoKhongXoaGoi}" Style="{StaticResource GhiChuStyle}" Foreground="{StaticResource MauCanhBao}" Visibility="{Binding CoLyDoKhongXoaGoi, Converter={StaticResource BoolToVis}}" />
-                        <ctl:NoticeBar Text="{Binding GoiMessage}" IsError="{Binding GoiMessageLaLoi}" Margin="0,12,0,0" />
-
-                    </StackPanel>
-                </ScrollViewer>
-            </Border>
-        </Grid>
     </Grid>
 </UserControl>

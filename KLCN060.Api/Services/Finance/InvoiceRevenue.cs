@@ -23,7 +23,7 @@ internal static class InvoiceRevenue
     {
         var hoaDons = await context.HoaDons.AsNoTracking()
             .Where(x => x.NgayLap >= tuLuc && x.NgayLap < denLuc && x.TrangThaiThanhToan != TrangThaiThanhToan.CHUA_THANH_TOAN)
-            .Select(x => new { x.MaHD, x.MaPhieuNhan, x.NgayLap, x.TienPhong, x.TienDV, x.PhuThu, x.TienDaCoc, x.TongTien })
+            .Select(x => new { x.MaHD, x.MaPhieuNhan, x.NgayLap, x.TienPhong, x.TienDV, x.PhuThu, x.TienDaCoc, x.TienKhuyenMai, x.TongTien })
             .ToListAsync();
         if (hoaDons.Count == 0) return new List<DongDoanhThu>();
 
@@ -52,9 +52,11 @@ internal static class InvoiceRevenue
             }
             var dichVuChung = h.TienDV - minibar - giatLa - dvKhac;
             var doanhThu = h.TongTien + h.TienDaCoc;
-            var chenh = h.TienPhong + h.TienDV + h.PhuThu - doanhThu;   // dương = đã giảm; âm = cọc giữ lại lớn hơn tổng tiền (tính vào "khác")
+            // Giảm giá lấy thẳng từ cột TienKhuyenMai. Phần lệch còn lại (0 với số liệu khớp): dương = thu thấp hơn giá sau giảm (tính thêm vào giảm giá);
+            // âm = cọc giữ lại lớn hơn tổng tiền (tính vào "khác").
+            var lech = h.TienPhong + h.TienDV + h.PhuThu - h.TienKhuyenMai - doanhThu;
             return new DongDoanhThu(h.MaHD, h.MaPhieuNhan, h.NgayLap, doanhThu,
-                h.TienPhong, dichVuChung, minibar, giatLa, h.PhuThu + dvKhac + Math.Max(0, -chenh), Math.Max(0, chenh));
+                h.TienPhong, dichVuChung, minibar, giatLa, h.PhuThu + dvKhac + Math.Max(0, -lech), h.TienKhuyenMai + Math.Max(0, lech));
         }).ToList();
     }
 }

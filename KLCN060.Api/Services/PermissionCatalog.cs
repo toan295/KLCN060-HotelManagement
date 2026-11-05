@@ -4,7 +4,7 @@ namespace KLCN060.Api.Services;
 
 /// <summary>
 /// Danh mục quyền viết bằng ngôn ngữ nghiệp vụ cho màn Phân quyền: tên dễ hiểu, nhóm chức năng, mức nhạy cảm.
-/// Người quản trị không phải nhớ mã quyền kỹ thuật (QUAN_LY_GIA...) mà chọn theo việc được phép làm.
+/// Người quản trị không phải nhớ mã quyền kỹ thuật (QUAN_LY_PHONG...) mà chọn theo việc được phép làm.
 /// </summary>
 public static class PermissionCatalog
 {
@@ -16,29 +16,21 @@ public static class PermissionCatalog
 
     private static readonly Dictionary<string, Muc> Bang = new()
     {
-        [Permissions.XemPhong] = new("Xem phòng và thiết bị", "Phòng & buồng phòng", Thuong),
-        [Permissions.DoiTinhTrangPhong] = new("Đổi tình trạng phòng", "Phòng & buồng phòng", Thuong),
-        [Permissions.XacNhanDonPhong] = new("Xác nhận dọn / kiểm tra phòng", "Phòng & buồng phòng", Thuong),
-        [Permissions.KhoaMoPhong] = new("Khóa / mở phòng bảo trì", "Phòng & buồng phòng", NhayCam),
-        [Permissions.GhiNhanBuongPhong] = new("Ghi nhận buồng phòng (sự cố, minibar, đồ bỏ quên)", "Phòng & buồng phòng", Thuong),
-        [Permissions.XuLySuCo] = new("Tiếp nhận và xử lý sự cố phòng", "Phòng & buồng phòng", Thuong),
-        [Permissions.QuanLyPhong] = new("Quản lý danh mục phòng và cơ sở vật chất", "Danh mục & giá", NhayCam),
-        [Permissions.QuanLyDichVu] = new("Quản lý dịch vụ và gói dịch vụ", "Danh mục & giá", NhayCam),
-        [Permissions.QuanLyKhuyenMai] = new("Quản lý khuyến mãi", "Danh mục & giá", NhayCam),
-        [Permissions.QuanLyGia] = new("Quản lý bảng giá phòng", "Danh mục & giá", NhayCam),
+        [Permissions.XemPhong] = new("Xem phòng và thiết bị", "Phòng", Thuong),
+        [Permissions.DoiTinhTrangPhong] = new("Đổi tình trạng phòng", "Phòng", Thuong),
+        [Permissions.KhoaMoPhong] = new("Khóa / mở phòng bảo trì", "Phòng", NhayCam),
+        [Permissions.QuanLyPhong] = new("Quản lý danh mục phòng và cơ sở vật chất", "Danh mục", NhayCam),
+        [Permissions.QuanLyDichVu] = new("Quản lý danh mục dịch vụ", "Danh mục", NhayCam),
+        [Permissions.QuanLyKhuyenMai] = new("Quản lý khuyến mãi", "Danh mục", NhayCam),
         [Permissions.XemKhachHang] = new("Xem và cập nhật hồ sơ khách hàng", "Khách hàng & đặt phòng", Thuong),
         [Permissions.XemDatPhong] = new("Xem đặt phòng", "Khách hàng & đặt phòng", Thuong),
         [Permissions.ThaoTacLeTan] = new("Thao tác lễ tân (đặt / nhận / đổi / trả phòng, hủy phiếu)", "Khách hàng & đặt phòng", NhayCam),
         [Permissions.XemLuuTru] = new("Xem lượt lưu trú và bảng tính tiền tạm", "Khách hàng & đặt phòng", Thuong),
-        [Permissions.ThanhToan] = new("Thu tiền và xuất hóa đơn", "Tiền & đối soát", NhayCam),
-        [Permissions.XemDoiSoat] = new("Xem chuyển khoản / đối soát", "Tiền & đối soát", Thuong),
-        [Permissions.XuLyDoiSoat] = new("Xử lý thông báo tiền về bất thường (đối soát chuyển khoản)", "Tiền & đối soát", RatNhayCam),
-        [Permissions.XemBaoCao] = new("Xem báo cáo và bảng điều hành", "Báo cáo & nhật ký", Thuong),
-        [Permissions.XemNhatKy] = new("Xem toàn bộ nhật ký hoạt động", "Báo cáo & nhật ký", NhayCam),
-        [Permissions.XemNhatKyTaiChinh] = new("Xem nhật ký nghiệp vụ tài chính", "Báo cáo & nhật ký", Thuong),
-        [Permissions.XuatNhatKy] = new("Xuất nhật ký hoạt động ra file", "Báo cáo & nhật ký", NhayCam),
+        [Permissions.ThanhToan] = new("Thu tiền và xuất hóa đơn", "Thanh toán", NhayCam),
+        [Permissions.XemBaoCao] = new("Xem báo cáo thống kê", "Báo cáo", Thuong),
         [Permissions.DuyetNghiepVu] = new("Quyền Quản lý trong đặt phòng (hủy phiếu, không đến, sửa phiếu đặc biệt)", "Quản lý nghiệp vụ", RatNhayCam),
         [Permissions.QuanTriHeThong] = new("Quản trị hệ thống: phân quyền, tài khoản nhân viên, sao lưu", "Quản trị", RatNhayCam),
+        [Permissions.XemNhatKy] = new("Xem nhật ký hệ thống (ai làm gì, lúc nào, kết quả)", "Quản trị", NhayCam),
     };
 
     public static Muc Cua(string tenQuyen)

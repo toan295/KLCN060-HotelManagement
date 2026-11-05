@@ -12,6 +12,9 @@ public class HoaDon
     public decimal TienDV { get; set; }
     public decimal PhuThu { get; set; }
     public decimal TienDaCoc { get; set; }
+
+    /// <summary>Khuyến mãi đã trừ khi lập hóa đơn. Doanh thu sau giảm giá = TienPhong + TienDV + PhuThu − TienKhuyenMai (= TongTien + TienDaCoc).</summary>
+    public decimal TienKhuyenMai { get; set; }
     public decimal TongTien { get; set; }
     public HinhThucThanhToan HinhThucThanhToan { get; set; }
     public TrangThaiThanhToan TrangThaiThanhToan { get; set; } = TrangThaiThanhToan.CHUA_THANH_TOAN;

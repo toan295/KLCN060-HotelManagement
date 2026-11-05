@@ -1,17 +1,6 @@
 @model List<KLCN060.Web.Models.Booking.BookingSummaryViewModel>
 @{
     ViewData["Title"] = "Lịch sử đặt phòng của tôi";
-
-    (string Nhan, string Mau) HienThiTrangThai(string trangThai) => trangThai switch
-    {
-        "CHO_XAC_NHAN" => ("Chờ xác nhận", "warning"),
-        "DA_XAC_NHAN" => ("Đã xác nhận", "primary"),
-        "DA_NHAN_PHONG" => ("Đã nhận phòng", "success"),
-        "DA_TRA_PHONG" => ("Đã trả phòng", "secondary"),
-        "DA_HUY" => ("Đã hủy", "secondary"),
-        "KHONG_DEN" => ("Không đến", "secondary"),
-        _ => (trangThai, "secondary")
-    };
 }
 
 <div class="page-head">
@@ -29,8 +18,50 @@
 }
 else
 {
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label" for="locTuKhoa">Tìm theo mã phiếu</label>
+                    <input id="locTuKhoa" type="search" class="form-control" placeholder="VD: BK20261227" autocomplete="off" />
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label" for="locTrangThai">Trạng thái</label>
+                    <select id="locTrangThai" class="form-select">
+                        <option value="">Tất cả</option>
+                        @foreach (var (ma, ten) in TrangThaiPhieu.TatCa)
+                        {
+                            <option value="@ma">@ten</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label" for="locTuNgay">Nhận phòng từ</label>
+                    <input id="locTuNgay" type="text" autocomplete="off" class="form-control date-picker-vi" placeholder="dd/mm/yyyy" />
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label" for="locDenNgay">Đến ngày</label>
+                    <input id="locDenNgay" type="text" autocomplete="off" class="form-control date-picker-vi" placeholder="dd/mm/yyyy" />
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <label class="form-label" for="locSapXep">Sắp xếp</label>
+                    <select id="locSapXep" class="form-select">
+                        <option value="moi">Mới đặt nhất</option>
+                        <option value="nhan-gan">Ngày nhận gần nhất</option>
+                        <option value="nhan-xa">Ngày nhận xa nhất</option>
+                    </select>
+                </div>
+                <div class="col-lg-1 col-12">
+                    <button type="button" id="locXoa" class="btn btn-outline-primary w-100">Xóa lọc</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="text-muted small mb-2" id="locDem" aria-live="polite"></p>
+
     <div class="table-responsive">
-        <table class="table align-middle">
+        <table class="table align-middle" id="bangDon">
             <thead>
                 <tr>
                     <th>Mã phiếu</th>
@@ -44,17 +75,18 @@ else
                 </tr>
             </thead>
             <tbody>
+                @{ var thuTu = 0; }
                 @foreach (var donDat in Model)
                 {
-                    var trangThai = HienThiTrangThai(donDat.TrangThai);
-                    <tr>
+                    <tr class="don-dat" data-ma="@donDat.MaPhieuDat.ToLowerInvariant()" data-trangthai="@donDat.TrangThai"
+                        data-nhan="@donDat.NgayDonDuKien.ToString("yyyy-MM-dd")" data-tra="@donDat.NgayTraDuKien.ToString("yyyy-MM-dd")" data-stt="@(thuTu++)">
                         <td class="mono">@donDat.MaPhieuDat</td>
                         <td>@(donDat.LoaiDatPhong == "CA_NHAN" ? "Cá nhân" : "Đoàn")</td>
                         <td>@donDat.NgayDonDuKien.ToString("dd/MM/yyyy")</td>
                         <td>@donDat.NgayTraDuKien.ToString("dd/MM/yyyy")</td>
                         <td>@donDat.SoPhong</td>
                         <td>@donDat.TongTienDuKien.ToVnd()</td>
-                        <td><span class="badge bg-@trangThai.Mau">@trangThai.Nhan</span></td>
+                        <td><span class="badge badge-st @TrangThaiPhieu.Lop(donDat.TrangThai)">@TrangThaiPhieu.Nhan(donDat.TrangThai)</span></td>
                         <td>
                             <a asp-controller="Booking" asp-action="Detail" asp-route-maPhieuDat="@donDat.MaPhieuDat">Xem chi tiết</a>
                         </td>
@@ -63,4 +95,49 @@ else
             </tbody>
         </table>
     </div>
+    <p id="locTrong" class="text-muted d-none">Không có đơn đặt phòng nào khớp bộ lọc.</p>
+}
+
+@section Scripts {
+    <script>
+        // Lọc và sắp xếp PHÍA CLIENT trên danh sách đơn đã tải (số đơn của một khách không lớn).
+        (function () {
+            var tbody = document.querySelector('#bangDon tbody');
+            if (!tbody) return;
+            var dong = Array.prototype.slice.call(tbody.querySelectorAll('tr.don-dat'));
+            var tuKhoa = document.getElementById('locTuKhoa'), trangThai = document.getElementById('locTrangThai');
+            var tuNgay = document.getElementById('locTuNgay'), denNgay = document.getElementById('locDenNgay');
+            var sapXep = document.getElementById('locSapXep'), dem = document.getElementById('locDem'), trong = document.getElementById('locTrong');
+
+            function apDung() {
+                var kw = tuKhoa.value.trim().toLowerCase(), tt = trangThai.value, tu = tuNgay.value, den = denNgay.value;
+                var hien = 0;
+                dong.forEach(function (tr) {
+                    var d = tr.dataset;
+                    var khop = (!kw || d.ma.indexOf(kw) >= 0) && (!tt || d.trangthai === tt)
+                        // khoảng ngày: đơn khớp khi ngày nhận nằm trong [từ, đến] (so sánh chuỗi yyyy-MM-dd)
+                        && (!tu || d.nhan >= tu) && (!den || d.nhan <= den);
+                    tr.classList.toggle('d-none', !khop);
+                    if (khop) hien++;
+                });
+                var kieu = sapXep.value;
+                dong.slice().sort(function (a, b) {
+                    if (kieu === 'nhan-gan') return a.dataset.nhan < b.dataset.nhan ? -1 : a.dataset.nhan > b.dataset.nhan ? 1 : 0;
+                    if (kieu === 'nhan-xa') return a.dataset.nhan < b.dataset.nhan ? 1 : a.dataset.nhan > b.dataset.nhan ? -1 : 0;
+                    return (+a.dataset.stt) - (+b.dataset.stt);   // thứ tự gốc của API: mới đặt nhất trước
+                }).forEach(function (tr) { tbody.appendChild(tr); });
+                dem.textContent = 'Hiển thị ' + hien + ' / ' + dong.length + ' đơn';
+                trong.classList.toggle('d-none', hien !== 0);
+            }
+
+            [tuKhoa, tuNgay, denNgay].forEach(function (el) { el.addEventListener('input', apDung); el.addEventListener('change', apDung); });
+            [trangThai, sapXep].forEach(function (el) { el.addEventListener('change', apDung); });
+            document.getElementById('locXoa').addEventListener('click', function () {
+                tuKhoa.value = ''; trangThai.value = ''; sapXep.value = 'moi';
+                [tuNgay, denNgay].forEach(function (el) { if (el._flatpickr) el._flatpickr.clear(); else el.value = ''; });
+                apDung();
+            });
+            apDung();
+        })();
+    </script>
 }

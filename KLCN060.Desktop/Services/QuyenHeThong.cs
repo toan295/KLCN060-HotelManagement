@@ -13,17 +13,9 @@ public static class QuyenHeThong
     public const string ThaoTacLeTan = "THAO_TAC_LE_TAN";
     public const string XemLuuTru = "XEM_LUU_TRU";
     public const string ThanhToan = "THANH_TOAN";
-    public const string XemDoiSoat = "XEM_DOI_SOAT";
     public const string XemBaoCao = "XEM_BAO_CAO";
     public const string QuanTriHeThong = "QUAN_TRI_HE_THONG";
-    public const string QuanLyGia = "QUAN_LY_GIA";
     public const string DuyetNghiepVu = "DUYET_NGHIEP_VU";
-    public const string XemNhatKy = "XEM_NHAT_KY";
-    public const string XacNhanDonPhong = "XAC_NHAN_DON_PHONG";
-    public const string GhiNhanBuongPhong = "GHI_NHAN_BUONG_PHONG";
-    public const string XuLySuCo = "XU_LY_SU_CO";
     public const string KhoaMoPhong = "KHOA_MO_PHONG";
-    public const string XuLyDoiSoat = "XU_LY_DOI_SOAT";
-    public const string XemNhatKyTaiChinh = "XEM_NHAT_KY_TAI_CHINH";
-    public const string XuatNhatKy = "XUAT_NHAT_KY";
+    public const string XemNhatKy = "XEM_NHAT_KY";
 }

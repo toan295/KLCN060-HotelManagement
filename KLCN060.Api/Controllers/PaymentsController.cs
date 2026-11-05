@@ -31,7 +31,7 @@ public class PaymentsController : ControllerBase
 
     /// <summary>Xem trạng thái một yêu cầu chuyển khoản (client gọi lặp lại để biết tiền đã về chưa).</summary>
     [HttpGet("transfers/{maGiaoDich}")]
-    [HasPermission(Permissions.ThanhToan, Permissions.XemDoiSoat, AllowRoles = "KHACH_HANG")]
+    [HasPermission(Permissions.ThanhToan, AllowRoles = "KHACH_HANG")]
     public async Task<IActionResult> GetTransfer(string maGiaoDich)
         => Ok(ApiResponse<TransferDto>.Ok(await _paymentService.GetTransferAsync(maGiaoDich, CurrentUser.From(User))));
 
@@ -51,24 +51,6 @@ public class PaymentsController : ControllerBase
     [HasPermission(Permissions.ThanhToan)]
     public async Task<IActionResult> PendingTransfers([FromQuery] string maThamChieu, [FromQuery] string loaiThamChieu = "HOA_DON")
         => Ok(ApiResponse<List<TransferDto>>.Ok(await _paymentService.ListPendingForReferenceAsync(loaiThamChieu, maThamChieu)));
-
-    /// <summary>Danh sách các yêu cầu chuyển khoản (đối soát).</summary>
-    [HttpGet("transfers")]
-    [HasPermission(Permissions.XemDoiSoat)]
-    public async Task<IActionResult> ListTransfers([FromQuery] TransferListQuery query)
-    {
-        var (items, total) = await _paymentService.ListTransfersAsync(query);
-        return Ok(ApiResponse<List<TransferDto>>.Ok(items, TaoMeta(query.Page, query.PageSize, total)));
-    }
-
-    /// <summary>Nhật ký thông báo tiền về từ ngân hàng, kể cả thông báo không khớp giao dịch nào (để kế toán đối soát).</summary>
-    [HttpGet("bank-notifications")]
-    [HasPermission(Permissions.XemDoiSoat)]
-    public async Task<IActionResult> ListBankNotifications([FromQuery] string? ketQua, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? trangThaiXuLy = null)
-    {
-        var (items, total) = await _paymentService.ListBankNoticesAsync(ketQua, page, pageSize, trangThaiXuLy);
-        return Ok(ApiResponse<List<BankNoticeDto>>.Ok(items, TaoMeta(page, pageSize, total)));
-    }
 
     /// <summary>
     /// Webhook của SePay: khi tài khoản ngân hàng thật nhận tiền, SePay gọi vào đây (header Authorization: Apikey ...).

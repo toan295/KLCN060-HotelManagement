@@ -62,6 +62,7 @@
                         <TextBlock Text="TỔNG PHẢI THU" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
                         <TextBlock Text="{Binding ThongKe.TongTien, StringFormat={}{0:N0}đ}" FontSize="18" FontWeight="Bold" />
                         <TextBlock Text="{Binding ThongKe.DaThu, StringFormat=đã thu {0:N0}đ}" FontSize="11" Foreground="{StaticResource MauThanhCong}" />
+                        <TextBlock Text="tiền khách phải trả, sau khi trừ cọc" FontSize="11" Foreground="{StaticResource MauChuNhat}" />
                     </StackPanel>
                 </Border>
                 <Button Style="{StaticResource TheThongKeStyle}" Command="{Binding LocNhanhCommand}" CommandParameter="NO" ToolTip="Bấm để xem hóa đơn còn nợ nhiều nhất">
@@ -255,7 +256,7 @@
 
                         <Border Style="{StaticResource InsetStyle}" Padding="12,10" Margin="0,12,0,0" Visibility="{Binding CheDoChiXem, Converter={StaticResource BoolToVis}}">
                             <TextBlock TextWrapping="Wrap" Style="{StaticResource HintTextStyle}" FontSize="12"
-                                       Text="Chế độ xem: bạn theo dõi hóa đơn và công nợ. Thu tiền do Kế toán / Lễ tân thực hiện. Hệ thống không cho sửa tiền hay xóa hóa đơn." />
+                                       Text="Chế độ xem: bạn theo dõi hóa đơn và công nợ. Thu tiền do Lễ tân thực hiện. Hệ thống không cho sửa tiền hay xóa hóa đơn." />
                         </Border>
                     </StackPanel>
                 </ScrollViewer>

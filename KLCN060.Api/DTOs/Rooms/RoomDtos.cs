@@ -32,18 +32,6 @@ public class RoomStatusRequest
     public string? TinhTrangCu { get; set; }
 }
 
-public class RoomStatusHistoryDto
-{
-    public long MaLichSu { get; set; }
-    public string MaPhong { get; set; } = null!;
-    public string TuTinhTrang { get; set; } = null!;
-    public string DenTinhTrang { get; set; } = null!;
-    public DateTime ThoiGian { get; set; }
-    public string? MaTaiKhoan { get; set; }
-    public string? HoTenNguoiThucHien { get; set; }
-    public string? LyDo { get; set; }
-}
-
 public class RoomDto
 {
     public string MaPhong { get; set; } = null!;
@@ -66,7 +54,6 @@ public class RoomDto
     public string? MaPhieuDatSapDen { get; set; }
 
     /// <summary>Số sự cố chưa xử lý xong của phòng.</summary>
-    public int SuCoDangMo { get; set; }
 
     /// <summary>Phòng cần được chú ý và vì sao (null = bình thường). MucCanhBao: NGUY_HIEM (ảnh hưởng khách sắp đến / bán phòng) hoặc CANH_BAO.</summary>
     public string? CanhBao { get; set; }
@@ -95,14 +82,6 @@ public class RoomReservationDto
     public decimal TienCoc { get; set; }
 }
 
-public class RoomIncidentBriefDto
-{
-    public int MaSuCo { get; set; }
-    public string TieuDe { get; set; } = null!;
-    public string MucDo { get; set; } = null!;
-    public string TrangThai { get; set; } = null!;
-}
-
 /// <summary>Mọi thứ cần biết về một phòng để quyết định ngay trên sơ đồ: tình trạng + vì sao + ai đổi, khách đang ở, đặt phòng sắp tới, sự cố, việc tiếp theo.</summary>
 public class RoomDetailDto
 {
@@ -118,8 +97,6 @@ public class RoomDetailDto
     public string? TinhTrangTruoc { get; set; }
     public RoomStayDto? KhachDangO { get; set; }
     public List<RoomReservationDto> DatPhongSapToi { get; set; } = new();
-    public List<RoomIncidentBriefDto> SuCo { get; set; } = new();
-    public string? NguoiDangDon { get; set; }
     public string? CanhBao { get; set; }
     public string? MucCanhBao { get; set; }
 

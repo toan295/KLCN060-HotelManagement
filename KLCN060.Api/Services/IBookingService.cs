@@ -14,7 +14,7 @@ public interface IBookingService
     Task<CancelBookingResultDto> CancelAsync(string maPhieuDat, CancelBookingRequest request, CurrentUser user);
     Task<BookingDto> UpdateAsync(string maPhieuDat, UpdateBookingRequest request, CurrentUser user);
     Task<BookingChangePreviewDto> PreviewUpdateAsync(string maPhieuDat, UpdateBookingRequest request, CurrentUser user);
-    Task<List<KLCN060.Api.DTOs.FrontDesk.VacantRoomDto>> GetSwapRoomsAsync(string maPhieuDat, string maPhongCu, DateOnly? nhan, DateOnly? tra);
+    Task<List<KLCN060.Api.DTOs.Bookings.VacantRoomDto>> GetSwapRoomsAsync(string maPhieuDat, string maPhongCu, DateOnly? nhan, DateOnly? tra);
     Task<BookingDto> MarkNoShowAsync(string maPhieuDat, NoShowRequest request, CurrentUser user);
     Task<List<CompanionDto>> GetCompanionsAsync(string maPhieuDat, CurrentUser user);
     Task<CompanionDto> AddCompanionAsync(string maPhieuDat, AddCompanionRequest request, CurrentUser user);

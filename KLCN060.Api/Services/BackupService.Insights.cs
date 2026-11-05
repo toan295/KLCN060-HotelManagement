@@ -100,6 +100,18 @@ public partial class BackupService
             cmd.CommandText = $"DBCC CHECKDB ({QuoteName(tenDb)}) WITH NO_INFOMSGS, PHYSICAL_ONLY";
             try { await cmd.ExecuteNonQueryAsync(); ds.Add("DBCC CHECKDB (mức vật lý): không có lỗi"); }
             catch (SqlException ex) { dat = false; ds.Add($"DBCC CHECKDB báo lỗi: {ex.Message}"); }
+
+            // Cấu trúc sau phục hồi phải khớp mô hình của ứng dụng (Database First: cấu trúc do script Database/*.sql quy định):
+            // bản sao lưu từ phiên bản cấu trúc cũ thiếu bảng thì báo rõ để chạy script nâng cấp.
+            var coTrongCsdl = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            await using (var dsBang = conn.CreateCommand())
+            {
+                dsBang.CommandText = "SELECT name FROM sys.tables";
+                await using var rd = await dsBang.ExecuteReaderAsync();
+                while (await rd.ReadAsync()) coTrongCsdl.Add(rd.GetString(0));
+            }
+            var thieu = _context.Model.GetEntityTypes().Select(x => x.GetTableName()).Where(x => x is not null).Distinct().Where(x => !coTrongCsdl.Contains(x!)).ToList();
+            ds.Add(thieu.Count == 0 ? "Cấu trúc CSDL khớp phiên bản ứng dụng" : $"LƯU Ý: bản sao lưu thiếu {thieu.Count} bảng so với ứng dụng hiện tại ({string.Join(", ", thieu.Take(5))}) - cần chạy script cập nhật cấu trúc");
         }
         catch (SqlException ex)
         {
@@ -107,19 +119,6 @@ public partial class BackupService
             ds.Add($"Không mở được CSDL sau phục hồi: {ex.Message}");
         }
 
-        try
-        {
-            var choMigration = (await _context.Database.GetPendingMigrationsAsync()).ToList();
-            if (choMigration.Count > 0)
-            {
-                ds.Add($"LƯU Ý: bản sao lưu cũ hơn cấu trúc hiện tại, còn {choMigration.Count} migration chưa áp dụng (khởi động lại API để tự nâng cấp)");
-            }
-            else ds.Add("Cấu trúc CSDL khớp phiên bản ứng dụng");
-        }
-        catch (Exception ex) when (ex is SqlException or InvalidOperationException)
-        {
-            ds.Add("Không đọc được danh sách migration");
-        }
         return (dat, string.Join("; ", ds) + ".");
     }
 
@@ -148,205 +147,6 @@ public partial class BackupService
         dto.CanhBao.Add("Tất cả người dùng đang đăng nhập sẽ bị ngắt kết nối trong lúc phục hồi.");
         dto.CanhBao.Add("Hệ thống sẽ tự chụp một bản sao lưu an toàn của dữ liệu hiện tại ngay trước khi ghi đè, để có thể quay lại.");
         dto.KetLuan = "File hợp lệ và đúng CSDL - có thể phục hồi sau khi bạn nhập lý do và gõ lại tên CSDL để xác nhận.";
-        return dto;
-    }
-
-    // ===== Bật / tắt sao lưu tự động ngay trên giao diện =====
-    public Task<BackupScheduleDto> GetScheduleAsync()
-    {
-        var lt = BackupScheduleStore.PhuLen(_configuration.GetSection(ScheduledBackupOptions.SectionName).Get<ScheduledBackupOptions>() ?? new ScheduledBackupOptions());
-        return Task.FromResult(new BackupScheduleDto { TuDongBat = lt.Enabled, ChuKyGio = Math.Max(1, lt.IntervalHours), KiemTraMoiPhut = Math.Max(1, lt.CheckEveryMinutes), ThuMuc = string.IsNullOrWhiteSpace(lt.ThuMuc) ? null : lt.ThuMuc });
-    }
-
-    public async Task<BackupScheduleDto> SetScheduleAsync(BackupScheduleRequest request, CurrentUser user)
-    {
-        if (request.ChuKyGio is < 1 or > 720)
-            throw new ApiException(StatusCodes.Status400BadRequest, "CHU_KY_KHONG_HOP_LE", "Chu kỳ sao lưu từ 1 đến 720 giờ.", "chuKyGio");
-        var cu = await GetScheduleAsync();
-        try { BackupScheduleStore.Ghi(request.TuDongBat, request.ChuKyGio); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            throw new ApiException(StatusCodes.Status500InternalServerError, "KHONG_GHI_DUOC_CAI_DAT", $"Không lưu được cài đặt sao lưu tự động trên máy chạy API: {ex.Message}");
-        }
-        _context.NhatKyThaoTacs.Add(new NhatKyThaoTac
-        {
-            MaTaiKhoan = user.TenDN, HanhDong = "CAU_HINH_SAO_LUU_TU_DONG", DoiTuongTacDong = "backup-schedule", ThoiGian = DateTime.Now, KetQua = "THANH_CONG",
-            ChiTiet = $"truoc=[tuDong={(cu.TuDongBat ? "Có" : "Không")}; chuKyGio={cu.ChuKyGio}]; sau=[tuDong={(request.TuDongBat ? "Có" : "Không")}; chuKyGio={request.ChuKyGio}]"
-        });
-        await _context.SaveChangesAsync();
-        return await GetScheduleAsync();
-    }
-
-    // ===== Tình trạng an toàn dữ liệu + đánh giá khả năng phục hồi =====
-    public async Task<BackupStatusDto> GetStatusAsync()
-    {
-        var bayGio = DateTime.Now;
-        var builder = LayConnectionStringBuilder();
-        var lichTrinh = BackupScheduleStore.PhuLen(_configuration.GetSection(ScheduledBackupOptions.SectionName).Get<ScheduledBackupOptions>() ?? new ScheduledBackupOptions());
-        var lichSu = await _context.LichSuSaoLuus.AsNoTracking().OrderByDescending(x => x.ThoiGianThucHien).ThenByDescending(x => x.MaLichSu).ToListAsync();
-        var saoLuu = lichSu.Where(x => x.LoaiThaoTac == LoaiThaoTacSaoLuu.SAO_LUU).ToList();
-        var thanhCong = saoLuu.Where(x => x.KetQua == KetQuaSaoLuu.THANH_CONG).ToList();
-        var kiemTraCuoi = lichSu.FirstOrDefault(x => x.LoaiThaoTac == LoaiThaoTacSaoLuu.KIEM_TRA);
-        var cuoi = thanhCong.FirstOrDefault();
-        var soNgay = cuoi is null ? (int?)null : (int)Math.Floor((bayGio - cuoi.ThoiGianThucHien).TotalDays);
-        var lanCuoi = saoLuu.FirstOrDefault();
-        var lanCuoiThatBai = lanCuoi?.KetQua == KetQuaSaoLuu.THAT_BAI;
-        var canhBao = new List<string>();
-
-        string tinhTrang, tomTat;
-        if (cuoi is null)
-        {
-            tinhTrang = "CHUA_SAO_LUU";
-            tomTat = "Chưa có bản sao lưu thành công nào - hãy sao lưu ngay.";
-        }
-        else if (lanCuoiThatBai || soNgay > 7)
-        {
-            tinhTrang = "CANH_BAO";
-            tomTat = lanCuoiThatBai ? "Lần sao lưu gần nhất thất bại - hãy thử lại." : $"Đã {soNgay} ngày chưa sao lưu.";
-        }
-        else
-        {
-            tinhTrang = "TOT";
-            tomTat = soNgay == 0 ? "Đã sao lưu hôm nay." : $"Sao lưu gần nhất cách đây {soNgay} ngày.";
-        }
-
-        var hanTuDong = lichTrinh.Enabled && cuoi is not null ? cuoi.ThoiGianThucHien.AddHours(lichTrinh.IntervalHours) : (DateTime?)null;
-        var tuDong = saoLuu.Where(x => x.NguonKichHoat == "TU_DONG" || (x.GhiChu != null && x.GhiChu.StartsWith("Sao lưu tự động"))).ToList();
-        var tuDongQuaHan = lichTrinh.Enabled && hanTuDong is { } h && bayGio > (BackupScheduleStore.ThoiDiemCaiDat() is { } moc && moc > h ? moc : h).AddMinutes(Math.Max(1, lichTrinh.CheckEveryMinutes) + lichTrinh.RetryAfterMinutes);
-        if (!lichTrinh.Enabled) canhBao.Add("Sao lưu tự động đang TẮT - dữ liệu chỉ được bảo vệ khi có người bấm sao lưu.");
-        else if (tuDongQuaHan) canhBao.Add($"Sao lưu tự động đã quá hạn (hạn {hanTuDong:dd/MM HH:mm}): dịch vụ nền có thể không chạy hoặc lần chạy gần nhất thất bại.");
-
-        // Bản thành công gần nhất: đã kiểm tra chưa, còn file không, dung lượng
-        bool? cuoiDaKiemTra = cuoi is null ? null : DaKiemTra(cuoi, lichSu);
-        var cuoiConFile = cuoi?.DuongDanFile is { } p && File.Exists(p);
-        if (cuoi is not null && !cuoiConFile) canhBao.Add("File của bản sao lưu gần nhất không còn trên máy chạy API (đã bị xóa hoặc di chuyển).");
-        if (cuoi is not null && cuoiDaKiemTra == null) canhBao.Add("Bản sao lưu gần nhất chưa được kiểm tra toàn vẹn.");
-        if (cuoiDaKiemTra == false) canhBao.Add("Bản sao lưu gần nhất KHÔNG đạt kiểm tra toàn vẹn - đừng dựa vào bản này.");
-
-        // Dung lượng
-        string? thuMuc = null; long? trong = null; string muc = "KHONG_RO"; string? ghiChuDl = null;
-        try
-        {
-            thuMuc = await XacDinhThuMucAsync(builder, null);
-            var goc = Path.GetPathRoot(thuMuc);
-            if (!string.IsNullOrEmpty(goc)) trong = new DriveInfo(goc).AvailableFreeSpace;
-        }
-        catch (Exception ex) when (ex is SqlException or IOException or ArgumentException or ApiException) { }
-        var kichThuocCsdl = await DocKichThuocCsdlAsync(builder);
-        var banToiDa = thanhCong.Where(x => x.KichThuocBytes != null).Select(x => x.KichThuocBytes!.Value).DefaultIfEmpty(0).Max();
-        var chuan = Math.Max(banToiDa, kichThuocCsdl ?? 0);
-        if (trong is { } t)
-        {
-            var nguong = Math.Max(1L << 30, chuan * 3);
-            muc = t < nguong ? "THAP" : "OK";
-            var soLan = chuan > 0 ? t / chuan : (long?)null;
-            ghiChuDl = $"Còn trống {Dinh(t)} ở ổ chứa thư mục sao lưu" + (soLan is { } n ? $" (đủ cho khoảng {n} bản nữa)" : "") + (muc == "THAP" ? " - SẮP HẾT, hãy dọn dẹp bản cũ hoặc đổi thư mục." : ".");
-            if (muc == "THAP") canhBao.Add("Dung lượng lưu trữ sao lưu sắp hết.");
-        }
-        else ghiChuDl = "Không đọc được dung lượng trống của nơi lưu bản sao lưu.";
-
-        var kq = new BackupStatusDto
-        {
-            TinhTrang = tinhTrang, TomTat = tomTat,
-            LanSaoLuuThanhCongCuoi = cuoi?.ThoiGianThucHien, SoNgayTuLanSaoLuuCuoi = soNgay, DuongDanBanSaoLuuCuoi = cuoi?.DuongDanFile,
-            TongSoBanSaoLuuThanhCong = thanhCong.Count,
-            LanPhucHoiCuoi = lichSu.FirstOrDefault(x => x.LoaiThaoTac == LoaiThaoTacSaoLuu.PHUC_HOI && x.KetQua == KetQuaSaoLuu.THANH_CONG)?.ThoiGianThucHien,
-            LanKiemTraCuoi = kiemTraCuoi?.ThoiGianThucHien,
-            LanKiemTraCuoiHopLe = kiemTraCuoi is null ? null : kiemTraCuoi.KetQua == KetQuaSaoLuu.THANH_CONG,
-            LanSaoLuuCuoiThatBai = lanCuoiThatBai,
-            TuDongBat = lichTrinh.Enabled, ChuKyTuDongGio = lichTrinh.Enabled ? lichTrinh.IntervalHours : null, HanTuDongKeTiep = hanTuDong,
-            TenCSDL = builder.InitialCatalog, CapNhatLuc = bayGio,
-            LanSaoLuuCuoi = lanCuoi?.ThoiGianThucHien, KetQuaLanSaoLuuCuoi = lanCuoi?.KetQua.ToString(), LoiLanSaoLuuCuoi = lanCuoiThatBai ? (lanCuoi!.ThongBaoLoi ?? lanCuoi.GhiChu) : null,
-            BanCuoiDaKiemTra = cuoiDaKiemTra, BanCuoiKichThuocBytes = cuoi?.KichThuocBytes, BanCuoiConFile = cuoiConFile,
-            LanTuDongThanhCongCuoi = tuDong.FirstOrDefault(x => x.KetQua == KetQuaSaoLuu.THANH_CONG)?.ThoiGianThucHien,
-            LanTuDongThatBaiCuoi = tuDong.FirstOrDefault(x => x.KetQua == KetQuaSaoLuu.THAT_BAI)?.ThoiGianThucHien,
-            TuDongQuaHan = tuDongQuaHan,
-            ThuMucSaoLuu = thuMuc, DungLuongTrongBytes = trong, KichThuocCSDLBytes = kichThuocCsdl,
-            TongDungLuongCacBanBytes = thanhCong.Where(x => x.KichThuocBytes != null && x.DuongDanFile != null && File.Exists(x.DuongDanFile)).Sum(x => x.KichThuocBytes!.Value),
-            MucDungLuong = muc, GhiChuDungLuong = ghiChuDl,
-            CanhBao = canhBao
-        };
-        kq.KhaNangPhucHoi = await DanhGiaPhucHoiAsync(thanhCong, lichSu, lichTrinh, bayGio, kq.CanhBao);
-        return kq;
-    }
-
-    private static string Dinh(long bytes)
-    {
-        string[] dv = { "B", "KB", "MB", "GB", "TB" };
-        double v = bytes; var i = 0;
-        while (v >= 1024 && i < dv.Length - 1) { v /= 1024; i++; }
-        return $"{v:0.#} {dv[i]}";
-    }
-
-    /// <summary>true = đã kiểm tra và đạt; false = kiểm tra không đạt; null = chưa kiểm tra lần nào.</summary>
-    private static bool? DaKiemTra(LichSuSaoLuu ban, List<LichSuSaoLuu> lichSu)
-    {
-        var sauDo = lichSu.Where(x => x.LoaiThaoTac == LoaiThaoTacSaoLuu.KIEM_TRA && x.DuongDanFile == ban.DuongDanFile && x.ThoiGianThucHien >= ban.ThoiGianThucHien)
-            .OrderByDescending(x => x.ThoiGianThucHien).FirstOrDefault();
-        if (sauDo is not null) return sauDo.KetQua == KetQuaSaoLuu.THANH_CONG;
-        return ban.DaKiemTraHopLe;
-    }
-
-    private async Task<long?> DocKichThuocCsdlAsync(SqlConnectionStringBuilder builder)
-    {
-        try
-        {
-            await using var conn = new SqlConnection(builder.ConnectionString);
-            await conn.OpenAsync();
-            await using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT SUM(CAST(size AS bigint)) * 8192 FROM sys.database_files WHERE type = 0";
-            var v = await cmd.ExecuteScalarAsync();
-            return v is null or DBNull ? null : Convert.ToInt64(v);
-        }
-        catch (SqlException) { return null; }
-    }
-
-    private async Task<RecoveryAssessmentDto> DanhGiaPhucHoiAsync(List<LichSuSaoLuu> thanhCong, List<LichSuSaoLuu> lichSu, ScheduledBackupOptions lichTrinh, DateTime bayGio, List<string> canhBaoChung)
-    {
-        var dto = new RecoveryAssessmentDto
-        {
-            CoCheBaoVe =
-            [
-                "Phục hồi luôn kiểm tra toàn vẹn (checksum) và kiểm tra file thuộc đúng CSDL trước khi ghi đè",
-                "Tự chụp bản sao lưu an toàn của dữ liệu hiện tại ngay trước khi phục hồi - không chụp được thì dừng",
-                "Phải nhập lý do và gõ lại tên CSDL; mọi thao tác kiểm tra từ máy chủ (không thể bỏ qua bằng giao diện)",
-                "Sau phục hồi tự kiểm tra CSDL (DBCC CHECKDB, số liệu, migration) và ghi lịch sử",
-                "Lịch sử sao lưu được ghi thêm ra file ngoài CSDL nên không mất khi phục hồi"
-            ]
-        };
-        // Bản đề xuất: bản thành công gần nhất còn file và không bị đánh dấu hỏng.
-        LichSuSaoLuu? tot = null;
-        foreach (var b in thanhCong)
-        {
-            if (string.IsNullOrEmpty(b.DuongDanFile) || !File.Exists(b.DuongDanFile)) continue;
-            if (DaKiemTra(b, lichSu) == false) continue;
-            tot = b; break;
-        }
-        if (tot is null)
-        {
-            dto.MucDo = "KHONG_CO";
-            dto.KetLuan = "Hiện KHÔNG có bản sao lưu nào dùng được (chưa sao lưu, file đã mất hoặc không đạt kiểm tra). Nếu CSDL hỏng bây giờ, dữ liệu sẽ không phục hồi được - hãy sao lưu ngay.";
-            dto.CanhBao.Add("Không có bản phục hồi khả dụng.");
-            return dto;
-        }
-
-        var daKt = DaKiemTra(tot, lichSu);
-        var gio = (int)Math.Floor((bayGio - tot.ThoiGianThucHien).TotalHours);
-        dto.MaBanDeXuat = tot.MaLichSu; dto.ThoiDiemBanDeXuat = tot.ThoiGianThucHien; dto.DuongDanBanDeXuat = tot.DuongDanFile;
-        dto.BanDeXuatDaKiemTra = daKt; dto.BanDeXuatConFile = true; dto.SoGioCoTheMatDuLieu = gio;
-        dto.SoThaoTacCoTheMat = await _context.NhatKyThaoTacs.AsNoTracking().CountAsync(x => x.ThoiGian > tot.ThoiGianThucHien);
-
-        var gioiHanGio = lichTrinh.Enabled ? Math.Max(24, lichTrinh.IntervalHours * 2) : 48;
-        if (daKt == true && gio <= gioiHanGio) dto.MucDo = "SAN_SANG";
-        else dto.MucDo = "RUI_RO";
-        if (daKt != true) dto.CanhBao.Add(daKt == false ? "Bản đề xuất không đạt kiểm tra." : "Bản đề xuất chưa được kiểm tra toàn vẹn - hãy bấm Kiểm tra.");
-        if (gio > gioiHanGio) dto.CanhBao.Add($"Bản đề xuất đã {gio} giờ tuổi - có thể mất nhiều dữ liệu.");
-        if (!ReferenceEquals(tot, thanhCong.FirstOrDefault()))
-            dto.CanhBao.Add("Bản sao lưu gần nhất không dùng được (mất file hoặc không đạt kiểm tra) nên đề xuất bản cũ hơn.");
-
-        dto.KetLuan = $"Nếu CSDL hỏng ngay bây giờ: phục hồi bản #{tot.MaLichSu} ({tot.ThoiGianThucHien:dd/MM/yyyy HH:mm}). "
-            + $"Dữ liệu có thể mất từ thời điểm đó đến nay ({(gio < 1 ? "dưới 1 giờ" : $"khoảng {gio} giờ")}, {dto.SoThaoTacCoTheMat} thao tác nghiệp vụ). "
-            + (daKt == true ? "Bản này đã được kiểm tra toàn vẹn - đáng tin cậy." : "Bản này CHƯA được xác nhận toàn vẹn.");
         return dto;
     }
 }

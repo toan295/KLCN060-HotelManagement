@@ -8,7 +8,7 @@ namespace KLCN060.Desktop.ViewModels;
 /// <summary>
 /// D20 - Hóa đơn. Danh sách + thẻ thống kê (tính trên TOÀN BỘ hóa đơn khớp bộ lọc) + panel tổng quan một hóa đơn
 /// (của ai, booking/phòng nào, cơ cấu tiền, ai thu/khi nào, lịch sử, ai được làm gì).
-/// Quản lý chỉ xem và kiểm soát; Kế toán/Lễ tân (quyền THANH_TOAN) mở màn hình thanh toán.
+/// Quản lý chỉ xem và kiểm soát; Lễ tân (quyền THANH_TOAN) mở màn hình thanh toán.
 /// </summary>
 public partial class HoaDonViewModel : ObservableObject
 {
@@ -41,7 +41,7 @@ public partial class HoaDonViewModel : ObservableObject
     /// <summary>Có quyền thu tiền (THANH_TOAN): mở màn hình thanh toán. Người chỉ có quyền báo cáo (Quản lý) chỉ xem.</summary>
     public bool CoTheThanhToan { get; } = AppSession.Current.CoQuyen(QuyenHeThong.ThanhToan);
     public bool CheDoChiXem => !CoTheThanhToan;
-    /// <summary>Lịch sử thao tác chỉ hiện cho Kế toán; Lễ tân chỉ thu tiền và tra cứu; Quản lý chỉ theo dõi hóa đơn và công nợ.</summary>
+    /// <summary>Lịch sử thao tác chỉ hiện cho Quản lý; Lễ tân chỉ thu tiền và tra cứu; Quản lý chỉ theo dõi hóa đơn và công nợ.</summary>
     public bool LaLeTan { get; } = AppSession.Current.CoQuyen(QuyenHeThong.ThaoTacLeTan) && !AppSession.Current.CoQuyen(QuyenHeThong.DuyetNghiepVu);
     public bool HienDieuChinh => CoTheThanhToan && !LaLeTan;
     public string PhuDe => LaLeTan

@@ -21,9 +21,6 @@ public class ServiceCatalogItemDto
 
     public int SoMucChiTiet { get; set; }
     public int SoMucChiTietHienThi { get; set; }
-    /// <summary>Tên các gói đang chứa dịch vụ này (đổi giá/ngừng phục vụ dịch vụ sẽ ảnh hưởng các gói này).</summary>
-    public List<string> CacGoiChua { get; set; } = new();
-    public bool DangGanMinibar { get; set; }
 
     public bool CoTheXoa { get; set; }
     public string? LyDoKhongXoa { get; set; }
@@ -39,10 +36,6 @@ public class ServiceCatalogSummaryDto
     public int NgungPhucVu { get; set; }
     public int DichVuChuaCoChiTiet { get; set; }
     public int DichVuChuaTungDung { get; set; }
-    public int TongGoi { get; set; }
-    public int GoiDangBan { get; set; }
-    /// <summary>Gói bật nhưng không bán được vì có dịch vụ ngừng phục vụ.</summary>
-    public int GoiKhongBanDuoc { get; set; }
     [JsonConverter(typeof(VndMoneyJsonConverter))] public decimal DoanhThuDichVu { get; set; }
 }
 

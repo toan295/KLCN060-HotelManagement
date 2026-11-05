@@ -51,8 +51,6 @@ public class RoomTypeCatalogDto : RoomTypeDto
     public int SoDatPhongTuongLai { get; set; }
     public bool CoTheXoa { get; set; }
     public string? LyDoKhongXoa { get; set; }
-    /// <summary>Số quy tắc giá đang gắn với loại phòng.</summary>
-    public int SoQuyTacGia { get; set; }
 }
 
 public class RoomTypeAvailabilityDto
@@ -60,6 +58,9 @@ public class RoomTypeAvailabilityDto
     public string MaLoai { get; set; } = null!;
     public string TenLoai { get; set; } = null!;
     public int SoNguoiTieuChuan { get; set; }
+
+    /// <summary>Số khách tối đa mỗi phòng (tiêu chuẩn + người ở thêm, phần vượt tiêu chuẩn có phụ thu).</summary>
+    public int SucChuaToiDa { get; set; }
 
     /// <summary>Đơn giá bình quân mỗi đêm áp dụng cho khoảng ngày đã chọn (đã tính quy tắc giá cuối tuần/cao điểm/lễ tết đang bật; bằng giá cơ bản nếu không có).</summary>
     [JsonConverter(typeof(VndMoneyJsonConverter))]

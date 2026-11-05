@@ -15,4 +15,6 @@ public class BookingSummaryViewModel
     public int SoPhong { get; set; }
     public decimal TienCoc { get; set; }
     public decimal TongTienDuKien { get; set; }
+    /// <summary>true = tiền cọc đã được nhận (phòng đã được giữ).</summary>
+    public bool DaThuCoc { get; set; }
 }

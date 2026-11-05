@@ -47,6 +47,9 @@ public class InvoiceDto
     [JsonConverter(typeof(VndMoneyJsonConverter))] public decimal PhuThu { get; set; }
     [JsonConverter(typeof(VndMoneyJsonConverter))] public decimal TienDaCoc { get; set; }
 
+    /// <summary>Khuyến mãi đã trừ khi lập hóa đơn; doanh thu sau giảm giá = tiền phòng + dịch vụ + phụ thu − khuyến mãi.</summary>
+    [JsonConverter(typeof(VndMoneyJsonConverter))] public decimal TienKhuyenMai { get; set; }
+
     /// <summary>Số tiền khách phải thanh toán tại quầy (đã trừ khuyến mãi và tiền cọc).</summary>
     [JsonConverter(typeof(VndMoneyJsonConverter))] public decimal TongTien { get; set; }
 

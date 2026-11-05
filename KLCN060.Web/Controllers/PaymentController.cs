@@ -1,3 +1,4 @@
+using KLCN060.Web.Helpers;
 using KLCN060.Web.Models.Payment;
 using KLCN060.Web.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -27,8 +28,11 @@ public class PaymentController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account");
 
-        var result = await _apiClient.PostAsync<TransferViewModel>("api/v1/payments/transfers",
-            new { loaiThamChieu = "DAT_COC", maThamChieu = maPhieuDat }, requireAuth: true);
+        // Bấm đúp nút thanh toán chỉ khởi tạo MỘT yêu cầu chuyển khoản (request đến sau dùng chung kết quả của lần đầu).
+        var result = await ChongGuiTrung.ChayAsync(
+            $"{HttpContext.Session.Id}|THANH_TOAN|{maPhieuDat}",
+            () => _apiClient.PostAsync<TransferViewModel>("api/v1/payments/transfers",
+                new { loaiThamChieu = "DAT_COC", maThamChieu = maPhieuDat }, requireAuth: true));
 
         if (!result.Success || result.Data is null)
         {
@@ -46,9 +50,13 @@ public class PaymentController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account", new { returnUrl = Url.Action(nameof(Transfer), new { maGiaoDich }) });
 
-        var result = await _apiClient.GetAsync<TransferViewModel>($"api/v1/payments/transfers/{Uri.EscapeDataString(maGiaoDich)}", requireAuth: true);
-        if (!result.Success || result.Data is null)
+        var maUrl = MaThamChieu.DoanDuongDan(maGiaoDich);
+        if (maUrl is null)
             return NotFound();
+
+        var result = await _apiClient.GetAsync<TransferViewModel>($"api/v1/payments/transfers/{maUrl}", requireAuth: true);
+        if (!result.Success || result.Data is null)
+            return result.KhongKetNoi ? StatusCode(503) : NotFound();
 
         return View(result.Data);
     }
@@ -60,7 +68,11 @@ public class PaymentController : Controller
         if (!_apiClient.IsLoggedIn)
             return Unauthorized();
 
-        var result = await _apiClient.GetAsync<TransferViewModel>($"api/v1/payments/transfers/{Uri.EscapeDataString(maGiaoDich)}", requireAuth: true);
+        var maUrl = MaThamChieu.DoanDuongDan(maGiaoDich);
+        if (maUrl is null)
+            return NotFound();
+
+        var result = await _apiClient.GetAsync<TransferViewModel>($"api/v1/payments/transfers/{maUrl}", requireAuth: true);
         if (!result.Success || result.Data is null)
             return StatusCode(result.StatusCode == 0 ? 502 : result.StatusCode);
 
@@ -75,7 +87,11 @@ public class PaymentController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account");
 
-        var result = await _apiClient.PostAsync<TransferViewModel>($"api/v1/payments/transfers/{Uri.EscapeDataString(maGiaoDich)}/simulate-paid", null, requireAuth: true);
+        var maUrl = MaThamChieu.DoanDuongDan(maGiaoDich);
+        if (maUrl is null)
+            return NotFound();
+
+        var result = await _apiClient.PostAsync<TransferViewModel>($"api/v1/payments/transfers/{maUrl}/simulate-paid", null, requireAuth: true);
         if (!result.Success)
             TempData["ErrorMessage"] = result.ErrorMessage ?? "Không ghi nhận được khoản chuyển khoản thử nghiệm.";
 
@@ -90,7 +106,11 @@ public class PaymentController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account");
 
-        var result = await _apiClient.PostAsync<TransferViewModel>($"api/v1/payments/transfers/{Uri.EscapeDataString(maGiaoDich)}/cancel", null, requireAuth: true);
+        var maUrl = MaThamChieu.DoanDuongDan(maGiaoDich);
+        if (maUrl is null || !MaThamChieu.HopLe(maPhieuDat))
+            return NotFound();
+
+        var result = await _apiClient.PostAsync<TransferViewModel>($"api/v1/payments/transfers/{maUrl}/cancel", null, requireAuth: true);
         if (!result.Success)
             TempData["ErrorMessage"] = result.ErrorMessage ?? "Không hủy được giao dịch.";
 

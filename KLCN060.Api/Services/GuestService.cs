@@ -179,17 +179,24 @@ public partial class GuestService : IGuestService
     private async Task KiemTraTrungSoDTAsync(string maKhach, string soDT)
     {
         var sdt = soDT.Trim();
-        if (await _context.Khachs.AnyAsync(x => x.SoDT == sdt && x.MaKhach != maKhach))
+        // Tên đăng nhập của khách là SĐT lúc đăng ký (không đổi khi khách đổi SĐT): SĐT đó vẫn thuộc chủ tài khoản cũ nên không cấp cho người khác.
+        if (await _context.Khachs.AnyAsync(x => x.SoDT == sdt && x.MaKhach != maKhach)
+            || await _context.TaiKhoans.AnyAsync(x => x.TenDN == sdt && x.MaKhach != maKhach))
             throw new ApiException(StatusCodes.Status409Conflict, "SDT_DA_TON_TAI", "Số điện thoại đã được khách hàng khác sử dụng.", "soDT");
     }
 
-    private static void KiemTraHoTenSoDT(string? hoTen, string? soDT)
+    internal static void KiemTraHoTen(string? hoTen)
     {
         if (string.IsNullOrWhiteSpace(hoTen))
             throw new ApiException(StatusCodes.Status400BadRequest, "THIEU_HO_TEN", "Họ tên là bắt buộc.", "hoTen");
         var ten = hoTen.Trim();
         if (ten.Length < 2 || !ten.Any(char.IsLetter))
             throw new ApiException(StatusCodes.Status400BadRequest, "HO_TEN_KHONG_HOP_LE", "Họ tên tối thiểu 2 ký tự và phải có chữ cái.", "hoTen");
+    }
+
+    private static void KiemTraHoTenSoDT(string? hoTen, string? soDT)
+    {
+        KiemTraHoTen(hoTen);
         if (string.IsNullOrWhiteSpace(soDT))
             throw new ApiException(StatusCodes.Status400BadRequest, "THIEU_SO_DIEN_THOAI", "Số điện thoại là bắt buộc.", "soDT");
     }

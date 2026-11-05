@@ -3,7 +3,6 @@ using KLCN060.Domain;
 using KLCN060.Api.DTOs.Common;
 using KLCN060.Api.DTOs.Invoices;
 using KLCN060.Api.Services;
-using KLCN060.Api.Services.EInvoice;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,12 +14,10 @@ namespace KLCN060.Api.Controllers;
 public class InvoicesController : ControllerBase
 {
     private readonly IInvoiceService _invoiceService;
-    private readonly IEInvoiceService _eInvoiceService;
 
-    public InvoicesController(IInvoiceService invoiceService, IEInvoiceService eInvoiceService)
+    public InvoicesController(IInvoiceService invoiceService)
     {
         _invoiceService = invoiceService;
-        _eInvoiceService = eInvoiceService;
     }
 
     /// <summary>Danh sách hóa đơn (lọc theo trạng thái thanh toán, tìm theo mã/khách) để lễ tân, kế toán tìm hóa đơn cần thu tiền hoặc đối chiếu.</summary>
@@ -71,22 +68,4 @@ public class InvoicesController : ControllerBase
         var (content, fileName) = await _invoiceService.ExportPdfAsync(maHD, CurrentUser.From(User));
         return File(content, "application/pdf", fileName);
     }
-
-    /// <summary>Hóa đơn điện tử (gửi nhà cung cấp HĐĐT/cơ quan thuế) của một hóa đơn. data = null nếu chưa lập.</summary>
-    [HttpGet("{maHD}/e-invoice")]
-    [HasPermission(Permissions.ThanhToan, Permissions.XemBaoCao)]
-    public async Task<IActionResult> GetEInvoice(string maHD)
-        => Ok(ApiResponse<EInvoiceDto?>.Ok(await _eInvoiceService.GetAsync(maHD)));
-
-    /// <summary>Lưu thông tin người mua và phát hành hóa đơn điện tử (chỉ khi hóa đơn đã thanh toán đủ). Dùng lại để sửa thông tin khi trạng thái CHO_PHAT_HANH/LOI.</summary>
-    [HttpPost("{maHD}/e-invoice")]
-    [HasPermission(Permissions.ThanhToan)]
-    public async Task<IActionResult> IssueEInvoice(string maHD, [FromBody] IssueEInvoiceRequest request)
-        => Ok(ApiResponse<EInvoiceDto>.Ok(await _eInvoiceService.IssueAsync(maHD, request, CurrentUser.From(User))));
-
-    /// <summary>Gửi lại hóa đơn điện tử đang chờ phát hành/lỗi bằng thông tin đã lưu.</summary>
-    [HttpPost("{maHD}/e-invoice/retry")]
-    [HasPermission(Permissions.ThanhToan)]
-    public async Task<IActionResult> RetryEInvoice(string maHD)
-        => Ok(ApiResponse<EInvoiceDto>.Ok(await _eInvoiceService.RetryAsync(maHD, CurrentUser.From(User))));
 }

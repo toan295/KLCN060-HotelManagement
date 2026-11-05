@@ -82,7 +82,6 @@ public partial class QuanLyDanhMucPhongViewModel : ObservableObject
     [ObservableProperty] private LoaiPhongDanhMucDto? loaiChoAnh;
 
     public bool CoTheQuanLy { get; } = AppSession.Current.CoQuyen(QuyenHeThong.QuanLyPhong);
-    public bool CoTheDatGia { get; } = AppSession.Current.CoQuyen(QuyenHeThong.QuanLyGia);
 
     public bool CoTongQuan => TongQuan is not null;
     public bool CoForm => DangThemPhong || SelectedRoom is not null;
@@ -103,7 +102,7 @@ public partial class QuanLyDanhMucPhongViewModel : ObservableObject
     public bool CoTheXoaLoai => !DangThemLoai && SelectedRoomType?.CoTheXoa == true && CoTheQuanLy;
     public string LyDoKhongXoaLoai => SelectedRoomType is null || DangThemLoai ? "" : SelectedRoomType.CoTheXoa ? "" : SelectedRoomType.LyDoKhongXoa ?? "";
     public string TieuDeFormLoai => DangThemLoai ? "Thêm loại phòng mới" : SelectedRoomType is null ? "Loại phòng" : $"Loại phòng {SelectedRoomType.TenLoai} ({SelectedRoomType.MaLoai})";
-    public bool KhongSuaGia => !CoTheDatGia;
+    public bool KhongSuaGia => !CoTheQuanLy;
 
     public QuanLyDanhMucPhongViewModel(ApiClient api)
     {
@@ -458,7 +457,6 @@ public partial class QuanLyDanhMucPhongViewModel : ObservableObject
         var cu = SelectedRoomType;
         if (!DangThemLoai && cu is not null && gia != cu.DonGia)
         {
-            if (!CoTheDatGia) { DatThongBao("Chỉ người có quyền quản lý giá được đổi đơn giá loại phòng.", true); return; }
             if (!HopThoai.XacNhan("Đổi đơn giá loại phòng",
                     $"Đơn giá {cu.TenLoai}: {cu.DonGia:N0}đ → {gia:N0}đ.\nÁp dụng cho các đặt phòng MỚI; {cu.SoDatPhongTuongLai} đặt phòng sắp tới và hóa đơn cũ giữ nguyên giá đã chốt. Thay đổi được ghi nhật ký. Tiếp tục?")) return;
         }

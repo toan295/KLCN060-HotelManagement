@@ -95,13 +95,12 @@ public class ChatbotService : IChatbotService
         if (loais.Count == 0) return $"Quý khách vui lòng xem phòng trống ở trang Tìm phòng hoặc gọi hotline {ChatbotGoiY.Hotline}.";
         var phongs = await _context.Phongs.AsNoTracking().Where(x => x.TinhTrang != TinhTrangPhong.OOO).Select(x => new { x.MaPhong, x.MaLoai }).ToListAsync();
         var bi = await RoomAvailability.GetOccupiedRoomIdsAsync(_context, ngay.Value, ngay.Value.AddDays(1));
-        var quyTacs = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
 
         var sb = new StringBuilder($"Đêm {ngay.Value:dd/MM/yyyy} ({ChatbotFormat.Thu(ngay.Value.DayOfWeek)}):");
         foreach (var l in loais)
         {
             var trong = phongs.Count(p => p.MaLoai == l.MaLoai && !bi.Contains(p.MaPhong));
-            var gia = GiaPhongCalculator.GiaDem(l, ngay.Value, LoaiDatPhong.CA_NHAN, quyTacs, out _);
+            var gia = l.DonGia;
             sb.Append("\n- ").Append(l.TenLoai).Append(": ").Append(trong > 0 ? $"còn {trong} phòng, {ChatbotFormat.Tien(gia)}/đêm" : "hết phòng");
         }
         sb.Append("\n\nSố phòng trống chỉ để tham khảo vì có thể thay đổi khi khách khác đặt. Quý khách chọn ngày ở trang Tìm phòng để đặt chính xác.");

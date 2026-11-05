@@ -84,7 +84,7 @@ public class AccountController : Controller
 
         _apiClient.SaveTokens(result.Data!.AccessToken, result.Data.RefreshToken);
 
-        // Website chỉ dành cho khách hàng. Tài khoản nhân viên (Quản lý, Lễ tân, Kế toán, Buồng phòng) làm việc trên ứng dụng Desktop:
+        // Website chỉ dành cho khách hàng. Tài khoản nhân viên (Quản lý, Lễ tân) làm việc trên ứng dụng Desktop:
         // để nhân viên đăng nhập ở đây sẽ cho họ một phiên khách hàng "nửa vời" (đặt phòng không có khách, thấy menu của khách...).
         if (DocVaiTro(result.Data.AccessToken) != "KHACH_HANG")
         {
@@ -119,8 +119,15 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        // Thu hồi refresh token phía API (không chỉ xóa phiên Website); API không phản hồi thì vẫn đăng xuất phía Website.
+        if (_apiClient.IsLoggedIn)
+        {
+            try { await _apiClient.PostAsync<object>("api/v1/auth/logout", null, requireAuth: true); }
+            catch (ApiSessionExpiredException) { }
+        }
+
         _apiClient.ClearSession();
         return RedirectToAction("Index", "Home");
     }
@@ -220,7 +227,11 @@ public class AccountController : Controller
         if (string.IsNullOrWhiteSpace(model.Email))
             return RedirectToAction(nameof(ForgotPassword));
 
-        var result = await _apiClient.PostAsync<ForgotPasswordResultModel>("api/v1/auth/forgot-password", new { email = model.Email });
+        // Bấm đúp "Gửi lại mã" chỉ gửi MỘT thư (hai thư liên tiếp làm mã đầu hết hiệu lực ngay). Khóa theo email vì người dùng chưa đăng nhập, phiên chưa chắc có.
+        var email = model.Email;
+        var result = await ChongGuiTrung.ChayAsync(
+            $"GUI_LAI_MA|{email.Trim().ToLowerInvariant()}",
+            () => _apiClient.PostAsync<ForgotPasswordResultModel>("api/v1/auth/forgot-password", new { email }));
         if (result.Success && result.Data is not null)
             ViewBag.ThongBao = "Đã gửi lại mã xác nhận mới tới email của bạn. Mã cũ không còn dùng được.";
         else

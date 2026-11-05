@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using KLCN060.Api.Auditing;
 using KLCN060.Api.Controllers;
@@ -103,7 +103,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IDichVuService, DichVuService>();
-builder.Services.AddScoped<IServicePackageService, ServicePackageService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IFacilityService, FacilityService>();
 // Chatbot: bản đối sánh từ khóa luôn có sẵn; LlmChatbotService thêm câu trả lời bằng mô hình ngôn ngữ khi bật cấu hình "Chatbot:Llm" (mặc định tắt) và tự lùi về bản từ khóa khi lỗi.
@@ -117,40 +116,17 @@ builder.Services.AddScoped<IChatbotService, KLCN060.Api.Services.Chatbot.LlmChat
 builder.Services.AddScoped<IGuestService, GuestService>();
 builder.Services.AddScoped<IStayService, StayService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
-builder.Services.AddScoped<IFrontDeskService, FrontDeskService>();
-builder.Services.AddScoped<IHousekeepingService, HousekeepingService>();
-builder.Services.AddScoped<IIncidentService, IncidentService>();
-builder.Services.AddScoped<ISupplyService, SupplyService>();
-builder.Services.AddScoped<IRoomCheckService, RoomCheckService>();
-builder.Services.AddScoped<ILostFoundService, LostFoundService>();
 builder.Services.AddScoped<ICheckInService, CheckInService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
-// Hóa đơn điện tử: nhà cung cấp chọn bằng EInvoice:Provider (mặc định NONE = chưa kết nối, hóa đơn chờ phát hành).
-builder.Services.Configure<KLCN060.Api.Services.EInvoice.EInvoiceOptions>(builder.Configuration.GetSection(KLCN060.Api.Services.EInvoice.EInvoiceOptions.SectionName));
-builder.Services.AddHttpClient<KLCN060.Api.Services.EInvoice.MisaEInvoiceProvider>(c => c.Timeout = TimeSpan.FromSeconds(30));
-builder.Services.AddSingleton<KLCN060.Api.Services.EInvoice.ChuaKetNoiEInvoiceProvider>();
-builder.Services.AddScoped<KLCN060.Api.Services.EInvoice.IEInvoiceProvider>(sp =>
-    string.Equals(sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<KLCN060.Api.Services.EInvoice.EInvoiceOptions>>().Value.Provider, "MISA", StringComparison.OrdinalIgnoreCase)
-        ? sp.GetRequiredService<KLCN060.Api.Services.EInvoice.MisaEInvoiceProvider>()
-        : sp.GetRequiredService<KLCN060.Api.Services.EInvoice.ChuaKetNoiEInvoiceProvider>());
-builder.Services.AddScoped<KLCN060.Api.Services.EInvoice.IEInvoiceService, KLCN060.Api.Services.EInvoice.EInvoiceService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IBackupService, BackupService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<KLCN060.Api.Middlewares.KhoangNgayBaoCaoFilter>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IManagementReportService, ManagementReportService>();
 builder.Services.AddScoped<KLCN060.Api.Services.Finance.IManagementReportExporter, KLCN060.Api.Services.Finance.ManagementReportExporter>();
-builder.Services.AddScoped<IAlertService, AlertService>();
-builder.Services.Configure<AlertOptions>(builder.Configuration.GetSection(AlertOptions.SectionName));
-// Cài đặt sao lưu tự động do Quản lý đặt trên giao diện: nạp sau cùng nên đè lên appsettings; tự nạp lại khi file đổi.
-BackupScheduleStore.DamBaoThuMuc();
-builder.Configuration.AddJsonFile(BackupScheduleStore.DuongDan, optional: true, reloadOnChange: true);
-builder.Services.Configure<ScheduledBackupOptions>(builder.Configuration.GetSection(ScheduledBackupOptions.SectionName));
-builder.Services.AddHostedService<ScheduledBackupService>();
+builder.Services.AddHostedService<PhieuChoQuaHanService>();
 builder.Services.Configure<KLCN060.Api.Services.Finance.FinanceOptions>(builder.Configuration.GetSection(KLCN060.Api.Services.Finance.FinanceOptions.SectionName));
-builder.Services.AddScoped<KLCN060.Api.Services.Finance.ITransferReconciliationService, KLCN060.Api.Services.Finance.TransferReconciliationService>();
-builder.Services.AddScoped<IRateService, RateService>();
-builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IRoomImageService, RoomImageService>();
 
 // Thanh toán chuyển khoản vào tài khoản ngân hàng thật: cấu hình mục "Payment" + service xử lý (tạo QR, webhook ngân hàng, đối soát).
@@ -190,6 +166,27 @@ builder.Services.AddRateLimiter(options =>
         {
             PermitLimit = Math.Max(1, cauHinh.ForgotPasswordMaxPerIp),
             Window = TimeSpan.FromMinutes(Math.Max(1, cauHinh.ForgotPasswordWindowMinutes)),
+            QueueLimit = 0
+        });
+    });
+    // Đăng nhập / đăng ký: mỗi IP một bộ đếm riêng cho từng chức năng.
+    options.AddPolicy(AuthController.LoginRateLimitPolicy, httpContext =>
+    {
+        var cauHinh = httpContext.RequestServices.GetRequiredService<IOptions<AuthOptions>>().Value;
+        return RateLimitPartition.GetFixedWindowLimiter("login:" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = Math.Max(1, cauHinh.LoginMaxPerIp),
+            Window = TimeSpan.FromMinutes(Math.Max(1, cauHinh.LoginWindowMinutes)),
+            QueueLimit = 0
+        });
+    });
+    options.AddPolicy(AuthController.RegisterRateLimitPolicy, httpContext =>
+    {
+        var cauHinh = httpContext.RequestServices.GetRequiredService<IOptions<AuthOptions>>().Value;
+        return RateLimitPartition.GetFixedWindowLimiter("register:" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = Math.Max(1, cauHinh.RegisterMaxPerIp),
+            Window = TimeSpan.FromMinutes(Math.Max(1, cauHinh.RegisterWindowMinutes)),
             QueueLimit = 0
         });
     });
@@ -284,12 +281,19 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Tự động áp dụng migration mới nhất và seed dữ liệu bắt buộc (Mục 6) mỗi khi ứng dụng khởi động.
+// Database First: cấu trúc bảng do các script Database/*.sql tạo sẵn, API KHÔNG tự tạo / sửa bảng hay nạp dữ liệu.
+// Khi khởi động chỉ kiểm tra kết nối và sự có mặt của cơ sở dữ liệu để báo lỗi rõ ràng thay vì để lỗi lộ ra ở request đầu tiên.
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<KLCN060DbContext>();
-    await context.Database.MigrateAsync();
-    await DataSeeder.SeedAsync(context);
+    const string huongDan = "Hãy tạo cơ sở dữ liệu bằng các script trong thư mục Database/ (chạy Database/Tao-CoSoDuLieu.ps1) rồi khởi động lại API.";
+    if (!await context.Database.CanConnectAsync())
+        throw new InvalidOperationException("Không kết nối được cơ sở dữ liệu theo ConnectionStrings:DefaultConnection. " + huongDan);
+    try { _ = await context.VaiTros.AnyAsync(); }
+    catch (Microsoft.Data.SqlClient.SqlException e) when (e.Number == 208)
+    {
+        throw new InvalidOperationException("Cơ sở dữ liệu đã có nhưng chưa có bảng của hệ thống (thiếu bảng VaiTros). " + huongDan, e);
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -361,6 +365,8 @@ if (!app.Environment.IsDevelopment() && app.Services.GetRequiredService<IOptions
     app.Logger.LogInformation("Cấu hình ngân hàng: {TrangThai}", po.BankDaCauHinh
         ? $"tài khoản THẬT {po.Bank.BankName} ****{(soTk.Length >= 4 ? soTk[^4..] : soTk)} ({po.Bank.AccountName})"
         : po.DemoMode ? "CHƯA đủ thông tin (cần BankName, BankBin, AccountNumber, AccountName) - đang dùng tài khoản MẪU (chế độ thử nghiệm)" : "CHƯA cấu hình - không tạo được mã QR");
+    if (po.DemoMode && po.BankDaCauHinh)
+        app.Logger.LogWarning("CẢNH BÁO: Payment:DemoMode đang BẬT cùng tài khoản ngân hàng THẬT - khách bấm \"Tôi đã chuyển khoản\" là được xác nhận cọc dù tiền chưa về. Chỉ dùng khi demo; tắt DemoMode trước khi nhận khách thật.");
     app.Logger.LogInformation("Cấu hình email: {TrangThai}", !string.IsNullOrWhiteSpace(eo.Smtp.Host) && !string.IsNullOrWhiteSpace(eo.Smtp.From)
         ? $"{eo.Smtp.Host}:{eo.Smtp.Port} (gửi từ {eo.Smtp.From})" : "CHƯA cấu hình (Email:Smtp:Host/From) - Quên mật khẩu sẽ báo lỗi");
 }

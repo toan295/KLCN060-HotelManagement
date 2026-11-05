@@ -19,6 +19,7 @@ public class HoaDonConfiguration : IEntityTypeConfiguration<HoaDon>
         entity.Property(x => x.TienDV).HasColumnType("decimal(18,2)").IsRequired();
         entity.Property(x => x.PhuThu).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(0m);
         entity.Property(x => x.TienDaCoc).HasColumnType("decimal(18,2)").IsRequired();
+        entity.Property(x => x.TienKhuyenMai).HasColumnType("decimal(18,2)").IsRequired().HasDefaultValue(0m);
         entity.Property(x => x.TongTien).HasColumnType("decimal(18,2)").IsRequired();
 
         entity.Property(x => x.HinhThucThanhToan)

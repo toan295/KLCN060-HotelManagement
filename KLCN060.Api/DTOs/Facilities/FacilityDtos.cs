@@ -82,7 +82,6 @@ public class FacilityRoomIssueDto
     public int Tang { get; set; }
     public string TinhTrangPhong { get; set; } = null!;
     public int SoThietBiHong { get; set; }
-    public int SuCoDangMo { get; set; }
     public string ThietBi { get; set; } = "";
 }
 

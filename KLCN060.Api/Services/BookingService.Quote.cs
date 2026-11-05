@@ -39,7 +39,6 @@ public partial class BookingService
             throw new ApiException(StatusCodes.Status400BadRequest, "DOAN_CAN_TU_2_PHONG", "Đặt phòng theo đoàn cần từ 2 phòng trở lên. Đặt 1 phòng vui lòng chọn loại cá nhân.", "loaiDatPhong");
 
         var soDem = request.NgayTraDuKien.DayNumber - request.NgayDonDuKien.DayNumber;
-        var quyTacGia = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
         var daChiem = await RoomAvailability.GetOccupiedRoomIdsAsync(_context, request.NgayDonDuKien, request.NgayTraDuKien);
 
         var ketQua = new BookingQuoteDto { SoDem = soDem, DuPhong = true };
@@ -50,7 +49,7 @@ public partial class BookingService
             var loai = await _context.LoaiPhongs.AsNoTracking().Include(x => x.Phongs).FirstOrDefaultAsync(x => x.MaLoai == maLoai)
                 ?? throw new ApiException(StatusCodes.Status404NotFound, "KHONG_TIM_THAY_LOAI_PHONG", $"Không tìm thấy loại phòng {maLoai}.", $"phongCanDat[{i}].maLoai");
             var trong = loai.Phongs.Count(p => p.TinhTrang != TinhTrangPhong.OOO && !daChiem.Contains(p.MaPhong));
-            var gia = GiaPhongCalculator.Tinh(loai, request.NgayDonDuKien, request.NgayTraDuKien, loaiDatPhong, quyTacGia);
+            var gia = GiaPhongCalculator.Tinh(loai, request.NgayDonDuKien, request.NgayTraDuKien);
             var du = trong >= soLuong;
             ketQua.DuPhong &= du;
             ketQua.Dong.Add(new BookingQuoteLineDto

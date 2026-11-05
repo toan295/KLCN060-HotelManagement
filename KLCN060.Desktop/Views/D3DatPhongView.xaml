@@ -11,7 +11,8 @@
 
         <ctl:PageHeader Title="Đặt phòng" Subtitle="Bước 1: chọn khách và ngày ở. Bước 2: chọn loại phòng và số phòng. Sau đó bấm Tạo đặt phòng." />
 
-        <Grid Grid.Row="1" Margin="0,20,0,16">
+        <ScrollViewer Grid.Row="1" Margin="0,20,0,16" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="20" />
@@ -80,7 +81,7 @@
             <!-- Bước 2: loại phòng và số lượng -->
             <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                 <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" MinHeight="150" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal">
                         <Border Style="{StaticResource StepBadgeStyle}"><TextBlock Text="2" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" /></Border>
                         <TextBlock Text="Chọn phòng" Style="{StaticResource CardTitleStyle}" Margin="10,0,0,0" VerticalAlignment="Center" />
@@ -116,6 +117,10 @@
                                    Visibility="{Binding ChuaChonPhong, Converter={StaticResource BoolToVis}}" />
                     </Grid>
                     <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                        <HeaderedContentControl Header="Số khách (không bắt buộc)" Margin="0,0,0,10" HorizontalAlignment="Left" Width="200">
+                            <TextBox Text="{Binding SoKhachNhap, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="SoKhachDatPhong"
+                                     ToolTip="Tổng số khách dự kiến của cả phiếu đặt; để trống nếu chưa hỏi. Không được vượt sức chứa tối đa của các phòng đã chọn (gồm người ở thêm)." />
+                        </HeaderedContentControl>
                         <TextBlock Text="Khuyến mãi (không bắt buộc, tích chọn tối đa 3)" Style="{StaticResource HintTextStyle}" />
                         <TextBlock Text="Hiện không có khuyến mãi nào đang áp dụng." Style="{StaticResource HintTextStyle}" Margin="0,4,0,0"
                                    Visibility="{Binding KhongCoKhuyenMai, Converter={StaticResource BoolToVis}}" />
@@ -137,6 +142,7 @@
                 </Grid>
             </Border>
         </Grid>
+        </ScrollViewer>
 
         <!-- Thanh thao tác cuối trang: kết quả (nếu có) bên trái, nút hành động bên phải -->
         <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="18,14">

@@ -16,13 +16,7 @@ public partial class DichVuSuDungViewModel : ObservableObject
     public ObservableCollection<DichVuDto> DichVu { get; } = [];
     /// <summary>Dòng dịch vụ của PHÒNG đang chọn (phiếu nhiều phòng: dòng của phòng khác không lẫn vào đây).</summary>
     public ObservableCollection<DichVuSuDungDto> DaDung { get; } = [];
-    /// <summary>Gói dịch vụ đang bán (mọi dịch vụ trong gói còn phục vụ) để ghi một lần cho khách.</summary>
-    public ObservableCollection<GoiDichVuDto> Goi { get; } = [];
-    public ObservableCollection<NhatKyDto> NhatKyDichVu { get; } = [];
     [ObservableProperty] private string tuKhoa = "";
-    [ObservableProperty] private GoiDichVuDto? goiDaChon;
-    [ObservableProperty] private int soLuongGoi = 1;
-    [ObservableProperty] private bool dangThemGoi;
 
     // Hủy dòng ghi nhầm (chỉ khi chưa lập hóa đơn; bắt buộc lý do, có ghi nhật ký)
     [ObservableProperty] private DichVuSuDungDto? dongDaChon;
@@ -49,9 +43,6 @@ public partial class DichVuSuDungViewModel : ObservableObject
     public string TinhTienDichVu => DichVuDaChon is null ? "" : SoLuong is >= 1 and <= 999
         ? $"{SoLuong} × {DichVuDaChon.GiaDV:N0}đ/{DichVuDaChon.DonViTinh} = {SoLuong * DichVuDaChon.GiaDV:N0}đ"
         : "Số lượng phải từ 1 đến 999.";
-    public string TinhTienGoi => GoiDaChon is null ? "" : SoLuongGoi is >= 1 and <= 999
-        ? $"{SoLuongGoi} gói × {GoiDaChon.GiaGoi:N0}đ = {SoLuongGoi * GoiDaChon.GiaGoi:N0}đ (mua lẻ {SoLuongGoi * GoiDaChon.GiaLe:N0}đ)"
-        : "Số lượng gói phải từ 1 đến 999.";
     public string TongHienThi => LuotDaChon is null ? "" : $"Phòng {LuotDaChon.MaPhong}: {DaDung.Count} dòng, tổng {TongCong:N0}đ" +
         (TongCaPhieu != TongCong ? $" · cả phiếu (mọi phòng) {TongCaPhieu:N0}đ" : "");
     public string TrangThaiDongHienThi => DongDaChon is null ? "" : DongDaChon.CoTheHuy
@@ -97,21 +88,19 @@ public partial class DichVuSuDungViewModel : ObservableObject
     partial void OnLuotDaChonChanged(LuotLuuTruDto? value)
     {
         OnPropertyChanged(nameof(CoLuotDaChon)); OnPropertyChanged(nameof(DangGhiChoHienThi));
-        DongDaChon = null; LyDoHuyDong = ""; DaDung.Clear(); NhatKyDichVu.Clear(); TongCong = 0; TongCaPhieu = 0; _tatCaDong = [];
+        DongDaChon = null; LyDoHuyDong = ""; DaDung.Clear(); TongCong = 0; TongCaPhieu = 0; _tatCaDong = [];
         OnPropertyChanged(nameof(TongHienThi));
         if (value is not null) _ = TaiDaDungAsync();
     }
 
     partial void OnDichVuDaChonChanged(DichVuDto? value) => OnPropertyChanged(nameof(TinhTienDichVu));
     partial void OnSoLuongChanged(int value) => OnPropertyChanged(nameof(TinhTienDichVu));
-    partial void OnGoiDaChonChanged(GoiDichVuDto? value) => OnPropertyChanged(nameof(TinhTienGoi));
-    partial void OnSoLuongGoiChanged(int value) => OnPropertyChanged(nameof(TinhTienGoi));
     partial void OnDongDaChonChanged(DichVuSuDungDto? value) { OnPropertyChanged(nameof(TrangThaiDongHienThi)); OnPropertyChanged(nameof(HuyDuoc)); }
     partial void OnDangThemChanged(bool value) => OnPropertyChanged(nameof(HuyDuoc));
 
     /// <summary>Nhắc nếu vừa ghi đúng dịch vụ + số lượng này cho phòng này (tránh ghi trùng do bấm nhầm / hai lễ tân cùng ghi một yêu cầu của khách).</summary>
     private DichVuSuDungDto? GhiGanDay(string maDV, int soLuong)
-        => _tatCaDong.Where(x => x.MaDV == maDV && x.SoLuong == soLuong && (x.MaPhong == LuotDaChon?.MaPhong) && x.MaGoi is null && (DateTime.Now - x.NgaySuDung).TotalMinutes <= 5)
+        => _tatCaDong.Where(x => x.MaDV == maDV && x.SoLuong == soLuong && (x.MaPhong == LuotDaChon?.MaPhong) && (DateTime.Now - x.NgaySuDung).TotalMinutes <= 5)
             .OrderByDescending(x => x.NgaySuDung).FirstOrDefault();
 
     [RelayCommand]
@@ -164,10 +153,6 @@ public partial class DichVuSuDungViewModel : ObservableObject
     {
         try
         {
-            Goi.Clear();
-            foreach (var goi in (await _api.GetGoiDichVuAsync()).Where(x => x.CoTheBan))
-                Goi.Add(goi);
-
             _tatCaLuot = (await _api.GetLuotDangOAsync()).OrderBy(x => x.MaPhong, StringComparer.Ordinal).ToList();
             LocLuot();
 
@@ -178,37 +163,6 @@ public partial class DichVuSuDungViewModel : ObservableObject
         catch (LoiYeuCauApi loi)
         {
             DatThongBao(loi.Message, true);
-        }
-    }
-
-    /// <summary>Ghi một gói dịch vụ cho khách đang ở: mỗi dịch vụ trong gói thành một dòng sử dụng, tổng đúng bằng giá gói.</summary>
-    [RelayCommand]
-    private async Task ThemGoiAsync()
-    {
-        if (DangThemGoi) return;
-        if (LuotDaChon is null || GoiDaChon is null) { DatThongBao("Vui lòng chọn khách đang ở và gói dịch vụ.", true); return; }
-        if (SoLuongGoi is < 1 or > 999) { DatThongBao("Số lượng gói phải từ 1 đến 999.", true); return; }
-
-        var noiDung = $"Ghi gói cho: {LuotDaChon.KhachHienThi} · phòng {LuotDaChon.MaPhong}\nGói: {GoiDaChon.TenGoi} ({GoiDaChon.NoiDungTomTat})\n{TinhTienGoi}\n\nThao tác được ghi nhật ký (ai, lúc nào). Xác nhận?";
-        if (!HopThoai.XacNhan("Xác nhận ghi gói dịch vụ", noiDung)) return;
-
-        DangThemGoi = true;
-        try
-        {
-            var dong = await _api.GhiGoiDichVuAsync(LuotDaChon.MaPhieuNhan, LuotDaChon.MaPhong, GoiDaChon.MaGoi, SoLuongGoi);
-            var ten = GoiDaChon.TenGoi; var sl = SoLuongGoi;
-            await TaiDaDungAsync();
-            SoLuongGoi = 1;
-            DatThongBao($"Đã ghi {sl} gói \"{ten}\": {dong.Sum(x => x.ThanhTien):N0}đ cho phòng {LuotDaChon.MaPhong} ({LuotDaChon.KhachHienThi}). Tổng phòng này: {TongCong:N0}đ.", false);
-        }
-        catch (LoiYeuCauApi loi)
-        {
-            DatThongBao(loi.Message, true);
-            await TaiAsync();
-        }
-        finally
-        {
-            DangThemGoi = false;
         }
     }
 
@@ -252,7 +206,6 @@ public partial class DichVuSuDungViewModel : ObservableObject
         try
         {
             var danhSach = await _api.GetDichVuSuDungAsync(luot.MaPhieuNhan, luot.MaPhong);
-            var lichSu = await _api.GetLichSuLuuTruAsync(luot.MaPhieuNhan, luot.MaPhong);
             if (lan != _lanTai) return;   // người dùng đã chọn khách khác trong lúc chờ
 
             _tatCaDong = danhSach.OrderByDescending(x => x.NgaySuDung).ToList();
@@ -262,9 +215,6 @@ public partial class DichVuSuDungViewModel : ObservableObject
             TongCong = DaDung.Sum(x => x.ThanhTien);
             TongCaPhieu = _tatCaDong.Sum(x => x.ThanhTien);
             OnPropertyChanged(nameof(TongHienThi));
-
-            NhatKyDichVu.Clear();
-            foreach (var n in lichSu.Where(x => x.HanhDong.Contains("DICH_VU", StringComparison.Ordinal))) NhatKyDichVu.Add(n);
         }
         catch (LoiYeuCauApi loi)
         {

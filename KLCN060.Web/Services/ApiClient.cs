@@ -77,22 +77,36 @@ public class ApiClient
 
     private async Task<ApiResult<TRes>> SendAsync<TRes>(HttpMethod method, string path, object? body, bool requireAuth)
     {
-        var response = await SendRawAsync(method, path, body);
-
-        if (response.StatusCode == HttpStatusCode.Unauthorized && requireAuth)
+        try
         {
-            var refreshed = await TryRefreshTokenAsync();
-            if (refreshed)
-                response = await SendRawAsync(method, path, body);
+            var response = await SendRawAsync(method, path, body);
 
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            if (response.StatusCode == HttpStatusCode.Unauthorized && requireAuth)
             {
-                ClearSession();
-                throw new ApiSessionExpiredException();
-            }
-        }
+                var refreshed = await TryRefreshTokenAsync();
+                if (refreshed)
+                    response = await SendRawAsync(method, path, body);
 
-        return await ReadResultAsync<TRes>(response);
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    ClearSession();
+                    throw new ApiSessionExpiredException();
+                }
+            }
+
+            return await ReadResultAsync<TRes>(response);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException)
+        {
+            // API tắt/quá tải/hết thời gian chờ: trả kết quả lỗi để trang vẫn mở được và báo rõ, thay vì lỗi 500.
+            return new ApiResult<TRes>
+            {
+                Success = false,
+                StatusCode = (int)HttpStatusCode.ServiceUnavailable,
+                ErrorCode = ApiResult<TRes>.MaLoiKhongKetNoi,
+                ErrorMessage = "Hệ thống tạm thời không phản hồi. Vui lòng thử lại sau ít phút."
+            };
+        }
     }
 
     private async Task<HttpResponseMessage> SendRawAsync(HttpMethod method, string path, object? body)

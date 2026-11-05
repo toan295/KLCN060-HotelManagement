@@ -21,7 +21,6 @@ public class KLCN060DbContext : DbContext
     public DbSet<LoaiPhong> LoaiPhongs => Set<LoaiPhong>();
     public DbSet<Phong> Phongs => Set<Phong>();
     public DbSet<LichSuTinhTrangPhong> LichSuTinhTrangPhongs => Set<LichSuTinhTrangPhong>();
-    public DbSet<QuyTacGia> QuyTacGias => Set<QuyTacGia>();
     public DbSet<CoSoVatChat> CoSoVatChats => Set<CoSoVatChat>();
 
     // Nhóm 3 — Đặt phòng, nhận phòng, đổi phòng
@@ -36,8 +35,6 @@ public class KLCN060DbContext : DbContext
     public DbSet<DichVu> DichVus => Set<DichVu>();
     public DbSet<ChiTietSuDungDV> ChiTietSuDungDVs => Set<ChiTietSuDungDV>();
     public DbSet<ChiTietDichVu> ChiTietDichVus => Set<ChiTietDichVu>();
-    public DbSet<GoiDichVu> GoiDichVus => Set<GoiDichVu>();
-    public DbSet<ChiTietGoiDichVu> ChiTietGoiDichVus => Set<ChiTietGoiDichVu>();
 
     // Nhóm 5 — Khuyến mãi
     public DbSet<KhuyenMai> KhuyenMais => Set<KhuyenMai>();
@@ -45,7 +42,6 @@ public class KLCN060DbContext : DbContext
 
     // Nhóm 6 — Hóa đơn và thanh toán
     public DbSet<HoaDon> HoaDons => Set<HoaDon>();
-    public DbSet<HoaDonDienTu> HoaDonDienTus => Set<HoaDonDienTu>();
     public DbSet<ChiTietHoaDon> ChiTietHoaDons => Set<ChiTietHoaDon>();
     public DbSet<ChiTietThanhToan> ChiTietThanhToans => Set<ChiTietThanhToan>();
 
@@ -55,18 +51,6 @@ public class KLCN060DbContext : DbContext
 
     // Người ở cùng khai báo theo phiếu đặt phòng (lễ tân thêm/xóa).
     public DbSet<KhachDiCung> KhachDiCungs => Set<KhachDiCung>();
-
-    // Buồng phòng: sự cố phòng, danh mục vật dụng + kiểm phòng/minibar, đồ khách bỏ quên, việc dọn phòng.
-    public DbSet<SuCoPhong> SuCoPhongs => Set<SuCoPhong>();
-    public DbSet<VatDung> VatDungs => Set<VatDung>();
-    public DbSet<VatDungLoaiPhong> VatDungLoaiPhongs => Set<VatDungLoaiPhong>();
-    public DbSet<PhieuKiemPhong> PhieuKiemPhongs => Set<PhieuKiemPhong>();
-    public DbSet<ChiTietKiemPhong> ChiTietKiemPhongs => Set<ChiTietKiemPhong>();
-    public DbSet<DoBoQuen> DoBoQuens => Set<DoBoQuen>();
-    public DbSet<AnhDoBoQuen> AnhDoBoQuens => Set<AnhDoBoQuen>();
-    public DbSet<PhieuDonPhong> PhieuDonPhongs => Set<PhieuDonPhong>();
-
-    public DbSet<CanhBaoTheoDoi> CanhBaoTheoDois => Set<CanhBaoTheoDoi>();
 
     // Quên mật khẩu: các mã đặt lại (chỉ lưu băm) còn/ hết hiệu lực.
     public DbSet<YeuCauDatLaiMatKhau> YeuCauDatLaiMatKhaus => Set<YeuCauDatLaiMatKhau>();

@@ -39,7 +39,7 @@ public partial class BackupService : IBackupService
         }
     }
 
-    public async Task<BackupHistoryDto> BackupAsync(BackupRequest? request, CurrentUser user, bool tuDong = false)
+    public async Task<BackupHistoryDto> BackupAsync(BackupRequest? request, CurrentUser user)
     {
         var builder = LayConnectionStringBuilder();
         var tenDb = builder.InitialCatalog;
@@ -48,7 +48,7 @@ public partial class BackupService : IBackupService
         var thuMucChon = ChuanHoaThuMucNguoiDung(request?.ThuMuc);
 
         string? duongDan = null;
-        string? ghiChu = tuDong ? "Sao lưu tự động theo lịch." : null;
+        string? ghiChu = null;
         var dongHo = System.Diagnostics.Stopwatch.StartNew();
         try
         {
@@ -84,7 +84,7 @@ public partial class BackupService : IBackupService
         {
             _logger.LogError(ex, "Sao lưu CSDL thất bại");
             await GhiLichSuAsync(LoaiThaoTacSaoLuu.SAO_LUU, user, duongDan, KetQuaSaoLuu.THAT_BAI, "Sao lưu thất bại.",
-                new ChiTietGhi { TenCSDL = tenDb, ThoiLuongMs = (int)dongHo.ElapsedMilliseconds, Nguon = tuDong ? "TU_DONG" : "THU_CONG", Loi = ex.Message });
+                new ChiTietGhi { TenCSDL = tenDb, ThoiLuongMs = (int)dongHo.ElapsedMilliseconds, Nguon = "THU_CONG", Loi = ex.Message });
             throw new ApiException(StatusCodes.Status500InternalServerError, "SAO_LUU_THAT_BAI", $"Sao lưu thất bại: {ex.Message}");
         }
 
@@ -95,7 +95,7 @@ public partial class BackupService : IBackupService
         var banHopLe = kiemTra.HopLe && kiemTra.DungCSDL != false;
         ghiChu = (ghiChu is null ? "" : ghiChu + " ") + (banHopLe ? "Đã kiểm tra toàn vẹn: đạt." : $"CẢNH BÁO - kiểm tra toàn vẹn KHÔNG đạt: {kiemTra.ThongBao}");
         var lichSu = await GhiLichSuAsync(LoaiThaoTacSaoLuu.SAO_LUU, user, duongDan, KetQuaSaoLuu.THANH_CONG, ghiChu,
-            new ChiTietGhi { TenCSDL = tenDb, KichThuoc = kichThuoc, ThoiLuongMs = (int)dongHo.ElapsedMilliseconds, Nguon = tuDong ? "TU_DONG" : "THU_CONG", DaKiemTra = banHopLe, Loi = banHopLe ? null : kiemTra.ThongBao });
+            new ChiTietGhi { TenCSDL = tenDb, KichThuoc = kichThuoc, ThoiLuongMs = (int)dongHo.ElapsedMilliseconds, Nguon = "THU_CONG", DaKiemTra = banHopLe, Loi = banHopLe ? null : kiemTra.ThongBao });
         return ToDto(lichSu!);
     }
 

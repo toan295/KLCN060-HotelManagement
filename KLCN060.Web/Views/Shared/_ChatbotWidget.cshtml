@@ -69,13 +69,26 @@
         var input = document.getElementById('chatbotInput');
         var messages = document.getElementById('chatbotMessages');
 
-        // Lịch sử hội thoại giữ trong biến JS phía client, mất khi tải lại trang - Mục 5B.
-        function themTinNhan(noiDung, laNguoiDung) {
+        // Lịch sử hội thoại giữ trong sessionStorage của TAB trình duyệt: chuyển trang trong website (mỗi lần là một lần tải trang mới) vẫn còn
+        // cuộc trò chuyện, trạng thái đóng/mở và gợi ý; đóng tab thì mất. Không gửi lên máy chủ nên không ảnh hưởng quyền riêng tư.
+        var KHOA_LUU = 'klcn060.chatbot.v1';
+        var TOI_DA_TIN = 60;
+        var lichSu = [];
+        var goiYHienTai = [];
+
+        function luuTrangThai() {
+            try {
+                sessionStorage.setItem(KHOA_LUU, JSON.stringify({ ls: lichSu.slice(-TOI_DA_TIN), mo: !panel.classList.contains('d-none'), gy: goiYHienTai }));
+            } catch (e) { /* trình duyệt chặn lưu trữ: chatbot vẫn chạy, chỉ không nhớ qua các trang */ }
+        }
+
+        function themTinNhan(noiDung, laNguoiDung, khongLuu) {
             var div = document.createElement('div');
             div.className = 'chatbot-msg ' + (laNguoiDung ? 'chatbot-msg-user' : 'chatbot-msg-bot');
             div.textContent = noiDung;
             messages.appendChild(div);
             messages.scrollTop = messages.scrollHeight;
+            if (!khongLuu) { lichSu.push({ t: noiDung, u: !!laNguoiDung }); luuTrangThai(); }
             return div;
         }
 
@@ -87,6 +100,8 @@
 
         function themGoiY(danhSach) {
             xoaGoiY();
+            goiYHienTai = danhSach || [];
+            luuTrangThai();
             if (!danhSach || !danhSach.length) return;
             var khung = document.createElement('div');
             khung.className = 'chatbot-chips';
@@ -118,7 +133,7 @@
             input.value = '';
             input.disabled = true;
             // Mô hình ngôn ngữ có thể mất vài giây: hiện dòng chờ để khách biết hệ thống đang trả lời.
-            var dangCho = themTinNhan('Đang soạn câu trả lời…', false);
+            var dangCho = themTinNhan('Đang soạn câu trả lời…', false, true);
 
             var url = new URL('api/v1/chatbot/ask', apiBaseUrl).toString();
 
@@ -155,11 +170,25 @@
                 taiGoiYMacDinh();
             }
             if (dangAn) input.focus();
+            luuTrangThai();
         });
 
         closeBtn.addEventListener('click', function () {
             panel.classList.add('d-none');
+            luuTrangThai();
         });
+
+        // Khôi phục cuộc trò chuyện của tab này (nếu có) khi trang vừa tải.
+        (function khoiPhuc() {
+            var daLuu = null;
+            try { daLuu = JSON.parse(sessionStorage.getItem(KHOA_LUU) || 'null'); } catch (e) { daLuu = null; }
+            if (!daLuu || !daLuu.ls || !daLuu.ls.length) return;
+            daLuu.ls.forEach(function (m) { themTinNhan(m.t, m.u, true); });
+            lichSu = daLuu.ls.slice();
+            if (daLuu.gy && daLuu.gy.length) themGoiY(daLuu.gy);
+            if (daLuu.mo) panel.classList.remove('d-none');
+            messages.scrollTop = messages.scrollHeight;
+        })();
 
         form.addEventListener('submit', function (ev) {
             ev.preventDefault();

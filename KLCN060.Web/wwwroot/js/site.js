@@ -22,6 +22,29 @@
     });
 })();
 
+// Form đặt phòng: sau lần gửi hợp lệ đầu tiên thì khóa nút gửi, bấm đúp không tạo hai phiếu.
+(function () {
+    document.querySelectorAll('form[data-chong-gui-doi]').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.daGui === '1') { e.preventDefault(); return; }
+            setTimeout(function () {
+                if (e.defaultPrevented) return; // validate phía client chưa đạt → cho sửa và gửi lại
+                form.dataset.daGui = '1';
+                form.querySelectorAll('button[type="submit"]').forEach(function (b) {
+                    b.disabled = true;
+                    b.textContent = 'Đang xử lý...';
+                });
+            }, 0);
+        });
+        // Quay lại bằng nút Back (trang lấy từ bộ nhớ đệm) thì mở khóa lại.
+        window.addEventListener('pageshow', function (ev) {
+            if (!ev.persisted) return;
+            form.dataset.daGui = '';
+            form.querySelectorAll('button[type="submit"]').forEach(function (b) { b.disabled = false; });
+        });
+    });
+})();
+
 // Thanh điều hướng: đổ bóng + thu gọn nhẹ khi cuộn xuống.
 (function () {
     var header = document.querySelector('.site-header');

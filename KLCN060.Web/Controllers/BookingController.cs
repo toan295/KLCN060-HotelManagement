@@ -24,12 +24,20 @@ public class BookingController : Controller
     [HttpGet]
     public async Task<IActionResult> Book(string maLoai)
     {
+        // Thiếu mã loại phòng (vào thẳng /Booking/Book, F5 sau khi form báo lỗi...) → về danh sách phòng thay vì lỗi 500.
+        if (string.IsNullOrWhiteSpace(maLoai))
+            return RedirectToAction("Search", "Home");
+
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account", new { returnUrl = Url.Action(nameof(Book), new { maLoai }) });
 
-        var roomTypeResult = await _apiClient.GetAsync<RoomTypeViewModel>($"api/v1/room-types/{maLoai}");
-        if (!roomTypeResult.Success || roomTypeResult.Data is null)
+        var maLoaiUrl = MaThamChieu.DoanDuongDan(maLoai);
+        if (maLoaiUrl is null)
             return NotFound();
+
+        var roomTypeResult = await _apiClient.GetAsync<RoomTypeViewModel>($"api/v1/room-types/{maLoaiUrl}");
+        if (!roomTypeResult.Success || roomTypeResult.Data is null)
+            return roomTypeResult.KhongKetNoi ? StatusCode(503) : NotFound();
 
         var model = new BookViewModel
         {
@@ -50,6 +58,9 @@ public class BookingController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account");
 
+        if (!MaThamChieu.HopLe(model.MaLoai))
+            return NotFound();
+
         // Validate ngày trả > ngày nhận phía server (đã có HTML5 min attribute phía client).
         if (model.NgayNhan.HasValue && model.NgayTra.HasValue && model.NgayTra <= model.NgayNhan)
             ModelState.AddModelError(nameof(model.NgayTra), "Ngày trả phải sau ngày nhận.");
@@ -65,15 +76,20 @@ public class BookingController : Controller
             loaiDatPhong = "CA_NHAN",
             ngayDonDuKien = model.NgayNhan!.Value.ToString("yyyy-MM-dd"),
             ngayTraDuKien = model.NgayTra!.Value.ToString("yyyy-MM-dd"),
+            soKhach = model.SoKhach,
             phongCanDat = new[] { new { maLoai = model.MaLoai, soLuong = 1 } }
         };
 
-        var result = await _apiClient.PostAsync<BookingViewModel>("api/v1/bookings", body, requireAuth: true);
+        var result = await ChongGuiTrung.ChayAsync(
+            $"{HttpContext.Session.Id}|{model.MaLoai}|{body.ngayDonDuKien}|{body.ngayTraDuKien}|{model.SoKhach}",
+            () => _apiClient.PostAsync<BookingViewModel>("api/v1/bookings", body, requireAuth: true));
 
         if (!result.Success)
         {
             // Lỗi 409 (hết phòng): hiển thị đúng nguyên văn error.message, giữ lại dữ liệu đã nhập (Mục 5B).
-            ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Đặt phòng thất bại.");
+            // Lỗi số khách gắn vào đúng ô nhập để khách thấy ngay chỗ cần sửa.
+            var truong = result.ErrorField == "soKhach" ? nameof(model.SoKhach) : string.Empty;
+            ModelState.AddModelError(truong, result.ErrorMessage ?? "Đặt phòng thất bại.");
             await NapLaiThongTinLoaiPhong(model);
             return View(model);
         }
@@ -83,7 +99,7 @@ public class BookingController : Controller
 
     private async Task NapLaiThongTinLoaiPhong(BookViewModel model)
     {
-        var roomTypeResult = await _apiClient.GetAsync<RoomTypeViewModel>($"api/v1/room-types/{model.MaLoai}");
+        var roomTypeResult = await _apiClient.GetAsync<RoomTypeViewModel>($"api/v1/room-types/{Uri.EscapeDataString(model.MaLoai)}");
         if (roomTypeResult.Success && roomTypeResult.Data is not null)
         {
             model.TenLoai = roomTypeResult.Data.TenLoai;
@@ -134,14 +150,20 @@ public class BookingController : Controller
             loaiDatPhong = "DOAN",
             ngayDonDuKien = model.NgayNhan!.Value.ToString("yyyy-MM-dd"),
             ngayTraDuKien = model.NgayTra!.Value.ToString("yyyy-MM-dd"),
+            soKhach = model.SoKhach,
             phongCanDat = dongHopLe.Select(dong => new { maLoai = dong.MaLoai, soLuong = dong.SoLuong })
         };
 
-        var result = await _apiClient.PostAsync<BookingViewModel>("api/v1/bookings", body, requireAuth: true);
+        var dongKhoa = string.Join(",", dongHopLe.OrderBy(d => d.MaLoai, StringComparer.Ordinal).Select(d => $"{d.MaLoai}x{d.SoLuong}"));
+        var result = await ChongGuiTrung.ChayAsync(
+            $"{HttpContext.Session.Id}|DOAN|{body.ngayDonDuKien}|{body.ngayTraDuKien}|{model.SoKhach}|{dongKhoa}",
+            () => _apiClient.PostAsync<BookingViewModel>("api/v1/bookings", body, requireAuth: true));
 
         if (!result.Success)
         {
-            ModelState.AddModelError(string.Empty, result.ErrorMessage ?? "Đặt phòng thất bại.");
+            // Lỗi số khách (vượt sức chứa tổng của các phòng đã chọn) gắn vào đúng ô nhập, giống đặt cá nhân.
+            var truong = result.ErrorField == "soKhach" ? nameof(model.SoKhach) : string.Empty;
+            ModelState.AddModelError(truong, result.ErrorMessage ?? "Đặt phòng thất bại.");
             await NapDanhSachLoaiPhong(model);
             return View(model);
         }
@@ -162,9 +184,13 @@ public class BookingController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account", new { returnUrl = Url.Action(nameof(Confirmation), new { maPhieuDat }) });
 
-        var result = await _apiClient.GetAsync<BookingViewModel>($"api/v1/bookings/{maPhieuDat}", requireAuth: true);
-        if (!result.Success || result.Data is null)
+        var maUrl = MaThamChieu.DoanDuongDan(maPhieuDat);
+        if (maUrl is null)
             return NotFound();
+
+        var result = await _apiClient.GetAsync<BookingViewModel>($"api/v1/bookings/{maUrl}", requireAuth: true);
+        if (!result.Success || result.Data is null)
+            return result.KhongKetNoi ? StatusCode(503) : NotFound();
 
         return View(result.Data);
     }
@@ -191,9 +217,13 @@ public class BookingController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account", new { returnUrl = Url.Action(nameof(Detail), new { maPhieuDat }) });
 
-        var result = await _apiClient.GetAsync<BookingViewModel>($"api/v1/bookings/{maPhieuDat}", requireAuth: true);
-        if (!result.Success || result.Data is null)
+        var maUrl = MaThamChieu.DoanDuongDan(maPhieuDat);
+        if (maUrl is null)
             return NotFound();
+
+        var result = await _apiClient.GetAsync<BookingViewModel>($"api/v1/bookings/{maUrl}", requireAuth: true);
+        if (!result.Success || result.Data is null)
+            return result.KhongKetNoi ? StatusCode(503) : NotFound();
 
         return View(result.Data);
     }
@@ -206,8 +236,12 @@ public class BookingController : Controller
         if (!_apiClient.IsLoggedIn)
             return RedirectToAction("Login", "Account");
 
+        var maUrl = MaThamChieu.DoanDuongDan(maPhieuDat);
+        if (maUrl is null)
+            return NotFound();
+
         // KH không gửi lyDo — để trống (lyDo chỉ bắt buộc khi LT ghi đè chính sách) - Mục 5B.
-        var result = await _apiClient.PostAsync<CancelResultViewModel>($"api/v1/bookings/{maPhieuDat}/cancel", new { }, requireAuth: true);
+        var result = await _apiClient.PostAsync<CancelResultViewModel>($"api/v1/bookings/{maUrl}/cancel", new { }, requireAuth: true);
 
         if (!result.Success)
         {
@@ -221,9 +255,11 @@ public class BookingController : Controller
             // [FIX P0 — 24/09/2026] W10: trước đây thành công thì chuyển hướng im lặng, không cho biết
             // có được hoàn cọc hay không / hoàn bao nhiêu — KH phải tự suy ra từ trạng thái "Đã hủy".
             // Hiển thị rõ kết quả hoàn cọc lấy từ CancelResultViewModel (khớp CancelBookingResultDto).
-            TempData["SuccessMessage"] = result.Data.HoanCoc
-                ? $"Hủy đặt phòng thành công. Bạn sẽ được hoàn cọc {result.Data.SoTienHoan.ToVnd()}."
-                : "Hủy đặt phòng thành công. Theo chính sách, đơn này không được hoàn cọc.";
+            TempData["SuccessMessage"] = !result.Data.DaThuCoc
+                ? "Hủy đặt phòng thành công. Đơn chưa thanh toán tiền cọc nên không có khoản nào cần hoàn hay bị giữ lại."
+                : result.Data.HoanCoc
+                    ? $"Hủy đặt phòng thành công. Bạn sẽ được hoàn cọc {result.Data.SoTienHoan.ToVnd()}."
+                    : "Hủy đặt phòng thành công. Theo chính sách, đơn này không được hoàn cọc.";
         }
 
         return RedirectToAction(nameof(Detail), new { maPhieuDat });

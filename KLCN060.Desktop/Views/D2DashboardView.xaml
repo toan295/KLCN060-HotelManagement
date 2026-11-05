@@ -100,7 +100,7 @@
             <ctl:PageHeader.Actions>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="{Binding CapNhatLuc}" Style="{StaticResource HintTextStyle}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <Button Content="Tải lại" Command="{Binding TaiDuLieuCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
+                    <Button Content="Tải lại" ToolTip="Lấy lại dữ liệu mới nhất từ máy chủ (để thấy thay đổi do người khác vừa làm). Không sửa hay xóa dữ liệu." Command="{Binding TaiDuLieuCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
                 </StackPanel>
             </ctl:PageHeader.Actions>
         </ctl:PageHeader>
@@ -275,16 +275,6 @@
                                         <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding HienThi}" TextWrapping="Wrap" Foreground="{StaticResource MauChu}" Margin="0,0,0,3" /></DataTemplate></ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
-                                <StackPanel Visibility="{Binding CoSuCo, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="Sự cố chưa xử lý" Style="{StaticResource NhanChiTietStyle}" />
-                                    <ItemsControl ItemsSource="{Binding ChiTiet.SuCo}">
-                                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding HienThi}" TextWrapping="Wrap" Foreground="{StaticResource MauChu}" Margin="0,0,0,3" /></DataTemplate></ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                                <StackPanel Visibility="{Binding CoNguoiDangDon, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="Buồng phòng" Style="{StaticResource NhanChiTietStyle}" />
-                                    <TextBlock Text="{Binding ChiTiet.NguoiDangDon}" TextWrapping="Wrap" Foreground="{StaticResource MauChu}" />
-                                </StackPanel>
 
                                 <TextBlock Text="Việc tiếp theo" Style="{StaticResource NhanChiTietStyle}" Visibility="{Binding CoChiTiet, Converter={StaticResource BoolToVis}}" />
                                 <TextBlock Text="{Binding ChiTiet.ViecTiepTheo}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource MauChinh}" Visibility="{Binding CoChiTiet, Converter={StaticResource BoolToVis}}" />
@@ -300,7 +290,6 @@
                                 </WrapPanel>
                                 <TextBlock Text="Mở màn hình liên quan" Style="{StaticResource NhanChiTietStyle}" Visibility="{Binding CoChiTiet, Converter={StaticResource BoolToVis}}" />
                                 <WrapPanel>
-                                    <Button Content="Mở Buồng phòng" Command="{Binding MoBuongPhongCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="10,3" MinHeight="28" Margin="0,0,10,8" Visibility="{Binding CoQuyenMoBuongPhong, Converter={StaticResource BoolToVis}}" />
                                     <Button Content="Mở Phiếu đặt phòng" Command="{Binding MoDatPhongCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="10,3" MinHeight="28" Margin="0,0,0,8" Visibility="{Binding CoQuyenMoDatPhong, Converter={StaticResource BoolToVis}}" />
                                 </WrapPanel>
                             </StackPanel>

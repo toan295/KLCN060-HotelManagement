@@ -9,12 +9,6 @@ public class AddStayServiceRequest
     public int SoLuong { get; set; } = 1;
 }
 
-public class AddStayServicePackageRequest
-{
-    public string MaGoi { get; set; } = null!;
-    public int SoLuong { get; set; } = 1;
-}
-
 public class StayServiceUsageDto
 {
     public int MaChiTietDV { get; set; }
@@ -25,8 +19,6 @@ public class StayServiceUsageDto
     public int SoLuong { get; set; }
     public DateTime NgaySuDung { get; set; }
 
-    /// <summary>Gói dịch vụ mà dòng này thuộc về (null = dịch vụ lẻ).</summary>
-    public string? MaGoi { get; set; }
 
     [JsonConverter(typeof(VndMoneyJsonConverter))]
     public decimal ThanhTien { get; set; }

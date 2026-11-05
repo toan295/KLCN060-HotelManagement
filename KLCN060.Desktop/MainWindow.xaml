@@ -25,16 +25,11 @@
         <DataTemplate DataType="{x:Type vm:QuanLyCoSoVatChatViewModel}"><views:D14QuanLyCoSoVatChatView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:PhanQuyenViewModel}"><views:D15PhanQuyenView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SaoLuuViewModel}"><views:D16SaoLuuView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NhatKyViewModel}"><views:D24NhatKyView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:BaoCaoViewModel}"><views:D17BaoCaoView /></DataTemplate>
-        <DataTemplate DataType="{x:Type vm:DoiSoatChuyenKhoanViewModel}"><views:D18DoiSoatChuyenKhoanView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:QuanLyDatPhongViewModel}"><views:D19QuanLyDatPhongView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:HoaDonViewModel}"><views:D20HoaDonView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:DoiMatKhauViewModel}"><views:D21DoiMatKhauView /></DataTemplate>
-        <DataTemplate DataType="{x:Type vm:DieuHanhViewModel}"><views:D22DieuHanhView /></DataTemplate>
-        <DataTemplate DataType="{x:Type vm:NhatKyViewModel}"><views:D24NhatKyView /></DataTemplate>
-        <DataTemplate DataType="{x:Type vm:BangGiaViewModel}"><views:D25BangGiaView /></DataTemplate>
-        <DataTemplate DataType="{x:Type vm:CaTrucViewModel}"><views:D27CaTrucView /></DataTemplate>
-        <DataTemplate DataType="{x:Type vm:BuongPhongViewModel}"><views:D28BuongPhongView /></DataTemplate>
 
         <!-- Nút điều hướng ở thanh bên: biểu tượng (Segoe MDL2) + tên màn hình. Mục của màn hình đang mở (Tag == ManHinhDangChon) được
              nền trắng, chữ đậm và vạch vàng đồng bên trái. Một Style dùng chung cho mọi mục - hiển thị theo vai trò gắn trực tiếp ở từng nút. -->
@@ -149,32 +144,7 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <!-- Ô đếm cảnh báo (bảo trì lâu, nợ quá hạn...): chỉ hiện khi có cảnh báo; bấm để mở bảng điều hành. Đỏ khi có mục nghiêm trọng. -->
-                        <Button x:Name="OCanhBao" Command="{Binding HienThiDieuHanhCommand}" Cursor="Hand" Margin="0,0,12,0" Padding="12,5" MinHeight="0" FocusVisualStyle="{x:Null}"
-                                ToolTip="{Binding ChuThichCanhBao}" BorderThickness="0"
-                                Visibility="{Binding CoCanhBao, Converter={StaticResource BoolToVis}}">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="bd" CornerRadius="16" Padding="{TemplateBinding Padding}">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="{StaticResource MauCanhBao}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding CoCanhBaoNghiemTrong}" Value="True">
-                                                        <Setter Property="Background" Value="{StaticResource MauNguyHiem}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="White" VerticalAlignment="Center" />
-                                            <TextBlock Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" Margin="7,0,0,0"
-                                                       Text="{Binding SoCanhBao, StringFormat={}{0} cảnh báo}" />
-                                        </StackPanel>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
+                        
                         <Border Background="{StaticResource MauChinh}" CornerRadius="16" Padding="8,5,14,5" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <Border Width="22" Height="22" CornerRadius="11" Background="{StaticResource MauNhan}">
@@ -200,16 +170,8 @@
 
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <StackPanel Visibility="{Binding CoNhomDieuHanh, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="ĐIỀU HÀNH" Style="{StaticResource NavGroupStyle}" Margin="14,12,0,6" />
-                                    <Button Content="Bảng điều hành" Tag="d22" ctl:NavIcon.Glyph="&#xE80F;" Style="{StaticResource NavItemStyle}"
-                                            Command="{Binding HienThiDieuHanhCommand}" Visibility="{Binding CoQuyenDieuHanh, Converter={StaticResource BoolToVis}}" />
-                                    <Button Content="Bảng điều hành" Tag="d27" ctl:NavIcon.Glyph="&#xE80F;" Style="{StaticResource NavItemStyle}"
-                                            Command="{Binding HienThiCaTrucCommand}" Visibility="{Binding CoQuyenCaTruc, Converter={StaticResource BoolToVis}}" />
-                                </StackPanel>
+                                
                                 <TextBlock Text="VẬN HÀNH" Style="{StaticResource NavGroupStyle}" Margin="14,12,0,6" Visibility="{Binding CoNhomVanHanh, Converter={StaticResource BoolToVis}}" />
-                                <Button Content="Buồng phòng" Tag="d28" ctl:NavIcon.Glyph="&#xE7EF;" Style="{StaticResource NavItemStyle}"
-                                        Command="{Binding HienThiBuongPhongCommand}" Visibility="{Binding CoQuyenBuongPhong, Converter={StaticResource BoolToVis}}" />
                                 <Button Content="Sơ đồ phòng" Tag="d2" ctl:NavIcon.Glyph="&#xE80A;" Style="{StaticResource NavItemStyle}"
                                         Command="{Binding HienThiDashboardCommand}" Visibility="{Binding CoQuyenXemPhong, Converter={StaticResource BoolToVis}}" />
                                 <Button Content="Đặt phòng" Tag="d3" ctl:NavIcon.Glyph="&#xE787;" Style="{StaticResource NavItemStyle}"
@@ -230,8 +192,6 @@
                                         Command="{Binding HienThiHoaDonCommand}" Visibility="{Binding CoQuyenHoaDon, Converter={StaticResource BoolToVis}}" />
                                 <Button Content="Khách hàng" Tag="d9" ctl:NavIcon.Glyph="&#xE77B;" Style="{StaticResource NavItemStyle}"
                                         Command="{Binding HienThiKhachHangCommand}" Visibility="{Binding CoQuyenKhachHang, Converter={StaticResource BoolToVis}}" />
-                                <Button Content="Đối soát chuyển khoản" Tag="d18" ctl:NavIcon.Glyph="&#xE825;" Style="{StaticResource NavItemStyle}"
-                                        Command="{Binding HienThiDoiSoatCommand}" Visibility="{Binding CoQuyenDoiSoat, Converter={StaticResource BoolToVis}}" />
 
                                 <StackPanel Visibility="{Binding CoNhomDanhMuc, Converter={StaticResource BoolToVis}}">
                                     <TextBlock Text="DANH MỤC" Style="{StaticResource NavGroupStyle}" />
@@ -239,7 +199,6 @@
                                     <Button Content="Khuyến mãi" Tag="d12" ctl:NavIcon.Glyph="&#xE8EC;" Style="{StaticResource NavItemStyle}" Command="{Binding HienThiKhuyenMaiCommand}" Visibility="{Binding CoQuyenKhuyenMai, Converter={StaticResource BoolToVis}}" />
                                     <Button Content="Danh mục dịch vụ" Tag="d13" ctl:NavIcon.Glyph="&#xE821;" Style="{StaticResource NavItemStyle}" Command="{Binding HienThiDichVuCommand}" Visibility="{Binding CoQuyenDichVu, Converter={StaticResource BoolToVis}}" />
                                     <Button Content="Cơ sở vật chất" Tag="d14" ctl:NavIcon.Glyph="&#xE90F;" Style="{StaticResource NavItemStyle}" Command="{Binding HienThiCoSoVatChatCommand}" Visibility="{Binding CoQuyenPhong, Converter={StaticResource BoolToVis}}" />
-                                    <Button Content="Bảng giá" Tag="d25" ctl:NavIcon.Glyph="&#xE8EC;" Style="{StaticResource NavItemStyle}" Command="{Binding HienThiBangGiaCommand}" Visibility="{Binding CoQuyenGia, Converter={StaticResource BoolToVis}}" />
                                 </StackPanel>
 
                                 <StackPanel Visibility="{Binding CoNhomHeThong, Converter={StaticResource BoolToVis}}">
@@ -250,7 +209,7 @@
                                             Command="{Binding HienThiPhanQuyenCommand}" Visibility="{Binding CoQuyenQuanTri, Converter={StaticResource BoolToVis}}" />
                                     <Button Content="Sao lưu dữ liệu" Tag="d16" ctl:NavIcon.Glyph="&#xE753;" Style="{StaticResource NavItemStyle}"
                                             Command="{Binding HienThiSaoLuuCommand}" Visibility="{Binding CoQuyenQuanTri, Converter={StaticResource BoolToVis}}" />
-                                    <Button Content="Nhật ký hoạt động" Tag="d24" ctl:NavIcon.Glyph="&#xE81C;" Style="{StaticResource NavItemStyle}"
+                                    <Button Content="Nhật ký hệ thống" Tag="d24" ctl:NavIcon.Glyph="&#xE81C;" Style="{StaticResource NavItemStyle}"
                                             Command="{Binding HienThiNhatKyCommand}" Visibility="{Binding CoQuyenNhatKy, Converter={StaticResource BoolToVis}}" />
                                 </StackPanel>
                             </StackPanel>
@@ -265,18 +224,7 @@
                                     Height="{Binding ViewportHeight, ElementName=PageScroller, Converter={StaticResource MaxValueConverter}, ConverterParameter=640}" />
                 </ScrollViewer>
 
-                <!-- Thông báo nổi khi có cảnh báo mới (góc trên bên phải khu vực nội dung) -->
-                <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,14,26,0" MaxWidth="460" Padding="16,12" CornerRadius="12"
-                        Background="{StaticResource MauNguyHiem}" Panel.ZIndex="10"
-                        Visibility="{Binding CoThongBaoCanhBaoMoi, Converter={StaticResource BoolToVis}}">
-                    <StackPanel>
-                        <TextBlock Text="{Binding ThongBaoCanhBaoMoi}" Foreground="White" FontWeight="SemiBold" TextWrapping="Wrap" />
-                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button Content="Xem" Command="{Binding XemThongBaoCanhBaoCommand}" Background="White" Foreground="{StaticResource MauNguyHiem}" BorderBrush="White" MinHeight="30" Padding="14,3" FontSize="12" />
-                            <Button Content="Đóng" Command="{Binding DongThongBaoCanhBaoCommand}" Background="Transparent" Foreground="White" BorderBrush="White" MinHeight="30" Padding="14,3" FontSize="12" Margin="0" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
+                
             </Grid>
         </Grid>
     </Grid>

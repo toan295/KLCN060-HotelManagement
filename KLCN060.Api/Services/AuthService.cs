@@ -29,6 +29,12 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrEmpty(request.MatKhau) || request.MatKhau.Length < DoDaiMatKhauToiThieu)
             throw new ApiException(StatusCodes.Status400BadRequest, "MAT_KHAU_QUA_NGAN", $"Mật khẩu phải có ít nhất {DoDaiMatKhauToiThieu} ký tự.", nameof(request.MatKhau));
+        // BCrypt chỉ xét 72 byte đầu: cùng giới hạn với đổi/đặt lại mật khẩu để không cắt cụt âm thầm.
+        if (request.MatKhau.Length > PasswordService.DoDaiToiDa)
+            throw new ApiException(StatusCodes.Status400BadRequest, "MAT_KHAU_QUA_DAI", $"Mật khẩu tối đa {PasswordService.DoDaiToiDa} ký tự.", nameof(request.MatKhau));
+
+        GuestService.KiemTraHoTen(request.HoTen);
+        request.HoTen = request.HoTen.Trim();
 
         request.SoDT = ContactValidator.KiemTraSoDT(request.SoDT, nameof(request.SoDT));
         // Email BẮT BUỘC: đây là kênh duy nhất để khôi phục mật khẩu (nhận liên kết đặt lại qua đúng email đã đăng ký).
@@ -107,6 +113,14 @@ public class AuthService : IAuthService
             taiKhoan = await _context.TaiKhoans
                 .Include(x => x.NhanVien).ThenInclude(nv => nv!.VaiTro)
                 .FirstOrDefaultAsync(x => x.LoaiTaiKhoan == LoaiTaiKhoan.KHACH_HANG && x.Khach != null && x.Khach.Email == request.TenDangNhap);
+        }
+
+        // Khách đã đổi SĐT trong Hồ sơ: tên đăng nhập gốc (SĐT lúc đăng ký) không đổi, nhưng SĐT mới cũng đăng nhập được.
+        if (taiKhoan is null && !request.TenDangNhap.Contains('@'))
+        {
+            taiKhoan = await _context.TaiKhoans
+                .Include(x => x.NhanVien).ThenInclude(nv => nv!.VaiTro)
+                .FirstOrDefaultAsync(x => x.LoaiTaiKhoan == LoaiTaiKhoan.KHACH_HANG && x.Khach != null && x.Khach.SoDT == request.TenDangNhap);
         }
 
         if (taiKhoan is null)

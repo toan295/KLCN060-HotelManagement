@@ -142,7 +142,8 @@ public sealed class LlmChatbotService : IChatbotService
 
         var bayGio = DateTime.Now;
         // Khóa nhớ gồm cả NGÀY: các câu như "ngày mai còn phòng không" đổi nghĩa khi sang ngày mới.
-        var khoaNho = $"chatbot:llm:{DateOnly.FromDateTime(bayGio).DayNumber}:{khoaHoa}";
+        // và cả PHIÊN BẢN dữ liệu: Quản lý đổi giá/loại phòng/dịch vụ thì câu trả lời đã nhớ không còn dùng nữa.
+        var khoaNho = $"chatbot:llm:{DateOnly.FromDateTime(bayGio).DayNumber}:{ChatbotDuLieu.PhienBan}:{khoaHoa}";
         if (_cache.TryGetValue(khoaNho, out string? daCo) && daCo is not null) return ChatbotAnswer.ChiCoCauTraLoi(daCo);
 
         string? boCanh = null;

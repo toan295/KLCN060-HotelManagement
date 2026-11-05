@@ -16,6 +16,9 @@ public partial class BookingService : IBookingService
     /// <summary>Một phiếu đặt phòng giữ phòng tối đa chừng này đêm (chặn đặt "55 năm" làm kẹt phòng); lưu trú dài hơn thì gia hạn dần hoặc làm hợp đồng riêng.</summary>
     public const int SoDemToiDa = 90;
 
+    /// <summary>Chỉ nhận đặt phòng có ngày đón trong vòng chừng này năm kể từ hôm nay (chặn đặt "năm 9999" giữ phòng vô nghĩa).</summary>
+    public const int SoNamDatTruocToiDa = 2;
+
     internal static void KiemTraSoDem(DateOnly don, DateOnly tra, string truong)
     {
         if (tra.DayNumber - don.DayNumber > SoDemToiDa)
@@ -41,12 +44,16 @@ public partial class BookingService : IBookingService
         var homNay = DateOnly.FromDateTime(DateTime.Now);
         if (request.NgayDonDuKien < homNay)
             throw new ApiException(StatusCodes.Status400BadRequest, "NGAY_DON_KHONG_HOP_LE", "Ngày đón dự kiến không được ở quá khứ.", "ngayDonDuKien");
+        if (request.NgayDonDuKien > homNay.AddYears(SoNamDatTruocToiDa))
+            throw new ApiException(StatusCodes.Status400BadRequest, "NGAY_DON_QUA_XA", $"Chỉ nhận đặt phòng trước tối đa {SoNamDatTruocToiDa} năm kể từ hôm nay.", "ngayDonDuKien");
         if (request.NgayTraDuKien <= request.NgayDonDuKien)
             throw new ApiException(StatusCodes.Status400BadRequest, "KHOANG_NGAY_KHONG_HOP_LE", "Ngày trả phải sau ngày đón.", "ngayTraDuKien");
         KiemTraSoDem(request.NgayDonDuKien, request.NgayTraDuKien, "ngayTraDuKien");
 
         if (request.PhongCanDat is null || request.PhongCanDat.Count == 0)
             throw new ApiException(StatusCodes.Status400BadRequest, "THIEU_PHONG_CAN_DAT", "Cần chọn ít nhất 1 loại phòng.", "phongCanDat");
+        if (request.SoKhach is < 1)
+            throw new ApiException(StatusCodes.Status400BadRequest, "SO_KHACH_KHONG_HOP_LE", "Số khách phải từ 1 trở lên.", "soKhach");
         for (var i = 0; i < request.PhongCanDat.Count; i++)
         {
             var dong = request.PhongCanDat[i];
@@ -77,14 +84,49 @@ public partial class BookingService : IBookingService
 
         var soDem = request.NgayTraDuKien.DayNumber - request.NgayDonDuKien.DayNumber;
 
+        // Sức chứa tính GỘP theo toàn bộ phòng trong yêu cầu (không theo từng phòng): SoKhach là số khách của cả phiếu đặt, chưa phân bổ vào từng phòng; việc chia người vào phòng làm lúc nhận phòng.
+        // Số khách vượt sức chứa là lỗi của yêu cầu, báo trước chuyện hết phòng (khách 5 người vào phòng chứa tối đa 3 phải được nói "quá sức chứa", không phải "hết phòng").
+        if (request.SoKhach is > 0)
+        {
+            long sucChua = 0;
+            foreach (var dong in yeuCau)
+            {
+                var lp = await _context.LoaiPhongs.AsNoTracking().FirstOrDefaultAsync(x => x.MaLoai == dong.MaLoai)
+                    ?? throw new ApiException(StatusCodes.Status404NotFound, "KHONG_TIM_THAY_LOAI_PHONG", $"Không tìm thấy loại phòng {dong.MaLoai}.", $"phongCanDat[{dong.ViTri}].maLoai");
+                sucChua += (long)dong.SoLuong * (lp.SoNguoiTieuChuan + CheckInService.NguoiThemToiDa);
+            }
+            if (request.SoKhach > sucChua)
+                throw new ApiException(StatusCodes.Status400BadRequest, "SO_KHACH_VUOT_SUC_CHUA",
+                    $"Các phòng đã chọn chứa tối đa {sucChua} khách (gồm {CheckInService.NguoiThemToiDa} người ở thêm mỗi phòng, có phụ thu); bạn khai {request.SoKhach} khách. Vui lòng giảm số khách hoặc đặt thêm phòng.", "soKhach");
+        }
+
+        // Khách tự đặt mà đã có đúng một đơn CHƯA ĐẶT CỌC giống hệt (cùng ngày, loại và số phòng, số khách) thì dùng lại đơn đó thay vì tạo thêm đơn rác.
+        if (user.LaKhachHang)
+        {
+            var khoaYeuCau = string.Join(",", yeuCau.Select(x => $"{x.MaLoai}x{x.SoLuong}"));
+            var choCoc = await _context.PhieuDatPhongs.AsNoTracking()
+                .Where(x => x.MaKhach == maKhach && x.TrangThai == TrangThaiPhieuDat.CHO_XAC_NHAN && x.LoaiDatPhong == loaiDatPhong
+                            && x.NgayDonDuKien == request.NgayDonDuKien && x.NgayTraDuKien == request.NgayTraDuKien && x.SoKhach == request.SoKhach)
+                .Select(x => new { x.MaPhieuDat, Phong = x.ChiTietPhieuDats.Select(c => c.Phong.MaLoai).ToList() })
+                .ToListAsync();
+            foreach (var p in choCoc)
+            {
+                var khoa = string.Join(",", p.Phong.GroupBy(m => m).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{g.Key}x{g.Count()}"));
+                // Chỉ dùng lại khi đơn đó vẫn còn phòng để cọc; hết phòng rồi thì đi tiếp để báo hết phòng đúng như một đơn mới.
+                if (khoa == khoaYeuCau
+                    && await RoomAvailability.GiuPhongKhiDatCocAsync(_context, new PhieuDatPhong { MaPhieuDat = p.MaPhieuDat, NgayDonDuKien = request.NgayDonDuKien, NgayTraDuKien = request.NgayTraDuKien }, chiKiemTra: true) is null)
+                    return await LayChiTietAsync(p.MaPhieuDat);
+            }
+        }
+
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
         // Bảng giá (Quản lý): đơn giá áp dụng của từng đêm theo quy tắc giá đang bật; không có quy tắc thì đúng bằng đơn giá loại phòng.
-        var quyTacGia = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
 
         var chiTiets = new List<ChiTietPhieuDat>();
         var giaChotTheoPhong = new Dictionary<string, List<GiaDemDatPhong>>();
         var loaiCuaPhong = new Dictionary<string, string>();
+        var daKiemTraGuiTrung = false;
         foreach (var dong in yeuCau)
         {
             var loaiPhong = await _context.LoaiPhongs.AsNoTracking().FirstOrDefaultAsync(x => x.MaLoai == dong.MaLoai);
@@ -98,6 +140,19 @@ public partial class BookingService : IBookingService
                 .AsNoTracking()
                 .ToListAsync();
 
+            // Lớp chặn gửi trùng ở tầng service (lớp 2, độc lập với việc client có chặn bấm đúp hay không): kiểm tra SAU khi đã giữ khóa của loại phòng đầu tiên,
+            // nên request thứ hai chạy song song phải chờ request đầu commit rồi mới thấy phiếu vừa tạo và trả lại chính phiếu đó.
+            if (!daKiemTraGuiTrung)
+            {
+                daKiemTraGuiTrung = true;
+                var maTrung = await TimPhieuVuaTaoGiongHetAsync(maKhach, loaiDatPhong, request, yeuCau.Select(x => (x.MaLoai, x.SoLuong)).ToList());
+                if (maTrung is not null)
+                {
+                    await transaction.RollbackAsync();
+                    return await LayChiTietAsync(maTrung);
+                }
+            }
+
             var daChiem = await RoomAvailability.GetOccupiedRoomIdsAsync(_context, request.NgayDonDuKien, request.NgayTraDuKien);
             var daChonTrongRequest = chiTiets.Select(x => x.MaPhong).ToHashSet();
 
@@ -108,10 +163,10 @@ public partial class BookingService : IBookingService
 
             if (phongTrong.Count < dong.SoLuong)
                 throw new ApiException(StatusCodes.Status409Conflict, "ROOM_NOT_AVAILABLE",
-                    $"Loại phòng {dong.MaLoai} chỉ còn {phongTrong.Count} phòng trống trong khoảng ngày đã chọn, không đủ {dong.SoLuong} phòng yêu cầu",
+                    $"Loại phòng {loaiPhong.TenLoai} chỉ còn {phongTrong.Count} phòng trống trong khoảng ngày đã chọn, không đủ {dong.SoLuong} phòng yêu cầu",
                     $"phongCanDat[{dong.ViTri}].soLuong");
 
-            var gia = GiaPhongCalculator.Tinh(loaiPhong, request.NgayDonDuKien, request.NgayTraDuKien, loaiDatPhong, quyTacGia);
+            var gia = GiaPhongCalculator.Tinh(loaiPhong, request.NgayDonDuKien, request.NgayTraDuKien);
             foreach (var phong in phongTrong.Take(dong.SoLuong))
             {
                 chiTiets.Add(new ChiTietPhieuDat
@@ -180,6 +235,7 @@ public partial class BookingService : IBookingService
             NgayDonDuKien = request.NgayDonDuKien,
             NgayTraDuKien = request.NgayTraDuKien,
             TienCoc = tienCoc,
+            SoKhach = request.SoKhach is > 0 ? request.SoKhach : null,
             TrangThai = TrangThaiPhieuDat.CHO_XAC_NHAN,
             LoaiDatPhong = loaiDatPhong,
             NguonDat = user.LaKhachHang ? NguonDatPhong.WEBSITE : NguonDatPhong.QUAY_LE_TAN
@@ -321,6 +377,11 @@ public partial class BookingService : IBookingService
         if (phieuDat.NgayDonDuKien < DateOnly.FromDateTime(DateTime.Now))
             throw new ApiException(StatusCodes.Status409Conflict, "PHIEU_QUA_NGAY_DON",
                 $"Phiếu {maPhieuDat} đã quá ngày đón dự kiến ({phieuDat.NgayDonDuKien:dd/MM/yyyy}), không thu cọc để giữ phòng nữa: hãy sửa ngày đón hoặc đánh dấu không đến/hủy phiếu.");
+
+        // Phiếu chưa cọc không giữ phòng: lúc thu cọc phải chắc chắn vẫn còn phòng (hoặc chuyển sang phòng cùng loại còn trống).
+        var khongGiuDuoc = await RoomAvailability.GiuPhongKhiDatCocAsync(_context, phieuDat);
+        if (khongGiuDuoc is not null)
+            throw new ApiException(StatusCodes.Status409Conflict, "ROOM_NOT_AVAILABLE", khongGiuDuoc);
 
         phieuDat.TrangThai = TrangThaiPhieuDat.DA_XAC_NHAN;
         phieuDat.NgayNhanCoc = DateTime.Now;
@@ -469,7 +530,6 @@ public partial class BookingService : IBookingService
             phongMoiTheoCu.Add((d.MaPhongCu, phongMoi));
         }
 
-        var quyTacGia = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
         var tongCu = phieuDat.ChiTietPhieuDats.Sum(x => x.ThanhTien);
         if (doiNgay)
         {
@@ -478,7 +538,7 @@ public partial class BookingService : IBookingService
             await _context.GiaDemDatPhongs.Where(x => x.MaPhieuDat == maPhieuDat && maGiu.Contains(x.MaPhong)).ExecuteDeleteAsync();
             foreach (var ct in giuNguyen)
             {
-                var gia = GiaPhongCalculator.Tinh(ct.Phong.LoaiPhong, don, tra, phieuDat.LoaiDatPhong, quyTacGia);
+                var gia = GiaPhongCalculator.Tinh(ct.Phong.LoaiPhong, don, tra);
                 ct.DonGiaApDung = gia.DonGiaBinhQuan;
                 ct.ThanhTien = gia.TongTien;
                 _context.GiaDemDatPhongs.AddRange(GiaPhongCalculator.TaoGiaChot(maPhieuDat, ct.MaPhong, ct.Phong.LoaiPhong, gia));
@@ -488,7 +548,7 @@ public partial class BookingService : IBookingService
         var dongMoi = giuNguyen.Select(ct => (MaLoai: ct.Phong.MaLoai, ct.ThanhTien)).ToList();
         foreach (var (cu, moi) in phongMoiTheoCu)
         {
-            var gia = GiaPhongCalculator.Tinh(moi.LoaiPhong, don, tra, phieuDat.LoaiDatPhong, quyTacGia);
+            var gia = GiaPhongCalculator.Tinh(moi.LoaiPhong, don, tra);
             _context.ChiTietPhieuDats.Remove(hienCo[cu]);
             _context.ChiTietPhieuDats.Add(new ChiTietPhieuDat { MaPhieuDat = maPhieuDat, MaPhong = moi.MaPhong, SoLuong = 1, DonGiaApDung = gia.DonGiaBinhQuan, ThanhTien = gia.TongTien });
             _context.GiaDemDatPhongs.AddRange(GiaPhongCalculator.TaoGiaChot(maPhieuDat, moi.MaPhong, moi.LoaiPhong, gia));
@@ -539,7 +599,7 @@ public partial class BookingService : IBookingService
             }
             foreach (var (cu, moi) in phongMoiTheoCu)
             {
-                var gia = GiaPhongCalculator.Tinh(moi.LoaiPhong, don, tra, phieuDat.LoaiDatPhong, quyTacGia);
+                var gia = GiaPhongCalculator.Tinh(moi.LoaiPhong, don, tra);
                 var (donGia, thanhTien) = giaCu[cu];
                 xem.Phongs.Add(new BookingChangeRoomDto { MaPhong = moi.MaPhong, MaLoai = moi.MaLoai, DoiTuPhong = cu, DonGiaCu = donGia, DonGiaMoi = gia.DonGiaBinhQuan, ThanhTienCu = thanhTien, ThanhTienMoi = gia.TongTien });
             }
@@ -572,7 +632,7 @@ public partial class BookingService : IBookingService
     }
 
     /// <summary>Danh sách phòng có thể đổi cho một phòng đang giữ: cùng loại, còn trống trong khoảng ngày (không tính chính phiếu này), không bảo trì, không phải phòng phiếu đang giữ.</summary>
-    public async Task<List<KLCN060.Api.DTOs.FrontDesk.VacantRoomDto>> GetSwapRoomsAsync(string maPhieuDat, string maPhongCu, DateOnly? nhan, DateOnly? tra)
+    public async Task<List<KLCN060.Api.DTOs.Bookings.VacantRoomDto>> GetSwapRoomsAsync(string maPhieuDat, string maPhongCu, DateOnly? nhan, DateOnly? tra)
     {
         var phieu = await _context.PhieuDatPhongs.AsNoTracking().Include(x => x.ChiTietPhieuDats).ThenInclude(ct => ct.Phong)
             .FirstOrDefaultAsync(x => x.MaPhieuDat == maPhieuDat)
@@ -590,7 +650,7 @@ public partial class BookingService : IBookingService
             .Where(x => x.MaLoai == cu.Phong.MaLoai && x.TinhTrang != TinhTrangPhong.OOO)
             .OrderBy(x => x.Tang).ThenBy(x => x.MaPhong)
             .Select(x => new { x.MaPhong, x.TenPhong, x.Tang, x.MaLoai, TenLoai = x.LoaiPhong.TenLoai, x.LoaiPhong.DonGia, x.TinhTrang }).ToListAsync();
-        return phongs.Where(x => !daChiem.Contains(x.MaPhong) && !giu.Contains(x.MaPhong)).Select(x => new KLCN060.Api.DTOs.FrontDesk.VacantRoomDto
+        return phongs.Where(x => !daChiem.Contains(x.MaPhong) && !giu.Contains(x.MaPhong)).Select(x => new KLCN060.Api.DTOs.Bookings.VacantRoomDto
         {
             MaPhong = x.MaPhong, TenPhong = x.TenPhong, Tang = x.Tang, MaLoai = x.MaLoai, TenLoai = x.TenLoai, DonGia = x.DonGia, TinhTrang = x.TinhTrang.ToString()
         }).ToList();
@@ -663,6 +723,7 @@ public partial class BookingService : IBookingService
             MaPhieuDat = maPhieuDat,
             TrangThai = nameof(TrangThaiPhieuDat.DA_HUY),
             HoanCoc = hoanCoc && daDatCoc,   // phiếu chưa thu cọc thì không có cọc nào để hoàn
+            DaThuCoc = daDatCoc,
             SoNgayConLai = soNgayConLai,
             SoTienHoan = soTienHoan
         };
@@ -737,6 +798,13 @@ public partial class BookingService : IBookingService
             .FirstOrDefaultAsync(x => x.MaPhieuDat == maPhieuDat)
             ?? throw new ApiException(StatusCodes.Status404NotFound, "KHONG_TIM_THAY_DAT_PHONG", "Không tìm thấy phiếu đặt phòng.");
 
+        // Phụ thu dự kiến: khách vượt tổng số khách tiêu chuẩn của các phòng thì mỗi người thêm chịu phụ thu của loại phòng (cao nhất trong các phòng) mỗi đêm.
+        var soDemO = phieuDat.NgayTraDuKien.DayNumber - phieuDat.NgayDonDuKien.DayNumber;
+        var tieuChuan = phieuDat.ChiTietPhieuDats.Sum(x => x.Phong.LoaiPhong.SoNguoiTieuChuan);
+        var soKhachVuot = phieuDat.SoKhach is { } sk ? Math.Max(0, sk - tieuChuan) : 0;
+        var phuThuMoiNguoi = phieuDat.ChiTietPhieuDats.Select(x => x.Phong.LoaiPhong.PhuThu).DefaultIfEmpty(0m).Max();
+        var phuThuDuKien = soKhachVuot * phuThuMoiNguoi * Math.Max(soDemO, 0);
+
         return new BookingDto
         {
             MaPhieuDat = phieuDat.MaPhieuDat,
@@ -756,6 +824,10 @@ public partial class BookingService : IBookingService
             TienCoc = phieuDat.TienCoc,
             TongTienDuKien = phieuDat.ChiTietPhieuDats.Sum(x => x.ThanhTien),
             TongKhuyenMai = phieuDat.ChiTietKhuyenMais.Sum(x => x.TongKhuyenMai),
+            SoDem = phieuDat.NgayTraDuKien.DayNumber - phieuDat.NgayDonDuKien.DayNumber,
+            SoKhach = phieuDat.SoKhach,
+            SoKhachVuotTieuChuan = soKhachVuot,
+            PhuThuDuKien = phuThuDuKien,
             PhongDaGiu = phieuDat.ChiTietPhieuDats
                 .OrderBy(x => x.MaPhong, StringComparer.Ordinal)
                 .Select(x => new HeldRoomDto { MaPhong = x.MaPhong, MaLoai = x.Phong.MaLoai, TenLoai = x.Phong.LoaiPhong.TenLoai, DonGiaApDung = x.DonGiaApDung, ThanhTien = x.ThanhTien })
@@ -793,6 +865,35 @@ public partial class BookingService : IBookingService
     public const int SoKhuyenMaiToiDa = 3;
 
     /// <summary>Gộp <c>MaKhuyenMais</c> và <c>MaKhuyenMai</c> (cũ): bỏ trống / trùng, tối đa <see cref="SoKhuyenMaiToiDa"/>.</summary>
+    /// <summary>Cửa sổ (giây) coi hai yêu cầu đặt phòng giống hệt nhau là cùng một lần bấm bị gửi lặp.</summary>
+    public const int CuaSoChongGuiTrungGiay = 10;
+
+    /// <summary>
+    /// Phiếu còn CHỜ XÁC NHẬN (chưa thu cọc: đã thu cọc nghĩa là người dùng chủ ý đặt tiếp) của đúng khách này, cùng loại đặt, ngày, số khách, khuyến mãi và cùng danh sách (loại phòng × số lượng), được tạo trong
+    /// <see cref="CuaSoChongGuiTrungGiay"/> giây gần nhất; trả mã phiếu hoặc null. Gọi trong transaction đã giữ khóa phòng để hai request song song không cùng lọt qua.
+    /// </summary>
+    private async Task<string?> TimPhieuVuaTaoGiongHetAsync(string maKhach, LoaiDatPhong loaiDatPhong, CreateBookingRequest request, List<(string MaLoai, int SoLuong)> yeuCau)
+    {
+        var tu = DateTime.Now.AddSeconds(-CuaSoChongGuiTrungGiay);
+        var soKhach = request.SoKhach is > 0 ? request.SoKhach : null;
+        var khoaYeuCau = string.Join(",", yeuCau.Select(x => $"{x.MaLoai}x{x.SoLuong}"));
+        var khoaKm = string.Join(",", DanhSachMaKhuyenMai(request).Select(x => x.ToUpperInvariant()).OrderBy(x => x, StringComparer.Ordinal));
+        var ungVien = await _context.PhieuDatPhongs.AsNoTracking()
+            .Where(x => x.MaKhach == maKhach && x.NgayDat >= tu && x.LoaiDatPhong == loaiDatPhong
+                        && x.TrangThai == TrangThaiPhieuDat.CHO_XAC_NHAN
+                        && x.NgayDonDuKien == request.NgayDonDuKien && x.NgayTraDuKien == request.NgayTraDuKien && x.SoKhach == soKhach)
+            .OrderBy(x => x.NgayDat)
+            .Select(x => new { x.MaPhieuDat, Phong = x.ChiTietPhieuDats.Select(c => c.Phong.MaLoai).ToList(), Km = x.ChiTietKhuyenMais.Select(k => k.MaKM).ToList() })
+            .ToListAsync();
+        foreach (var p in ungVien)
+        {
+            var khoaPhong = string.Join(",", p.Phong.GroupBy(m => m).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{g.Key}x{g.Count()}"));
+            var khoaKmPhieu = string.Join(",", p.Km.Select(x => x.ToUpperInvariant()).OrderBy(x => x, StringComparer.Ordinal));
+            if (khoaPhong == khoaYeuCau && khoaKmPhieu == khoaKm) return p.MaPhieuDat;
+        }
+        return null;
+    }
+
     internal static List<string> DanhSachMaKhuyenMai(CreateBookingRequest request)
     {
         var ds = (request.MaKhuyenMais ?? new List<string>()).Append(request.MaKhuyenMai ?? "")

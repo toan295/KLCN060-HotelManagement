@@ -83,6 +83,7 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
 {
     private readonly AuditTrail _audit;
     private readonly byte[] _khoaKy;
+    private bool _chatbotCanDocLai;
 
     public AuditSaveChangesInterceptor(AuditTrail audit, IConfiguration configuration)
     {
@@ -113,9 +114,40 @@ public sealed class AuditSaveChangesInterceptor : SaveChangesInterceptor
         return ValueTask.FromResult(result);
     }
 
+    // Chatbot đọc dữ liệu công khai (giá, loại phòng, dịch vụ...) và nhớ tạm: lưu xong thay đổi thì báo để nó đọc lại ngay.
+    public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
+    {
+        BaoChatbotNeuCan();
+        return result;
+    }
+
+    public override ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
+    {
+        BaoChatbotNeuCan();
+        return ValueTask.FromResult(result);
+    }
+
+    public override void SaveChangesFailed(DbContextErrorEventData eventData) => _chatbotCanDocLai = false;
+
+    public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, CancellationToken cancellationToken = default)
+    {
+        _chatbotCanDocLai = false;
+        return Task.CompletedTask;
+    }
+
+    private void BaoChatbotNeuCan()
+    {
+        if (!_chatbotCanDocLai) return;
+        _chatbotCanDocLai = false;
+        KLCN060.Api.Services.Chatbot.ChatbotDuLieu.DaThayDoi();
+    }
+
     private void XuLy(DbContext? context)
     {
         if (context is null) return;
+
+        _chatbotCanDocLai = context.ChangeTracker.Entries()
+            .Any(x => x.State is EntityState.Added or EntityState.Modified or EntityState.Deleted && KLCN060.Api.Services.Chatbot.ChatbotDuLieu.LienQuan(x.Entity));
 
         foreach (var nhatKy in _audit.LayHangCho())
             context.Set<NhatKyThaoTac>().Add(nhatKy);

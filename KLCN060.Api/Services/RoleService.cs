@@ -11,7 +11,7 @@ namespace KLCN060.Api.Services;
 public partial class RoleService : IRoleService
 {
     /// <summary>5 vai trò hệ thống: tên được dùng trong [Authorize(Roles=...)] nên không được đổi tên.</summary>
-    private static readonly string[] VaiTroHeThong = { "QUAN_LY", "LE_TAN", "BUONG_PHONG", "KE_TOAN", "KHACH_HANG" };
+    private static readonly string[] VaiTroHeThong = { "QUAN_LY", "LE_TAN", "KHACH_HANG" };
 
     private const string GhiChuHieuLuc =
         "Vai trò mới có hiệu lực ngay ở lần gọi API kế tiếp của nhân viên (quyền được kiểm tra lại theo CSDL ở mỗi request); nhân viên nên đăng nhập lại để giao diện cập nhật đủ chức năng.";

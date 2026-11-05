@@ -5,66 +5,15 @@ using KLCN060.Desktop.Services;
 
 namespace KLCN060.Desktop.ViewModels;
 
+/// <summary>Yêu cầu chuyển từ một màn hình sang màn hình xử lý khác kèm sẵn đối tượng đang chọn (phiếu đặt, lượt ở, phòng, hóa đơn, khách).</summary>
+public sealed record YeuCauMoManHinh(string ManHinh, string? MaPhieuDat = null, string? MaPhieuNhan = null, string? MaPhong = null, string? MaHoaDon = null, string? MaKhach = null, string? TuKhoa = null);
+
 public partial class ManHinhChinhViewModel : ObservableObject
 {
     private readonly ApiClient _api;
     private readonly AppSession _session;
-    private System.Windows.Threading.DispatcherTimer? _dongHoCanhBao;
     [ObservableProperty] private object currentViewModel;
     [ObservableProperty] private string manHinhDangChon = "";
-
-    /// <summary>Số cảnh báo đang có (phòng bảo trì lâu, công nợ quá hạn...) hiện ở thanh trên cho người có quyền xem báo cáo.</summary>
-    [ObservableProperty] private int soCanhBao;
-    [ObservableProperty] private int soCanhBaoNghiemTrong;
-    public bool CoCanhBao => SoCanhBao > 0;
-    public bool CoCanhBaoNghiemTrong => SoCanhBaoNghiemTrong > 0;
-    partial void OnSoCanhBaoChanged(int value) { OnPropertyChanged(nameof(CoCanhBao)); OnPropertyChanged(nameof(ChuThichCanhBao)); }
-    /// <summary>Giải thích con số trên ô cảnh báo: đếm số LOẠI cảnh báo (mỗi loại có thể gồm nhiều mục, số mục ghi trong ngoặc ở bảng điều hành).</summary>
-    public string ChuThichCanhBao => $"{SoCanhBao} loại cảnh báo đang có" + (SoCanhBaoNghiemTrong > 0 ? $", trong đó {SoCanhBaoNghiemTrong} nghiêm trọng" : "") + " - bấm để xem chi tiết. Mỗi loại có thể gồm nhiều mục (số mục ghi trong ngoặc).";
-
-    /// <summary>
-    /// NƠI DUY NHẤT cập nhật ô đếm cảnh báo: cả đồng hồ nền lẫn màn Tổng quan điều hành đều gọi hàm này với cùng một danh sách,
-    /// nên con số không thể nhảy giữa hai cách đếm khác nhau (trước đây mỗi nơi tự đếm). Kế toán chỉ đếm cảnh báo tài chính xử lý được.
-    /// </summary>
-    public void CapNhatSoCanhBao(IEnumerable<CanhBaoDto> canhBaos)
-    {
-        var danhSach = LaKeToan ? DieuHanhViewModel.LocCanhBaoKeToan(canhBaos) : canhBaos.ToList();
-        SoCanhBaoNghiemTrong = danhSach.Count(x => x.MucDo == "NGHIEM_TRONG");
-        SoCanhBao = danhSach.Count;
-        GhiNhanCanhBao(danhSach);
-    }
-
-    /// <summary>Thông báo nổi khi xuất hiện cảnh báo MỚI (hoặc tăng thêm) sau lần kiểm tra trước: hiện ở góc màn hình cho tới khi người dùng đóng hoặc bấm "Xem".</summary>
-    [ObservableProperty] private string thongBaoCanhBaoMoi = "";
-    public bool CoThongBaoCanhBaoMoi => !string.IsNullOrEmpty(ThongBaoCanhBaoMoi);
-    partial void OnThongBaoCanhBaoMoiChanged(string value) => OnPropertyChanged(nameof(CoThongBaoCanhBaoMoi));
-    private Dictionary<string, int>? _canhBaoLanTruoc;   // null = chưa tải lần nào (lần đầu chỉ ghi nhận, không báo)
-
-    [RelayCommand] private void DongThongBaoCanhBao() => ThongBaoCanhBaoMoi = "";
-    [RelayCommand] private void XemThongBaoCanhBao() { ThongBaoCanhBaoMoi = ""; HienThiDieuHanh(); }
-
-    /// <summary>Cảnh báo (mức nghiêm trọng / cảnh báo) mới xuất hiện hoặc tăng số lượng so với lần kiểm tra trước; mức thông tin không làm hiện thông báo nổi.</summary>
-    public static List<string> TimCanhBaoMoi(IReadOnlyDictionary<string, int>? lanTruoc, IEnumerable<CanhBaoDto> hienTai)
-    {
-        var moi = new List<string>();
-        if (lanTruoc is null) return moi;
-        foreach (var cb in hienTai.Where(x => x.MucDo is "NGHIEM_TRONG" or "CANH_BAO"))
-        {
-            if (!lanTruoc.TryGetValue(cb.Ma, out var truoc)) moi.Add(cb.TieuDe);
-            else if (cb.SoLuong > truoc) moi.Add($"{cb.TieuDe} (+{cb.SoLuong - truoc})");
-        }
-        return moi;
-    }
-
-    /// <summary>Cập nhật cảnh báo đã biết và hiện thông báo nổi nếu có cảnh báo mới.</summary>
-    public void GhiNhanCanhBao(IReadOnlyList<CanhBaoDto> canhBaos)
-    {
-        var moi = TimCanhBaoMoi(_canhBaoLanTruoc, canhBaos);
-        _canhBaoLanTruoc = canhBaos.ToDictionary(x => x.Ma, x => x.SoLuong);
-        if (moi.Count > 0)
-            ThongBaoCanhBaoMoi = "Cảnh báo mới: " + string.Join("; ", moi.Take(3)) + (moi.Count > 3 ? $" và {moi.Count - 3} cảnh báo khác" : "");
-    }
-    partial void OnSoCanhBaoNghiemTrongChanged(int value) { OnPropertyChanged(nameof(CoCanhBaoNghiemTrong)); OnPropertyChanged(nameof(ChuThichCanhBao)); }
 
     public ManHinhChinhViewModel(ApiClient api, AppSession session)
     {
@@ -83,12 +32,12 @@ public partial class ManHinhChinhViewModel : ObservableObject
             hanhDong();
     }
 
-    // Access token het han (30 phut) VA lam moi bang refresh token cung that bai (ApiClient.SessionExpired) ->
-    // truoc day Desktop khong co duong nao thoat khoi trang thai loi lien tuc, phai dong app thu cong.
-    // Su kien co the phat tu 1 continuation nen khong chac chan dang o UI thread -> dieu phoi qua Dispatcher.
+    // Access token hết hạn (30 phút) VÀ làm mới bằng refresh token cũng thất bại (ApiClient.SessionExpired) -> quay về màn hình đăng nhập.
+    // Sự kiện có thể phát từ một continuation nên không chắc đang ở UI thread -> điều phối qua Dispatcher.
     private void TrenPhienHetHan() => ChayTrenUi(() =>
     {
-        DungTheoDoiCanhBao();
+        // Đang ở màn hình đăng nhập (đã đăng xuất / phiên đã bị đóng) thì không dựng lại form: việc đó làm mất tên đăng nhập người dùng đang gõ.
+        if (!DaDangNhap) return;
         _session.Clear();
         _api.ClearAccessToken();
         CurrentViewModel = TaoManHinhDangNhap();
@@ -116,8 +65,7 @@ public partial class ManHinhChinhViewModel : ObservableObject
         finally { _dangLamMoiQuyen = false; }
     }
 
-    // Khung shell (app-chrome + sidebar) chỉ hiện sau khi đăng nhập thành công - đúng bản thiết kế
-    // ("D1: standalone, no app chrome/sidebar (login screen precedes the main app shell)").
+    // Khung shell (app-chrome + sidebar) chỉ hiện sau khi đăng nhập thành công.
     public bool DaDangNhap => CurrentViewModel is not DangNhapViewModel;
 
     // ----- Chức năng nào hiện trên thanh bên: theo QUYỀN của vai trò (D15), không theo tên vai trò -----
@@ -126,40 +74,25 @@ public partial class ManHinhChinhViewModel : ObservableObject
     public bool CoQuyenKhachHang => _session.CoQuyen(QuyenHeThong.XemKhachHang);            // D9
     public bool CoQuyenDatPhong => _session.CoQuyen(QuyenHeThong.XemDatPhong);              // D19
     public bool CoQuyenThanhToan => _session.CoQuyen(QuyenHeThong.ThanhToan);               // D8, D20
-    public bool CoQuyenDoiSoat => _session.CoQuyen(QuyenHeThong.XemDoiSoat);                // D18
     public bool CoQuyenBaoCao => _session.CoQuyen(QuyenHeThong.XemBaoCao);                  // D17
     public bool CoQuyenPhong => _session.CoQuyen(QuyenHeThong.QuanLyPhong);                 // D11, D14
     public bool CoQuyenKhuyenMai => _session.CoQuyen(QuyenHeThong.QuanLyKhuyenMai);         // D12
     public bool CoQuyenDichVu => _session.CoQuyen(QuyenHeThong.QuanLyDichVu);               // D13
     public bool CoQuyenQuanTri => _session.CoQuyen(QuyenHeThong.QuanTriHeThong);            // D15, D16
-    public bool CoQuyenGia => _session.CoQuyen(QuyenHeThong.QuanLyGia);                     // D25
     public bool CoQuyenDuyet => _session.CoQuyen(QuyenHeThong.DuyetNghiepVu);               // D19 (xử lý ngoại lệ)
-    public bool CoQuyenNhatKy => !LaKeToan && (_session.CoQuyen(QuyenHeThong.XemNhatKy) || _session.CoQuyen(QuyenHeThong.XemNhatKyTaiChinh));   // D24 (kế toán chỉ thấy nhật ký tài chính - API lọc)
-    // D27 Ca trực: màn hình dành cho lễ tân/nhân viên trực ca - KHÔNG có ở vai trò Quản lý (API cũng chặn vai trò QUAN_LY ở /api/v1/frontdesk).
-    // Quản lý nắm tình hình trong ngày qua Bảng điều hành (D22) và Sơ đồ phòng (D2). Các vai trò khác giữ nguyên: mỗi tab chỉ hiện phần dữ liệu có quyền xem.
-    public bool LaQuanLy => _session.VaiTro == "QUAN_LY";
-    // Kế toán chỉ có MỘT màn hình điều hành (D22, số liệu tiền); không có Ca trực (lễ tân), Buồng phòng, Nhật ký hoạt động.
-    public bool LaKeToan => _session.VaiTro == "KE_TOAN";
-    public bool CoQuyenCaTruc => !LaQuanLy && !LaKeToan && (_session.CoQuyen(QuyenHeThong.XemDatPhong) || _session.CoQuyen(QuyenHeThong.XemLuuTru));
-    public bool CoQuyenBuongPhong => !LaKeToan && (_session.CoQuyen(QuyenHeThong.GhiNhanBuongPhong) || _session.CoQuyen(QuyenHeThong.XuLySuCo) || _session.CoQuyen(QuyenHeThong.XemPhong)
-        || _session.CoQuyen(QuyenHeThong.ThaoTacLeTan) || _session.CoQuyen(QuyenHeThong.QuanLyPhong) || _session.CoQuyen(QuyenHeThong.XemBaoCao));   // D28 (mỗi tab chỉ hiện phần có quyền)
+    public bool CoQuyenNhatKy => _session.CoQuyen(QuyenHeThong.XemNhatKy);                   // D24
     public bool CoQuyenHoaDon => CoQuyenThanhToan || CoQuyenBaoCao;                         // D20 (Kế toán thu tiền; Quản lý chỉ xem)
-    public bool CoQuyenDieuHanh => CoQuyenBaoCao;                                           // D22
 
     // Tiêu đề nhóm trên thanh bên chỉ hiện khi có ít nhất một mục trong nhóm.
-    public bool CoNhomDieuHanh => CoQuyenDieuHanh || CoQuyenCaTruc;
-    public bool CoNhomVanHanh => CoQuyenBuongPhong || CoQuyenXemPhong || CoQuyenLeTan || CoQuyenKhachHang || CoQuyenDatPhong || CoQuyenHoaDon || CoQuyenDoiSoat;
-    public bool CoNhomDanhMuc => CoQuyenPhong || CoQuyenKhuyenMai || CoQuyenDichVu || CoQuyenGia;
+    public bool CoNhomVanHanh => CoQuyenXemPhong || CoQuyenLeTan || CoQuyenKhachHang || CoQuyenDatPhong || CoQuyenHoaDon;
+    public bool CoNhomDanhMuc => CoQuyenPhong || CoQuyenKhuyenMai || CoQuyenDichVu;
     public bool CoNhomHeThong => CoQuyenBaoCao || CoQuyenQuanTri || CoQuyenNhatKy;
 
-    // Nhãn vai trò hiển thị trên thanh app-chrome, khớp mẫu "Quản lý · Trần Văn Long" trong bản thiết kế
-    // nhưng dùng đúng tên đăng nhập thật của phiên hiện tại thay vì tên minh hoạ.
+    // Nhãn vai trò hiển thị trên thanh app-chrome, ví dụ "Nguyễn Văn Quản · Quản lý".
     public string VaiTroHienThi => (string.IsNullOrWhiteSpace(_session.HoTen) ? "" : _session.HoTen + " · ") + _session.VaiTro switch
     {
         "QUAN_LY" => "Quản lý",
         "LE_TAN" => "Lễ tân",
-        "BUONG_PHONG" => "Buồng phòng",
-        "KE_TOAN" => "Kế toán",
         _ => _session.VaiTro ?? ""
     };
 
@@ -171,20 +104,14 @@ public partial class ManHinhChinhViewModel : ObservableObject
         OnPropertyChanged(nameof(CoQuyenKhachHang));
         OnPropertyChanged(nameof(CoQuyenDatPhong));
         OnPropertyChanged(nameof(CoQuyenThanhToan));
-        OnPropertyChanged(nameof(CoQuyenDoiSoat));
         OnPropertyChanged(nameof(CoQuyenBaoCao));
         OnPropertyChanged(nameof(CoQuyenPhong));
         OnPropertyChanged(nameof(CoQuyenKhuyenMai));
         OnPropertyChanged(nameof(CoQuyenDichVu));
         OnPropertyChanged(nameof(CoQuyenQuanTri));
-        OnPropertyChanged(nameof(CoQuyenGia));
-        OnPropertyChanged(nameof(CoQuyenDuyet));
         OnPropertyChanged(nameof(CoQuyenNhatKy));
-        OnPropertyChanged(nameof(CoQuyenCaTruc));
-        OnPropertyChanged(nameof(CoQuyenBuongPhong));
+        OnPropertyChanged(nameof(CoQuyenDuyet));
         OnPropertyChanged(nameof(CoQuyenHoaDon));
-        OnPropertyChanged(nameof(CoQuyenDieuHanh));
-        OnPropertyChanged(nameof(CoNhomDieuHanh));
         OnPropertyChanged(nameof(CoNhomVanHanh));
         OnPropertyChanged(nameof(CoNhomDanhMuc));
         OnPropertyChanged(nameof(CoNhomHeThong));
@@ -209,13 +136,8 @@ public partial class ManHinhChinhViewModel : ObservableObject
             ThanhToanViewModel => "d8",
             PhanQuyenViewModel => "d15",
             SaoLuuViewModel => "d16",
-            BaoCaoViewModel => "d17",
-            DoiSoatChuyenKhoanViewModel => "d18",
-            DieuHanhViewModel => "d22",
             NhatKyViewModel => "d24",
-            CaTrucViewModel => "d27",
-            BuongPhongViewModel => "d28",
-            BangGiaViewModel => "d25",
+            BaoCaoViewModel => "d17",
             QuanLyDatPhongViewModel => "d19",
             HoaDonViewModel => "d20",
             DoiMatKhauViewModel => "d21",
@@ -235,87 +157,33 @@ public partial class ManHinhChinhViewModel : ObservableObject
     }
 
     // Mỗi tài khoản cần được đưa vào MỘT màn hình có thật ngay sau khi đăng nhập, nếu không CurrentViewModel vẫn còn là
-    // DangNhapViewModel -> DaDangNhap = false -> shell (app-chrome + sidebar) không bao giờ hiện ra và người dùng bị kẹt.
-    // Chọn màn hình đầu tiên mà QUYỀN của vai trò cho phép (Quản lý -> bảng điều hành; Lễ tân -> Bảng điều hành ca trực; Buồng phòng -> sơ đồ phòng; Kế toán -> tài chính).
+    // DangNhapViewModel -> DaDangNhap = false -> shell không bao giờ hiện ra và người dùng bị kẹt.
+    // Chọn màn hình đầu tiên mà QUYỀN của vai trò cho phép: Sơ đồ phòng (Quản lý, Lễ tân) -> Hóa đơn -> ...
     private void DieuHuongSauDangNhap()
     {
-        BatDauTheoDoiCanhBao();
-        // Quản lý (có cả báo cáo lẫn quyền Quản lý nghiệp vụ) bắt đầu ở bảng điều hành: thấy ngay tình hình và cảnh báo.
-        if (CoQuyenDieuHanh && (CoQuyenDuyet || LaKeToan)) HienThiDieuHanh();   // Kế toán cũng vào Tổng quan điều hành (bản số liệu tiền)
-        // Lễ tân bắt đầu ca ở Bảng điều hành (D27): thấy ngay khách đến/đi, phòng, cọc, công nợ và việc cần xử lý.
-        else if (CoQuyenCaTruc && CoQuyenLeTan) HienThiCaTruc();
-        else if (CoQuyenPhong) HienThiPhong();
-        else if (CoQuyenXemPhong) HienThiDashboard();
-        else if (CoQuyenBaoCao) HienThiBaoCao();
+        if (CoQuyenXemPhong) HienThiDashboard();
         else if (CoQuyenThanhToan) HienThiHoaDon();
-        else if (CoQuyenDoiSoat) HienThiDoiSoat();
+        else if (CoQuyenBaoCao) HienThiBaoCao();
+        else if (CoQuyenPhong) HienThiPhong();
         else if (CoQuyenQuanTri) HienThiPhanQuyen();
         else if (CoQuyenKhachHang) HienThiKhachHang();
         else if (CoQuyenDatPhong) HienThiQuanLyDatPhong();
         else HienThiDoiMatKhau();   // vai trò chưa được cấp chức năng nào: vẫn có màn hình để đổi mật khẩu/đăng xuất
     }
 
-    // ----- Điều hành (Quản lý) -----
-    [RelayCommand]
-    private void HienThiDieuHanh()
-    {
-        if (!CoQuyenDieuHanh) return;
-        var manHinh = new DieuHanhViewModel(_api, LaKeToan);
-        manHinh.MoManHinh += MoTheoCanhBao;
-        manHinh.DaTaiDanhSachCanhBao += canhBaos => ChayTrenUi(() => CapNhatSoCanhBao(canhBaos));
-        CurrentViewModel = manHinh;
-    }
-
-    [RelayCommand] private void HienThiNhatKy() { if (!CoQuyenNhatKy) return; var nk = new NhatKyViewModel(_api); nk.MoManHinh += MoTheoCanhBao; CurrentViewModel = nk; }
-    [RelayCommand] private void HienThiBangGia() { if (CoQuyenGia) CurrentViewModel = new BangGiaViewModel(_api); }
-
-    /// <summary>Bấm "Mở" ở một cảnh báo: chuyển tới màn hình xử lý tương ứng (nếu vai trò có quyền vào màn hình đó).</summary>
-    private void MoTheoCanhBao(string manHinh)
+    /// <summary>Chuyển tới màn hình có tên chung (từ nút "Mở màn hình" của Sơ đồ phòng, Báo cáo...), nếu vai trò có quyền vào.</summary>
+    private void MoTheoTen(string manHinh)
     {
         switch (manHinh)
         {
             case "PHONG": if (CoQuyenPhong) HienThiPhong(); else HienThiDashboard(); break;
-            case "BUONG_PHONG": HienThiBuongPhong(); break;
             case "LUU_TRU": HienThiDashboard(); break;
             case "DAT_PHONG": HienThiQuanLyDatPhong(); break;
             case "HOA_DON": if (CoQuyenHoaDon) HienThiHoaDon(); else HienThiBaoCao(); break;
-            case "DOI_SOAT": HienThiDoiSoat(); break;
             case "SAO_LUU": HienThiSaoLuu(); break;
+            case "NHAT_KY": HienThiNhatKy(); break;
             case "NHAN_VIEN": HienThiPhanQuyen(); break;
         }
-    }
-
-    // ----- Cảnh báo trên thanh trên: cập nhật mỗi phút cho người có quyền xem báo cáo -----
-    private void BatDauTheoDoiCanhBao()
-    {
-        DungTheoDoiCanhBao();
-        if (!CoQuyenDieuHanh) return;
-        _ = LamMoiCanhBaoAsync();
-        _dongHoCanhBao = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
-        _dongHoCanhBao.Tick += (_, _) => _ = LamMoiCanhBaoAsync();
-        _dongHoCanhBao.Start();
-    }
-
-    private void DungTheoDoiCanhBao()
-    {
-        _dongHoCanhBao?.Stop();
-        _dongHoCanhBao = null;
-        SoCanhBao = 0;
-        SoCanhBaoNghiemTrong = 0;
-        ThongBaoCanhBaoMoi = "";
-        _canhBaoLanTruoc = null;
-    }
-
-    private async Task LamMoiCanhBaoAsync()
-    {
-        if (!DaDangNhap || !CoQuyenDieuHanh) return;
-        try
-        {
-            var canhBao = await _api.GetCanhBaoAsync();
-            CapNhatSoCanhBao(canhBao.CanhBaoDangCo);
-        }
-        catch (LoiYeuCauApi) { /* giữ số cũ */ }
-        catch (System.Net.Http.HttpRequestException) { }
     }
 
     [RelayCommand]
@@ -323,27 +191,19 @@ public partial class ManHinhChinhViewModel : ObservableObject
     {
         if (!CoQuyenKhachHang) return;
         var khach = new QuanLyKhachHangViewModel(_api);
-        khach.MoXuLy += MoTuTongQuanDieuHanh;   // việc làm ngay từ hồ sơ khách: dịch vụ / đổi phòng / trả phòng / nhận phòng / thu tiền / đặt phòng
+        khach.MoXuLy += MoXuLyTuManHinh;   // việc làm ngay từ hồ sơ khách: dịch vụ / đổi phòng / trả phòng / nhận phòng / thu tiền / đặt phòng
         CurrentViewModel = khach;
     }
-    [RelayCommand]
-    private void HienThiCaTruc()
-    {
-        if (!CoQuyenCaTruc) return;
-        var tongQuan = new CaTrucViewModel(_api);
-        tongQuan.MoManHinh += MoTuTongQuanDieuHanh;
-        CurrentViewModel = tongQuan;
-    }
 
-    /// <summary>Từ Tổng quan điều hành (lễ tân): mở thẳng màn hình xử lý với đúng booking / lượt ở / phòng / hóa đơn đã chọn (vẫn kiểm tra quyền; API kiểm tra lại ở từng thao tác).</summary>
-    private void MoTuTongQuanDieuHanh(YeuCauMoManHinh y)
+    /// <summary>Mở thẳng màn hình xử lý với đúng phiếu đặt / lượt ở / phòng / hóa đơn đã chọn (vẫn kiểm tra quyền; API kiểm tra lại ở từng request).</summary>
+    private void MoXuLyTuManHinh(YeuCauMoManHinh y)
     {
         switch (y.ManHinh)
         {
             case "DAT_PHONG":
                 if (!CoQuyenDatPhong) return;
                 var datPhong = new QuanLyDatPhongViewModel(_api, CoQuyenLeTan, CoQuyenDuyet);
-                datPhong.MoXuLy += MoTuTongQuanDieuHanh;
+                datPhong.MoXuLy += MoXuLyTuManHinh;
                 CurrentViewModel = datPhong;
                 if (y.MaPhieuDat is not null) _ = datPhong.MoPhieuAsync(y.MaPhieuDat);
                 else if (!string.IsNullOrWhiteSpace(y.TuKhoa)) _ = datPhong.LocTheoTuKhoaAsync(y.TuKhoa);
@@ -375,14 +235,7 @@ public partial class ManHinhChinhViewModel : ObservableObject
                 if (CoQuyenThanhToan) CurrentViewModel = new ThanhToanViewModel(_api, y.MaHoaDon);
                 break;
             case "SO_DO_PHONG":
-                if (!CoQuyenXemPhong) return;
-                var soDo = new DashboardViewModel(_api, y.MaPhong);
-                soDo.MoManHinh += MoTheoCanhBao;
-                soDo.MoXuLy += MoTuTongQuanDieuHanh;
-                CurrentViewModel = soDo;
-                break;
-            case "BUONG_PHONG":
-                HienThiBuongPhong();
+                if (CoQuyenXemPhong) HienThiDashboard();
                 break;
             case "HOA_DON":
                 if (!CoQuyenHoaDon) return;
@@ -390,16 +243,19 @@ public partial class ManHinhChinhViewModel : ObservableObject
                 dsHoaDon.MoThanhToan += maHoaDon => CurrentViewModel = new ThanhToanViewModel(_api, maHoaDon);
                 CurrentViewModel = dsHoaDon;
                 break;
+            case "PHONG" or "SAO_LUU":
+                MoTheoTen(y.ManHinh);
+                break;
         }
     }
-    [RelayCommand] private void HienThiBuongPhong() { if (CoQuyenBuongPhong) CurrentViewModel = new BuongPhongViewModel(_api); }
+
     [RelayCommand]
     private void HienThiDashboard()
     {
         if (!CoQuyenXemPhong) return;
         var soDo = new DashboardViewModel(_api);
-        soDo.MoManHinh += MoTheoCanhBao;   // nút "Mở Buồng phòng" / "Mở Phiếu đặt phòng" trên chi tiết phòng
-        soDo.MoXuLy += MoTuTongQuanDieuHanh;   // nút trả phòng / gia hạn / nhận phòng với đúng khách và booking của phòng đang chọn
+        soDo.MoManHinh += MoTheoTen;   // nút "Mở Phiếu đặt phòng" trên chi tiết phòng
+        soDo.MoXuLy += MoXuLyTuManHinh;   // nút trả phòng / gia hạn / nhận phòng với đúng khách và booking của phòng đang chọn
         CurrentViewModel = soDo;
     }
     [RelayCommand] private void HienThiDatPhong() { if (CoQuyenLeTan) CurrentViewModel = new DatPhongViewModel(_api); }
@@ -435,7 +291,7 @@ public partial class ManHinhChinhViewModel : ObservableObject
     {
         if (!CoQuyenDatPhong) return;
         var datPhong = new QuanLyDatPhongViewModel(_api, CoQuyenLeTan, CoQuyenDuyet);
-        datPhong.MoXuLy += MoTuTongQuanDieuHanh;   // nút "Nhận phòng" / "Trả phòng" ngay trên chi tiết phiếu
+        datPhong.MoXuLy += MoXuLyTuManHinh;   // nút "Nhận phòng" / "Trả phòng" ngay trên chi tiết phiếu
         CurrentViewModel = datPhong;
     }
     [RelayCommand]
@@ -457,7 +313,6 @@ public partial class ManHinhChinhViewModel : ObservableObject
         var manHinh = new DoiMatKhauViewModel(_api);
         manHinh.DaDoiMatKhau += () =>
         {
-            DungTheoDoiCanhBao();
             _session.Clear();
             _api.ClearAccessToken();
             CurrentViewModel = TaoManHinhDangNhap();
@@ -465,26 +320,23 @@ public partial class ManHinhChinhViewModel : ObservableObject
         CurrentViewModel = manHinh;
     }
     [RelayCommand] private void HienThiPhanQuyen() { if (CoQuyenQuanTri) CurrentViewModel = new PhanQuyenViewModel(_api); }
+    [RelayCommand] private void HienThiNhatKy() { if (CoQuyenNhatKy) CurrentViewModel = new NhatKyViewModel(_api); }
     [RelayCommand] private void HienThiSaoLuu() { if (CoQuyenQuanTri) CurrentViewModel = new SaoLuuViewModel(_api); }
-    [RelayCommand] private void HienThiDoiSoat() { if (CoQuyenDoiSoat) CurrentViewModel = new DoiSoatChuyenKhoanViewModel(_api); }
     [RelayCommand]
     private void HienThiBaoCao()
     {
         if (!CoQuyenBaoCao) return;
-        var baoCao = new BaoCaoViewModel(_api) { AnTabVanHanh = LaKeToan };   // Kế toán không xem báo cáo vận hành buồng phòng / bảo trì / lễ tân
-        baoCao.MoManHinh += MoTheoCanhBao;   // nút "Mở màn hình" ở tab Vấn đề cần chú ý
+        var baoCao = new BaoCaoViewModel(_api);
         CurrentViewModel = baoCao;
     }
 
-    // "← Đăng xuất" (bản thiết kế D2-D17): gọi API để thu hồi refresh token, xoá phiên làm việc,
-    // rồi quay về màn hình đăng nhập D1 - trước đây chưa có cách nào thoát khỏi phiên đã đăng nhập.
+    // "Đăng xuất": gọi API để thu hồi refresh token, xóa phiên làm việc, rồi quay về màn hình đăng nhập D1.
     [RelayCommand]
     private async Task DangXuatAsync()
     {
         try { await _api.LogoutAsync(); }
         catch (LoiYeuCauApi) { /* best-effort: vẫn đăng xuất phía client kể cả khi gọi API thất bại */ }
 
-        DungTheoDoiCanhBao();
         _session.Clear();
         _api.ClearAccessToken();
         CurrentViewModel = TaoManHinhDangNhap();

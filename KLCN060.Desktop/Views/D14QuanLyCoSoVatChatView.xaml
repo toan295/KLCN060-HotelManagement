@@ -69,7 +69,7 @@
                             <HeaderedContentControl Header="Tìm theo tên, mã, phòng hoặc ghi chú"><TextBox Text="{Binding TuKhoa, UpdateSourceTrigger=PropertyChanged}" /></HeaderedContentControl>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
                                 <Button Content="Xóa lọc" Command="{Binding XoaBoLocCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
-                                <Button Content="Tải lại" Command="{Binding LoadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0" />
+                                <Button Content="Tải lại" ToolTip="Lấy lại dữ liệu mới nhất từ máy chủ (để thấy thay đổi do người khác vừa làm). Không sửa hay xóa dữ liệu." Command="{Binding LoadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0" />
                             </StackPanel>
                         </Grid>
                         <Grid Margin="0,8,0,0">

@@ -1,5 +1,6 @@
 using KLCN060.Api.DTOs.Invoices;
 using KLCN060.Api.Middlewares;
+using KLCN060.Api.Services.Finance;
 using KLCN060.Domain;
 using KLCN060.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace KLCN060.Api.Services;
 
 /// <summary>
-/// Danh sách / thống kê / tổng quan hóa đơn cho Quản lý và Kế toán: mọi con số (tổng tiền, đã thu, còn nợ, công nợ, quá hạn) được tính một nơi duy nhất
+/// Danh sách / thống kê / tổng quan hóa đơn cho Quản lý: mọi con số (tổng tiền, đã thu, còn nợ, công nợ, quá hạn) được tính một nơi duy nhất
 /// ở đây để danh sách, thẻ thống kê và panel chi tiết luôn khớp nhau.
 /// </summary>
 public partial class InvoiceService
@@ -86,11 +87,7 @@ public partial class InvoiceService
     }
 
     private (bool QuaHan, int SoNgay) TinhQuaHan(HoaDonRow x, DateOnly homNay)
-    {
-        if (x.TongTien <= x.DaThu || x.DangO || x.NgayTraCuoi is not { } tra) return (false, 0);
-        var soNgay = homNay.DayNumber - tra.DayNumber;
-        return soNgay >= NgayQuaHan ? (true, soNgay) : (false, 0);
-    }
+        => CongNoQuaHan.Tinh(x.TongTien, x.DaThu, x.DangO, x.NgayTraCuoi, homNay, NgayQuaHan);
 
     public async Task<(List<InvoiceSummaryDto> Items, int TotalItems)> SearchAsync(InvoiceListQuery query)
     {
@@ -195,7 +192,7 @@ public partial class InvoiceService
                 LoaiKhoanMuc = x.LoaiKhoanMuc.ToString(), MoTa = x.MoTa, SoLuong = x.SoLuong, DonGia = x.DonGia, ThanhTien = x.ThanhTien
             }).ToList()
         };
-        dto.TongGiamGia = -h.ChiTietHoaDons.Where(x => x.LoaiKhoanMuc == LoaiKhoanMuc.KHUYEN_MAI).Sum(x => x.ThanhTien);
+        dto.TongGiamGia = h.TienKhuyenMai;
 
         // Cùng quy tắc tính tiền phòng của folio: ở ít nhất 1 đêm, trừ phòng đã đổi đi (đổi ngay trong ngày thì không tính đêm cho phòng cũ).
         var phongDaDoiDi = (await _context.PhieuDoiPhongs.AsNoTracking().Where(x => x.MaPhieuNhan == h.MaPhieuNhan).Select(x => x.MaPhongCu).ToListAsync()).ToHashSet();
@@ -243,18 +240,18 @@ public partial class InvoiceService
 
         dto.LichSu = nhatKy.Select(x => new InvoiceHistoryOverviewDto
         {
-            ThoiGian = x.ThoiGian, NguoiThucHien = Ten(x.MaTaiKhoan), HanhDong = AuditLogService.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
+            ThoiGian = x.ThoiGian, NguoiThucHien = Ten(x.MaTaiKhoan), HanhDong = NhatKyMoTa.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
         }).ToList();
 
         // ---- Ai được làm gì, hiện có làm được không
         var heThongKhongSua = h.TrangThaiThanhToan == TrangThaiThanhToan.DA_THANH_TOAN && conNo <= 0;
         dto.ThaoTac =
         [
-            new() { Ma = "XEM", Ten = "Xem hóa đơn và công nợ", AiThucHien = "Quản lý, Kế toán (quyền báo cáo); Lễ tân/Kế toán (quyền thanh toán)", ChoPhep = true },
-            new() { Ma = "THU_TIEN", Ten = "Thu tiền", AiThucHien = "Kế toán / Lễ tân (quyền thanh toán) - Quản lý chỉ xem", ChoPhep = conNo > 0 && duocThanhToan,
-                    GiaiThich = !duocThanhToan ? "Bạn chỉ có quyền xem - việc thu tiền do Kế toán / Lễ tân thực hiện." : conNo > 0 ? $"Còn nợ {Tien(conNo)}; chuyển khoản phải đi qua mã QR để đối soát với ngân hàng." : "Hóa đơn đã thu đủ." },
-            new() { Ma = "XUAT_PDF", Ten = "Xuất hóa đơn PDF", AiThucHien = "Kế toán / Lễ tân (quyền thanh toán)", ChoPhep = heThongKhongSua && duocThanhToan,
-                    GiaiThich = !duocThanhToan ? "Việc xuất hóa đơn do Kế toán / Lễ tân thực hiện." : heThongKhongSua ? "" : "Chỉ xuất khi đã thanh toán đủ." },
+            new() { Ma = "XEM", Ten = "Xem hóa đơn và công nợ", AiThucHien = "Quản lý (quyền báo cáo); Lễ tân (quyền thanh toán)", ChoPhep = true },
+            new() { Ma = "THU_TIEN", Ten = "Thu tiền", AiThucHien = "Lễ tân (quyền thanh toán) - Quản lý chỉ xem", ChoPhep = conNo > 0 && duocThanhToan,
+                    GiaiThich = !duocThanhToan ? "Bạn chỉ có quyền xem - việc thu tiền do Lễ tân thực hiện." : conNo > 0 ? $"Còn nợ {Tien(conNo)}; chuyển khoản phải đi qua mã QR để đối soát với ngân hàng." : "Hóa đơn đã thu đủ." },
+            new() { Ma = "XUAT_PDF", Ten = "Xuất hóa đơn PDF", AiThucHien = "Lễ tân (quyền thanh toán)", ChoPhep = heThongKhongSua && duocThanhToan,
+                    GiaiThich = !duocThanhToan ? "Việc xuất hóa đơn do Lễ tân thực hiện." : heThongKhongSua ? "" : "Chỉ xuất khi đã thanh toán đủ." },
             new() { Ma = "SUA_XOA", Ten = "Sửa tiền / xóa hóa đơn", AiThucHien = "Không ai - hệ thống không có thao tác này", ChoPhep = false,
                     GiaiThich = "Hóa đơn chỉ được lập từ lúc trả phòng và không chỉnh sửa; khoản thu chỉ ghi thêm, không xóa." },
         ];

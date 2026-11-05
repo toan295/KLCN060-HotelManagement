@@ -6,6 +6,7 @@ using KLCN060.Api.DTOs.Roles;
 using KLCN060.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace KLCN060.Api.Controllers;
 
@@ -13,6 +14,9 @@ namespace KLCN060.Api.Controllers;
 [Route("api/v1/auth")]
 public class AuthController : ControllerBase
 {
+    public const string LoginRateLimitPolicy = "auth-login";
+    public const string RegisterRateLimitPolicy = "auth-register";
+
     private readonly IAuthService _authService;
 
     public AuthController(IAuthService authService)
@@ -22,6 +26,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     [AllowAnonymous]
+    [EnableRateLimiting(RegisterRateLimitPolicy)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var result = await _authService.RegisterAsync(request);
@@ -30,6 +35,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting(LoginRateLimitPolicy)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var result = await _authService.LoginAsync(request);

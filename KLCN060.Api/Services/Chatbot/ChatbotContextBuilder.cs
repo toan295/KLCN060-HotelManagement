@@ -66,7 +66,7 @@ public sealed class ChatbotContextBuilder
 
     private async Task<string> PhanAsync(string khoa, Func<Task<string>> dung)
     {
-        var key = "chatbot:ctx:" + khoa;
+        var key = $"chatbot:ctx:{ChatbotDuLieu.PhienBan}:{khoa}";
         if (_cache.TryGetValue(key, out string? coSan) && coSan is not null) return coSan;
         await MotLuong.WaitAsync();   // nhiều khách hỏi cùng lúc khi bộ nhớ vừa hết hạn: chỉ một request dựng lại
         try
@@ -84,6 +84,7 @@ public sealed class ChatbotContextBuilder
         var sb = new StringBuilder();
         sb.AppendLine($"KLCN060 Hotel, Đà Lạt, Lâm Đồng. Hotline: {ChatbotGoiY.Hotline}.");
         sb.AppendLine("Đặt phòng online: khách chọn ngày và loại phòng ở trang Tìm phòng (hoặc Đặt phòng đoàn cho nhiều phòng), đặt cọc 50% giá trị đặt phòng bằng mã QR chuyển khoản; hệ thống tự xác nhận khi nhận được tiền.");
+        sb.AppendLine("Phòng chỉ được giữ cho khách SAU KHI tiền cọc đã về tài khoản khách sạn. Đơn chưa đặt cọc (trạng thái Chờ xác nhận) chưa giữ phòng nên khách khác vẫn đặt được phòng đó; đơn chưa đặt cọc mà quá ngày nhận phòng sẽ tự hủy.");
         sb.AppendLine($"Mã QR chuyển khoản có hiệu lực {Math.Max(1, _payment.Value.TransferExpiryMinutes)} phút kể từ khi tạo; quá hạn thì tạo lại mã hoặc liên hệ khách sạn.");
         sb.AppendLine($"Mỗi lần đặt phòng tối đa {BookingService.SoDemToiDa} đêm. Mỗi phòng nhận tối đa số khách tiêu chuẩn cộng thêm {CheckInService.NguoiThemToiDa} người (có phụ thu).");
         sb.AppendLine("Hủy phiếu trước ngày nhận phòng từ 30 ngày trở lên thì được hoàn tiền cọc; hủy trong vòng dưới 30 ngày hoặc không đến thì không hoàn cọc.");
@@ -127,27 +128,7 @@ public sealed class ChatbotContextBuilder
         var loaiPhongs = await LoaiPhongsAsync();
         if (loaiPhongs.Count == 0) return "";
 
-        var quyTacRows = await _context.QuyTacGias.AsNoTracking().Where(x => x.HoatDong).OrderByDescending(x => x.UuTien).ThenBy(x => x.TenQuyTac).Take(20).ToListAsync();
-        if (quyTacRows.Count > 0)
-        {
-            var tenLoai = loaiPhongs.ToDictionary(x => x.MaLoai, x => x.TenLoai);
-            sb.AppendLine().AppendLine("QUY TẮC GIÁ THEO NGÀY (áp lên giá cơ bản; nhiều quy tắc cùng khớp thì lấy quy tắc ưu tiên cao nhất):");
-            foreach (var q in quyTacRows)
-            {
-                var s = $"- {q.TenQuyTac}: {GiaPhongCalculator.MoTaDieuChinh(q)}";
-                if (q.MaLoai is not null) s += $", loại {(tenLoai.TryGetValue(q.MaLoai, out var t) ? t : q.MaLoai)}";
-                if (q.TuNgay is not null || q.DenNgay is not null)
-                    s += $", {(q.TuNgay is { } a ? $"từ {a:dd/MM/yyyy}" : "")}{(q.DenNgay is { } b ? $" đến {b:dd/MM/yyyy}" : "")}";
-                if (!string.IsNullOrWhiteSpace(q.CacThuApDung))
-                    s += ", các ngày " + string.Join("/", q.CacThuApDung.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(x => int.TryParse(x, out var n) && n is >= 0 and <= 6 ? ChatbotFormat.ThuNgan((DayOfWeek)n) : x));
-                if (q.LoaiDatPhongApDung == LoaiDatPhong.DOAN) s += " (chỉ đặt phòng đoàn)";
-                sb.AppendLine(s);
-            }
-        }
-
         var phongs = await _context.Phongs.AsNoTracking().Where(x => x.TinhTrang != TinhTrangPhong.OOO).Select(x => new { x.MaPhong, x.MaLoai }).ToListAsync();
-        var quyTacs = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
         var banTheoDem = new List<(DateOnly Dem, HashSet<string> Bi)>();
         for (var i = 0; i < SoDemLich; i++)
         {
@@ -155,13 +136,13 @@ public sealed class ChatbotContextBuilder
             banTheoDem.Add((dem, await RoomAvailability.GetOccupiedRoomIdsAsync(_context, dem, dem.AddDays(1))));
         }
 
-        sb.AppendLine().AppendLine($"BẢNG GIÁ VÀ PHÒNG TRỐNG {SoDemLich} ĐÊM TỚI (mỗi dòng: các đêm bắt đầu từ ngày đó, giá một đêm đã gồm quy tắc giá, số phòng còn trống). " +
+        sb.AppendLine().AppendLine($"BẢNG GIÁ VÀ PHÒNG TRỐNG {SoDemLich} ĐÊM TỚI (mỗi dòng: các đêm bắt đầu từ ngày đó, giá một đêm, số phòng còn trống). " +
             "Số phòng trống chỉ mang tính tham khảo vì có thể đổi khi khách khác đặt; muốn chắc chắn hãy chọn ngày ở trang Tìm phòng:");
         foreach (var l in loaiPhongs)
         {
             var cua = phongs.Where(p => p.MaLoai == l.MaLoai).Select(p => p.MaPhong).ToList();
             sb.Append("- ").Append(l.TenLoai).Append(" (").Append(cua.Count).AppendLine(" phòng bán được):");
-            var dong = banTheoDem.Select(b => (b.Dem, Gia: GiaPhongCalculator.GiaDem(l, b.Dem, LoaiDatPhong.CA_NHAN, quyTacs, out _), Trong: cua.Count(p => !b.Bi.Contains(p)))).ToList();
+            var dong = banTheoDem.Select(b => (b.Dem, Gia: l.DonGia, Trong: cua.Count(p => !b.Bi.Contains(p)))).ToList();
             for (var i = 0; i < dong.Count;)
             {
                 var j = i;
@@ -186,22 +167,6 @@ public sealed class ChatbotContextBuilder
             foreach (var d in dichVus) sb.Append("- ").Append(d.TenDV).Append(": ").Append(ChatbotFormat.Tien(d.GiaDV)).Append('/').AppendLine(d.DonViTinh);
         }
 
-        var goi = await _context.GoiDichVus.AsNoTracking().Where(x => x.HoatDong)
-            .Select(g => new { g.TenGoi, g.MoTa, g.GiaGoi, ChiTiet = g.ChiTietGois.Select(c => new { c.SoLuong, c.DichVu.TenDV, c.DichVu.HoatDong }).ToList() })
-            .OrderBy(x => x.TenGoi).Take(15).ToListAsync();
-        // Gói có dịch vụ đã ngừng thì không bán được (giống Ghi dịch vụ ở quầy), nên không giới thiệu cho khách.
-        var banDuoc = goi.Where(g => g.ChiTiet.Count > 0 && g.ChiTiet.All(c => c.HoatDong)).ToList();
-        if (banDuoc.Count > 0)
-        {
-            sb.AppendLine().AppendLine("GÓI DỊCH VỤ ĐANG BÁN:");
-            foreach (var g in banDuoc)
-            {
-                sb.Append("- ").Append(g.TenGoi).Append(": ").Append(ChatbotFormat.Tien(g.GiaGoi)).Append(" gồm ")
-                    .Append(string.Join(", ", g.ChiTiet.Select(c => $"{c.SoLuong} {c.TenDV}")));
-                if (!string.IsNullOrWhiteSpace(g.MoTa)) sb.Append(". ").Append(g.MoTa.Trim());
-                sb.AppendLine();
-            }
-        }
         return sb.ToString();
     }
 
@@ -211,7 +176,7 @@ public sealed class ChatbotContextBuilder
             .Where(x => !x.TamNgung && x.NgayBatDau <= homNay && x.NgayKetThuc >= homNay).OrderBy(x => x.NgayKetThuc).Take(10).ToListAsync();
         if (khuyenMais.Count == 0) return "\nKHUYẾN MÃI: hiện chưa có chương trình khuyến mãi nào đang chạy.\n";
         var sb = new StringBuilder();
-        sb.AppendLine().AppendLine("KHUYẾN MÃI ĐANG CHẠY (mỗi đặt phòng chỉ áp dụng một chương trình):");
+        sb.AppendLine().AppendLine("KHUYẾN MÃI ĐANG CHẠY (mỗi đặt phòng áp dụng tối đa 3 chương trình):");
         foreach (var k in khuyenMais) sb.Append("- ").AppendLine(ChatbotFormat.MoTaKhuyenMai(k));
         return sb.ToString();
     }

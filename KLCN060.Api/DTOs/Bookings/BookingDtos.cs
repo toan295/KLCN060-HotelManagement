@@ -20,6 +20,10 @@ public class CreateBookingRequest
     public DateOnly NgayDonDuKien { get; set; }
     public DateOnly NgayTraDuKien { get; set; }
     public List<BookingRoomRequest> PhongCanDat { get; set; } = new();
+
+    /// <summary>Tổng số khách dự kiến (tùy chọn). Có gửi thì phải không vượt sức chứa tối đa của các phòng đặt (tiêu chuẩn + người ở thêm), tính gộp cả phiếu; được lưu vào phiếu đặt.</summary>
+    public int? SoKhach { get; set; }
+
     /// <summary>Một khuyến mãi (giữ để tương thích); muốn áp dụng nhiều khuyến mãi dùng <see cref="MaKhuyenMais"/>.</summary>
     public string? MaKhuyenMai { get; set; }
 
@@ -62,6 +66,19 @@ public class BookingDto
 
     [JsonConverter(typeof(VndMoneyJsonConverter))]
     public decimal TongKhuyenMai { get; set; }
+
+    /// <summary>Số đêm ở (ngày trả − ngày đón).</summary>
+    public int SoDem { get; set; }
+
+    /// <summary>Số khách khách đã khai khi đặt (null nếu người đặt không khai, ví dụ lễ tân chưa hỏi).</summary>
+    public int? SoKhach { get; set; }
+
+    /// <summary>Số khách vượt tiêu chuẩn của các phòng đã đặt (0 nếu không vượt hoặc không biết số khách).</summary>
+    public int SoKhachVuotTieuChuan { get; set; }
+
+    /// <summary>Phụ thu dự kiến do khách vượt tiêu chuẩn (số khách thêm × phụ thu loại phòng × số đêm). CHƯA nằm trong tiền cọc: tính vào hóa đơn khi trả phòng.</summary>
+    [JsonConverter(typeof(VndMoneyJsonConverter))]
+    public decimal PhuThuDuKien { get; set; }
 
     /// <summary>Thời điểm phiếu bị hủy / bị đánh dấu không đến, người thực hiện, lý do và số cọc đã hoàn (chỉ có khi phiếu ở trạng thái DA_HUY hoặc KHONG_DEN).</summary>
     public DateTime? NgayHuy { get; set; }
@@ -379,6 +396,9 @@ public class CancelBookingResultDto
     public string TrangThai { get; set; } = null!;
     public bool HoanCoc { get; set; }
 
+    /// <summary>Phiếu đã thu cọc trước khi hủy (false = hủy khi chưa đóng cọc, không có khoản nào để hoàn hay giữ).</summary>
+    public bool DaThuCoc { get; set; }
+
     /// <summary>Số ngày từ hôm nay tới ngày đón dự kiến, dùng để đối chiếu mốc 30 ngày.</summary>
     public int SoNgayConLai { get; set; }
 
@@ -440,4 +460,21 @@ public class BookingQuoteDto
 
     [JsonConverter(typeof(VndMoneyJsonConverter))]
     public decimal TienCoc { get; set; }
+}
+
+/// <summary>Phòng trống có thể đổi sang (đổi phòng trong phiếu đặt).</summary>
+public class VacantRoomDto
+{
+    public string MaPhong { get; set; } = null!;
+    public string TenPhong { get; set; } = null!;
+    public int Tang { get; set; }
+    public string MaLoai { get; set; } = null!;
+    public string TenLoai { get; set; } = null!;
+
+    [global::System.Text.Json.Serialization.JsonConverter(typeof(KLCN060.Api.Middlewares.VndMoneyJsonConverter))]
+    public decimal DonGia { get; set; }
+    public string TinhTrang { get; set; } = null!;
+
+    /// <summary>Nhận phòng ngay hôm nay được: khoảng tìm bắt đầu hôm nay và phòng đã dọn.</summary>
+    public bool NhanNgayDuoc { get; set; }
 }

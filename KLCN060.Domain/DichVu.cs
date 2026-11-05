@@ -16,5 +16,4 @@ public class DichVu
 
     public ICollection<ChiTietSuDungDV> ChiTietSuDungDVs { get; set; } = new List<ChiTietSuDungDV>();
     public ICollection<ChiTietDichVu> ChiTietDichVus { get; set; } = new List<ChiTietDichVu>();
-    public ICollection<ChiTietGoiDichVu> ChiTietGois { get; set; } = new List<ChiTietGoiDichVu>();
 }

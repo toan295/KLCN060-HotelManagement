@@ -259,6 +259,25 @@ a:hover { color: var(--accent-strong); }
 .badge.bg-primary { background-color: color-mix(in srgb, var(--brand) 16%, white) !important; color: var(--brand-strong) !important; }
 .badge.bg-secondary { background-color: var(--surface-3) !important; color: var(--ink-2) !important; }
 
+/* Trạng thái phiếu đặt phòng: mỗi trạng thái một màu + chấm tròn riêng để phân biệt rõ (kể cả người khó phân biệt màu). */
+.badge.badge-st { display: inline-flex; align-items: center; gap: .4em; border: 1px solid transparent; }
+.badge.badge-st::before { content: ""; width: .6em; height: .6em; border-radius: 50%; background: currentColor; flex: none; }
+.badge.badge-st.st-cho { background-color: #fdf0d5 !important; color: #8a5a00 !important; border-color: #f0cf8a; }
+.badge.badge-st.st-xacnhan { background-color: #1f7a4d !important; color: #fff !important; }
+.badge.badge-st.st-dango { background-color: #dcecf9 !important; color: #1d5d93 !important; border-color: #a9cdea; }
+.badge.badge-st.st-xong { background-color: #eceee9 !important; color: #4a564d !important; border-color: #d3d8cf; }
+.badge.badge-st.st-huy { background-color: #fbe3df !important; color: #b02a16 !important; border-color: #efb4aa; }
+.badge.badge-st.st-khongden { background-color: #f1e3f5 !important; color: #7a2a8c !important; border-color: #d9b5e3; }
+
+/* Lịch chọn ngày (flatpickr): ngày đã qua / không chọn được thì mờ + gạch ngang; ngày chọn được (kể cả ngày đầu tháng sau hiện ở cuối lưới) luôn đậm rõ. */
+.flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover {
+  color: #b9c0b6 !important; background: transparent !important; text-decoration: line-through; cursor: not-allowed;
+}
+.flatpickr-day.prevMonthDay:not(.flatpickr-disabled):not(.selected):not(.inRange),
+.flatpickr-day.nextMonthDay:not(.flatpickr-disabled):not(.selected):not(.inRange) { color: var(--ink-2); font-weight: 600; }
+.flatpickr-day:not(.flatpickr-disabled):not(.selected):hover { background: var(--accent-weak); border-color: var(--accent); }
+.flatpickr-day.today:not(.selected) { font-weight: 800; }
+
 /* ---- Data tables (lịch sử đặt phòng, dịch vụ...) ---- */
 .table {
   --bs-table-bg: transparent;

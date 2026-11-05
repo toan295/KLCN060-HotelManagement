@@ -39,7 +39,7 @@ public partial class PaymentService : IPaymentService
         // Chưa khai báo tài khoản ngân hàng thật thì không sinh mã QR: khách có thể chuyển nhầm vào tài khoản mẫu.
         if (!_options.BankDaCauHinh && !_options.DemoMode)
             throw new ApiException(StatusCodes.Status503ServiceUnavailable, "NGAN_HANG_CHUA_CAU_HINH",
-                "Chưa cấu hình tài khoản ngân hàng nhận tiền của khách sạn (Payment:Bank). Vui lòng liên hệ quản trị viên.");
+                "Hiện chưa thể thanh toán bằng chuyển khoản trực tuyến. Vui lòng liên hệ khách sạn (hotline 1900 0001) để được hỗ trợ.");
 
         var maThamChieu = request.MaThamChieu?.Trim() ?? string.Empty;
         if (maThamChieu.Length == 0)
@@ -61,6 +61,14 @@ public partial class PaymentService : IPaymentService
                     $"Chỉ thanh toán đặt cọc được khi phiếu đang chờ xác nhận (hiện tại: {phieu.TrangThai}).");
             if (phieu.TienCoc <= 0)
                 throw new ApiException(StatusCodes.Status409Conflict, "KHONG_CAN_DAT_COC", "Phiếu đặt phòng này không yêu cầu tiền cọc.");
+            if (phieu.NgayDonDuKien < DateOnly.FromDateTime(DateTime.Now))
+                throw new ApiException(StatusCodes.Status409Conflict, "PHIEU_QUA_NGAY_DON",
+                    $"Đơn đặt phòng này đã quá ngày nhận phòng ({phieu.NgayDonDuKien:dd/MM/yyyy}) nên không thể đặt cọc nữa. Vui lòng đặt lại với ngày khác.");
+            // Đơn chưa cọc không giữ phòng: trước khi khách chuyển tiền phải chắc chắn phòng vẫn còn, tránh khách chuyển rồi mới biết hết phòng.
+            var hetPhong = await RoomAvailability.GiuPhongKhiDatCocAsync(_context, phieu, chiKiemTra: true);
+            if (hetPhong is not null)
+                throw new ApiException(StatusCodes.Status409Conflict, "ROOM_NOT_AVAILABLE",
+                    hetPhong.Replace(" Phiếu này chưa được xác nhận.", "") + " Vui lòng đặt lại với ngày hoặc loại phòng khác.");
 
             soTien = phieu.TienCoc;
         }
@@ -207,57 +215,6 @@ public partial class PaymentService : IPaymentService
             .Where(x => x.LoaiThamChieu == loai && x.MaThamChieu == maThamChieu && x.TrangThai == TrangThaiGiaoDichChuyenKhoan.CHO_THANH_TOAN)
             .OrderByDescending(x => x.NgayTao).ToListAsync();
         return ds.Select(x => ToDto(x, kemQr: true)).ToList();
-    }
-
-    public async Task<(List<TransferDto> Items, int Total)> ListTransfersAsync(TransferListQuery query)
-    {
-        // Đánh dấu hết hạn hàng loạt trước khi liệt kê để danh sách không hiện "đang chờ" cho giao dịch đã quá hạn.
-        var bayGio = DateTime.Now;
-        await _context.GiaoDichChuyenKhoans
-            .Where(x => x.TrangThai == TrangThaiGiaoDichChuyenKhoan.CHO_THANH_TOAN && x.HanThanhToan <= bayGio)
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.TrangThai, TrangThaiGiaoDichChuyenKhoan.HET_HAN));
-
-        var q = _context.GiaoDichChuyenKhoans.AsNoTracking().AsQueryable();
-        if (!string.IsNullOrWhiteSpace(query.TrangThai))
-        {
-            if (!EnumParser.TryParse<TrangThaiGiaoDichChuyenKhoan>(query.TrangThai, out var trangThai))
-                throw new ApiException(StatusCodes.Status400BadRequest, "TRANG_THAI_KHONG_HOP_LE", "trangThai chỉ chấp nhận: CHO_THANH_TOAN, THANH_CONG, HET_HAN, DA_HUY.", "trangThai");
-            q = q.Where(x => x.TrangThai == trangThai);
-        }
-
-        var page = Math.Max(query.Page, 1);
-        var pageSize = Math.Clamp(query.PageSize, 1, 100);
-        var total = await q.CountAsync();
-        var items = await q.OrderByDescending(x => x.NgayTao).ThenByDescending(x => x.MaGiaoDich)
-            .Skip((int)Math.Min((long)(page - 1) * pageSize, int.MaxValue)).Take(pageSize).ToListAsync();
-
-        // Danh sách không kèm ảnh QR (nặng và không cần).
-        return (items.Select(x => ToDto(x, kemQr: false)).ToList(), total);
-    }
-
-    public async Task<(List<BankNoticeDto> Items, int Total)> ListBankNoticesAsync(string? ketQua, int page, int pageSize, string? trangThaiXuLy = null)
-    {
-        var q = _context.ThongBaoNganHangs.AsNoTracking().AsQueryable();
-        if (!string.IsNullOrWhiteSpace(ketQua))
-        {
-            if (!EnumParser.TryParse<KetQuaDoiSoatNganHang>(ketQua, out var kq))
-                throw new ApiException(StatusCodes.Status400BadRequest, "KET_QUA_KHONG_HOP_LE", "ketQua không hợp lệ.", "ketQua");
-            q = q.Where(x => x.KetQua == kq);
-        }
-        if (!string.IsNullOrWhiteSpace(trangThaiXuLy))
-        {
-            var tt = EnumParser.Parse<TrangThaiXuLyDoiSoat>(trangThaiXuLy, "trangThaiXuLy", "trangThaiXuLy chỉ nhận: KHONG_CAN, CAN_XU_LY, DA_XU_LY.");
-            q = q.Where(x => x.TrangThaiXuLy == tt);
-        }
-
-        page = Math.Max(page, 1);
-        pageSize = Math.Clamp(pageSize, 1, 100);
-        var total = await q.CountAsync();
-        var items = (await q.OrderByDescending(x => x.ThoiGianNhan).ThenByDescending(x => x.MaThongBao)
-            .Skip((int)Math.Min((long)(page - 1) * pageSize, int.MaxValue)).Take(pageSize).ToListAsync())
-            .Select(Finance.ThongBaoMapper.ToDto).ToList();
-
-        return (items, total);
     }
 
     private async Task<GiaoDichChuyenKhoan> TimGiaoDichAsync(string maGiaoDich)

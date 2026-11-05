@@ -85,17 +85,9 @@ public sealed partial class ApiClient
     public Task<ChiTietDichVuDto> CreateServiceDetailAsync(string maDV, YeuCauChiTietDichVu x) => PostAsync<YeuCauChiTietDichVu, ChiTietDichVuDto>($"api/v1/services/{maDV}/details", x);
     public Task<ChiTietDichVuDto> UpdateServiceDetailAsync(string maDV, string maCTDV, YeuCauChiTietDichVu x) => PutAsync<YeuCauChiTietDichVu, ChiTietDichVuDto>($"api/v1/services/{maDV}/details/{maCTDV}", x);
     public Task DeleteServiceDetailAsync(string maDV, string maCTDV) => SendKhongCoNoiDungAsync(HttpMethod.Delete, $"api/v1/services/{maDV}/details/{maCTDV}");
-    public Task<List<CoSoVatChatDto>> GetFacilitiesAsync(string roomId) => GetAsync<List<CoSoVatChatDto>>($"api/v1/rooms/{roomId}/facilities");
     // [FIX P0 — 24/09/2026] D14 (Mục 0C): API FacilitiesController đã có đủ POST/PUT/DELETE nhưng Desktop trước đây
     // chỉ có GET (màn hình chỉ đọc) — bổ sung 3 hàm này để QuanLyCoSoVatChatViewModel có thể thêm/sửa/xóa.
-    public Task<CoSoVatChatDto> CreateFacilityAsync(string roomId, YeuCauCoSoVatChat x) => PostAsync<YeuCauCoSoVatChat, CoSoVatChatDto>($"api/v1/rooms/{roomId}/facilities", x);
     public Task<CoSoVatChatDto> UpdateFacilityAsync(string id, YeuCauCoSoVatChat x) => PutAsync<YeuCauCoSoVatChat, CoSoVatChatDto>($"api/v1/facilities/{id}", x);
-    public Task DeleteFacilityAsync(string id) => SendKhongCoNoiDungAsync(HttpMethod.Delete, $"api/v1/facilities/{id}");
-    public Task<TongQuanDoiSoatDto> GetTongQuanDoiSoatAsync(DateOnly? tu, DateOnly? den)
-        => GetAsync<TongQuanDoiSoatDto>("api/v1/reconciliation/transfers/overview?" + BoLocDoiSoat.Ky(tu, den));
-    public Task<List<DongDoiSoatDto>> GetDanhSachDoiSoatAsync(BoLocDoiSoat loc)
-        => GetAsync<List<DongDoiSoatDto>>("api/v1/reconciliation/transfers?pageSize=200&" + loc.ToQuery());
-    public Task<ChiTietDoiSoatDto> GetChiTietDoiSoatAsync(int maThongBao) => GetAsync<ChiTietDoiSoatDto>($"api/v1/reconciliation/transfers/{maThongBao}");
     public async Task<(byte[] NoiDung, string TenFile)> XuatDoiSoatAsync(BoLocDoiSoat loc)
     {
         var duongDan = "api/v1/reconciliation/transfers/export?dinhDang=xlsx&" + loc.ToQuery();
@@ -152,7 +144,6 @@ public sealed partial class ApiClient
         => PostAsync<YeuCauDoiPhong, KetQuaDoiPhongDto>($"api/v1/stays/{Uri.EscapeDataString(maPhieuNhan)}/{Uri.EscapeDataString(maPhong)}/change-room", request);
     public Task<List<DichVuSuDungDto>> GetDichVuSuDungAsync(string pn,string phong)=>GetAsync<List<DichVuSuDungDto>>($"api/v1/stays/{pn}/{phong}/services");
     public Task<DichVuSuDungDto> ThemDichVuAsync(string pn,string phong,YeuCauDichVuSuDung x)=>PostAsync<YeuCauDichVuSuDung,DichVuSuDungDto>($"api/v1/stays/{pn}/{phong}/services",x);
-    public Task<FolioDto> GetFolioAsync(string pn,string phong)=>GetAsync<FolioDto>($"api/v1/stays/{pn}/{phong}/folio");
     public Task<KetQuaTraPhongDto> TraPhongAsync(string pn,string phong,bool phuThu,decimal? conPhaiThuDaXem=null)=>PostAsync<object,KetQuaTraPhongDto>($"api/v1/stays/{Uri.EscapeDataString(pn)}/{Uri.EscapeDataString(phong)}/check-out",new { apDungPhuThuTreGio=phuThu, conPhaiThuDaXem });
     public Task<ThongTinTraPhongDto> GetThongTinTraPhongAsync(string pn,string phong,bool phuThu)=>GetAsync<ThongTinTraPhongDto>($"api/v1/stays/{Uri.EscapeDataString(pn)}/{Uri.EscapeDataString(phong)}/check-out-info?apDungPhuThuTreGio={(phuThu ? "true" : "false")}");
     public Task<List<HoaDonTomTatDto>> GetDanhSachHoaDonAsync(string? trangThai, string tuKhoa)
@@ -164,10 +155,6 @@ public sealed partial class ApiClient
     public Task<HoaDonDto> ThanhToanAsync(string ma,YeuCauThanhToan x)=>PostAsync<YeuCauThanhToan,HoaDonDto>($"api/v1/invoices/{ma}/payments",x);
     public Task<GiaoDichChuyenKhoanDto> TaoChuyenKhoanHoaDonAsync(string maHoaDon, decimal soTien)
         => PostAsync<object, GiaoDichChuyenKhoanDto>("api/v1/payments/transfers", new { loaiThamChieu = "HOA_DON", maThamChieu = maHoaDon, soTien });
-    public Task<List<GiaoDichChuyenKhoanDto>> GetDanhSachChuyenKhoanAsync(string? trangThai)
-        => GetAsync<List<GiaoDichChuyenKhoanDto>>($"api/v1/payments/transfers?pageSize=100{(string.IsNullOrEmpty(trangThai) ? "" : "&trangThai=" + Uri.EscapeDataString(trangThai))}");
-    public Task<List<ThongBaoNganHangDto>> GetThongBaoNganHangAsync()
-        => GetAsync<List<ThongBaoNganHangDto>>("api/v1/payments/bank-notifications?pageSize=100");
     public Task<List<GiaoDichChuyenKhoanDto>> GetChuyenKhoanDangChoAsync(string maHoaDon)
         => GetAsync<List<GiaoDichChuyenKhoanDto>>($"api/v1/payments/transfers/pending?loaiThamChieu=HOA_DON&maThamChieu={Uri.EscapeDataString(maHoaDon)}");
     public Task<GiaoDichChuyenKhoanDto> GetChuyenKhoanAsync(string maGiaoDich)
@@ -179,7 +166,6 @@ public sealed partial class ApiClient
         => PostAsync<object, GiaoDichChuyenKhoanDto>($"api/v1/payments/transfers/{Uri.EscapeDataString(maGiaoDich)}/cancel", new { });
     public Task<List<VaiTroDto>> GetVaiTroAsync() => GetAsync<List<VaiTroDto>>("api/v1/roles");
     public Task<List<QuyenDto>> GetQuyenAsync() => GetAsync<List<QuyenDto>>("api/v1/permissions");
-    public Task<VaiTroDto> TaoVaiTroAsync(YeuCauVaiTro request) => PostAsync<YeuCauVaiTro, VaiTroDto>("api/v1/roles", request);
     public Task<VaiTroDto> CapNhatVaiTroAsync(int maVaiTro, YeuCauVaiTro request) => PutAsync<YeuCauVaiTro, VaiTroDto>($"api/v1/roles/{maVaiTro}", request);
     public Task<List<NhanVienDto>> GetNhanVienAsync() => GetAsync<List<NhanVienDto>>("api/v1/employees");
     public Task<KetQuaTaiKhoanNhanVienDto> MoKhoaNhanVienAsync(string maNhanVien, string? lyDo = null)
@@ -187,18 +173,10 @@ public sealed partial class ApiClient
     public Task<KetQuaTaiKhoanNhanVienDto> DatLaiMatKhauNhanVienAsync(string maNhanVien, string? matKhauMoi, string? lyDo = null)
         => PutAsync<YeuCauDatLaiMatKhauNhanVien, KetQuaTaiKhoanNhanVienDto>($"api/v1/employees/{Uri.EscapeDataString(maNhanVien)}/password", new YeuCauDatLaiMatKhauNhanVien(string.IsNullOrWhiteSpace(matKhauMoi) ? null : matKhauMoi, lyDo));
     public Task<XemTruocVaiTroDto> XemTruocVaiTroAsync(int maVaiTro, YeuCauVaiTro x) => PostAsync<YeuCauVaiTro, XemTruocVaiTroDto>($"api/v1/roles/{maVaiTro}/preview", x);
-    public Task<List<LichSuPhanQuyenDto>> GetLichSuPhanQuyenAsync(string? doiTuong = null)
-        => GetAsync<List<LichSuPhanQuyenDto>>("api/v1/roles/history" + (string.IsNullOrWhiteSpace(doiTuong) ? "" : $"?doiTuong={Uri.EscapeDataString(doiTuong)}"));
     public Task DoiMatKhauAsync(string matKhauCu, string matKhauMoi)
         => SendKhongCoNoiDungAsync(HttpMethod.Post, "api/v1/auth/change-password", new YeuCauDoiMatKhau(matKhauCu, matKhauMoi));
     public Task<KetQuaDoiVaiTroDto> DoiVaiTroNhanVienAsync(string maNhanVien, int maVaiTro, string? lyDo = null)
         => PutAsync<YeuCauDoiVaiTro, KetQuaDoiVaiTroDto>($"api/v1/employees/{Uri.EscapeDataString(maNhanVien)}/roles", new YeuCauDoiVaiTro(maVaiTro, lyDo));
-    public Task<BaoCaoDoanhThuDto> GetBaoCaoDoanhThuAsync(DateOnly tuNgay, DateOnly denNgay)
-        => GetAsync<BaoCaoDoanhThuDto>($"api/v1/reports/revenue?from={tuNgay:yyyy-MM-dd}&to={denNgay:yyyy-MM-dd}");
-    public Task<BaoCaoCongSuatDto> GetBaoCaoCongSuatAsync(DateOnly tuNgay, DateOnly denNgay)
-        => GetAsync<BaoCaoCongSuatDto>($"api/v1/reports/occupancy?from={tuNgay:yyyy-MM-dd}&to={denNgay:yyyy-MM-dd}");
-    public Task<BaoCaoKhachDto> GetBaoCaoKhachAsync(DateOnly tuNgay, DateOnly denNgay)
-        => GetAsync<BaoCaoKhachDto>($"api/v1/reports/guests?from={tuNgay:yyyy-MM-dd}&to={denNgay:yyyy-MM-dd}");
     /// <summary>Sao lưu; thuMuc = thư mục (trên máy chạy API) để lưu file .bak, null = thư mục mặc định.</summary>
     public Task<LichSuSaoLuuDto> SaoLuuAsync(string? thuMuc = null)
         => PostAsync<object, LichSuSaoLuuDto>("api/v1/system/backups", new { thuMuc });
@@ -423,7 +401,7 @@ public sealed record YeuCauKhachHang(string HoTen, string SoDT, string? CCCD, st
 /// <summary>TinhTrangCu = tình trạng người dùng đang thấy; nếu phòng đã bị người khác đổi thì API từ chối (không ghi đè).</summary>
 public sealed record YeuCauTinhTrangPhong(string TinhTrang, string? GhiChu, string? TinhTrangCu = null);
 public sealed record DongYeuCauDatPhong(string MaLoai, int SoLuong);
-public sealed record YeuCauDatPhong(string LoaiDatPhong, string? MaKhach, DateOnly NgayDonDuKien, DateOnly NgayTraDuKien, List<DongYeuCauDatPhong> PhongCanDat, string? MaKhuyenMai, List<string>? MaKhuyenMais = null);
+public sealed record YeuCauDatPhong(string LoaiDatPhong, string? MaKhach, DateOnly NgayDonDuKien, DateOnly NgayTraDuKien, List<DongYeuCauDatPhong> PhongCanDat, string? MaKhuyenMai, List<string>? MaKhuyenMais = null, int? SoKhach = null);
 public sealed record ThongTinNhanPhong(string MaPhong, string? CCCD, int SoNguoi);
 public sealed record YeuCauNhanPhong(List<string> PhongNhan, List<ThongTinNhanPhong> Khach, bool NhanSom = false, string? LyDo = null);
 public sealed record YeuCauNhanPhongVangLai(string MaKhach, List<ThongTinNhanPhong> Khach, DateOnly? NgayTraDuKien = null);
@@ -770,6 +748,8 @@ public sealed class ChiTietPhieuDatDto : PhieuDatTomTatDto
 {
     public List<PhongDaGiuDto> PhongDaGiu { get; init; } = [];
     public List<KhachDiCungDto> KhachDiCung { get; init; } = [];
+    /// <summary>Số khách đã khai lúc đặt (null nếu không khai).</summary>
+    public int? SoKhach { get; init; }
 }
 public sealed class LoaiPhongConTrongDto
 {
@@ -958,12 +938,6 @@ public sealed class DichVuSuDungDto
     /// <summary>Do máy chủ ghép sẵn "Họ tên (Mã NV)"; không bao giờ để trống.</summary>
     public string NguoiGhiHienThi { get; init; } = "Hệ thống (dữ liệu cũ)";
     public string TrangThaiHienThi => CoTheHuy ? "Hủy được" : "Đã chốt hóa đơn";
-}
-
-public sealed class FolioDto
-{
-    public FolioTongHopDto TongHopFolio { get; init; } = new();
-    public List<DongFolioDto> ChiTiet { get; init; } = [];
 }
 
 public sealed class FolioTongHopDto
@@ -1163,7 +1137,7 @@ public sealed class VaiTroDto
 
     public string TenHienThi => TenVaiTro switch
     {
-        "QUAN_LY" => "Quản lý", "LE_TAN" => "Lễ tân", "BUONG_PHONG" => "Buồng phòng", "KE_TOAN" => "Kế toán", "KHACH_HANG" => "Khách hàng (tài khoản khách)", _ => TenVaiTro
+        "QUAN_LY" => "Quản lý", "LE_TAN" => "Lễ tân", "KHACH_HANG" => "Khách hàng (tài khoản khách)", _ => TenVaiTro
     };
     public string TomTat => $"{SoNhanVien} nhân viên · {Quyen.Count} quyền" + (SoQuyenNhayCam > 0 ? $" ({SoQuyenNhayCam} nhạy cảm)" : "");
     public bool CoCanhBao => CanhBao.Count > 0;
@@ -1187,14 +1161,6 @@ public sealed class XemTruocVaiTroDto
     public bool NenCoLyDo { get; init; }
     public string? LoiChan { get; init; }
     public string TomTat { get; init; } = "";
-}
-
-public sealed class LichSuPhanQuyenDto
-{
-    public DateTime ThoiGian { get; init; } public string NguoiThucHien { get; init; } = ""; public string HanhDong { get; init; } = ""; public string MoTaHanhDong { get; init; } = "";
-    public string? DoiTuong { get; init; } public string? ChiTiet { get; init; }
-    public string HienThi => $"{ThoiGian:dd/MM/yyyy HH:mm} · {NguoiThucHien} · {MoTaHanhDong}" + (DoiTuong is null ? "" : $" → {DoiTuong}");
-    public string ChiTietDoc => ChiTiet is null ? "" : ChiTiet.Replace("; ", "\n").Replace("->", "→");
 }
 
 public sealed class NhanVienDto
@@ -1231,39 +1197,10 @@ public sealed class KetQuaDoiVaiTroDto
     public string GhiChu { get; init; } = "";
 }
 
-public sealed class BaoCaoDoanhThuDto
-{
-    public DateOnly TuNgay { get; init; }
-    public DateOnly DenNgay { get; init; }
-    public decimal TongCong { get; init; }
-    public List<DoanhThuTheoNgayDto> TheoNgay { get; init; } = [];
-}
-
 public sealed class DoanhThuTheoNgayDto
 {
     public DateOnly Ngay { get; init; }
     public decimal DoanhThu { get; init; }
-}
-
-public sealed class BaoCaoCongSuatDto
-{
-    public int TongSoPhong { get; init; }
-    public decimal TyLeTrungBinhPhanTram { get; init; }
-    public List<CongSuatTheoNgayDto> TheoNgay { get; init; } = [];
-}
-
-public sealed class CongSuatTheoNgayDto
-{
-    public DateOnly Ngay { get; init; }
-    public int SoPhongCoKhach { get; init; }
-    public decimal TyLePhanTram { get; init; }
-}
-
-public sealed class BaoCaoKhachDto
-{
-    public int KhachMoi { get; init; }
-    public int KhachQuayLai { get; init; }
-    public int TongKhach { get; init; }
 }
 
 public sealed class LichSuSaoLuuDto
@@ -1351,45 +1288,6 @@ public sealed class GiaoDichChuyenKhoanDto
         _ => TrangThai
     };
 }
-public sealed class ThongBaoNganHangDto
-{
-    public int MaThongBao { get; init; }
-    public string MaGiaoDichNganHang { get; init; } = "";
-    public string SoTaiKhoanNhan { get; init; } = "";
-    public decimal SoTien { get; init; }
-    public string NoiDung { get; init; } = "";
-    public DateTime ThoiGianNhan { get; init; }
-    public string KetQua { get; init; } = "";
-    public string? MaGiaoDich { get; init; }
-    public string? GhiChu { get; init; }
-
-    /// <summary>KHONG_CAN (đã khớp), CAN_XU_LY (bất thường, chờ kế toán), DA_XU_LY.</summary>
-    public string? TrangThaiXuLy { get; init; }
-    public string? NguoiXuLy { get; init; }
-    public DateTime? NgayXuLy { get; init; }
-    public string? HuongXuLy { get; init; }
-    public string? GhiChuXuLy { get; init; }
-
-    /// <summary>Thông báo bất thường mà kế toán CHƯA xử lý (xử lý xong thì không còn "cần xử lý").</summary>
-    public bool CanXuLy => TrangThaiXuLy is null ? KetQua != "KHOP" : TrangThaiXuLy == "CAN_XU_LY";
-    public string XuLyHienThi => TrangThaiXuLy switch
-    {
-        "CAN_XU_LY" => "Chờ xử lý",
-        "DA_XU_LY" => HuongXuLy switch { "DA_XU_LY_NGOAI" => "Đã xử lý ngoài hệ thống", "BO_QUA" => "Đã bỏ qua", _ => "Đã xử lý" },
-        _ => ""
-    };
-    public string KetQuaHienThi => KetQua switch
-    {
-        "KHOP" => "Khớp - đã ghi nhận thanh toán",
-        "SAI_SO_TIEN" => "Sai số tiền - cần xử lý",
-        "KHONG_TIM_THAY_GIAO_DICH" => "Sai nội dung - không tìm thấy giao dịch",
-        "GIAO_DICH_KHONG_CON_HIEU_LUC" => "Giao dịch hết hạn/đã hủy - cần xử lý (trả lại tiền hoặc ghi nhận thủ công)",
-        "GIAO_DICH_DA_THANH_TOAN" => "Chuyển thừa (đã thanh toán trước đó)",
-        "SAI_TAI_KHOAN_NHAN" => "Sai tài khoản nhận",
-        "KHONG_AP_DUNG_DUOC" => "Không áp dụng được - cần xử lý",
-        _ => KetQua
-    };
-}
 public sealed class CaiDatSaoLuuDto { public string ThuMucMacDinh { get; init; } = ""; }
 public sealed class AnhPhongDto
 {
@@ -1400,7 +1298,6 @@ public sealed class AnhPhongDto
     public long KichThuocByte { get; init; }
 }
 public sealed class CoSoVatChatDto { public string MaSo { get; init; } = ""; public string Ten { get; init; } = ""; public int SoLuong { get; init; } public string TinhTrang { get; init; } = ""; public string? MaPhong { get; init; } }
-public sealed class DongCoSoVatChat { public string MaSo { get; init; } = ""; public string Ten { get; init; } = ""; public string Phong { get; init; } = ""; public int SoLuong { get; init; } public string TinhTrang { get; init; } = ""; }
 public sealed class PhanHoiApi<T> { public bool Success { get; init; } public T? Data { get; init; } }
 public sealed class PhanHoiLoiApi { public LoiApi? Error { get; init; } }
 public sealed class LoiApi { public string Message { get; init; } = ""; public string? Code { get; init; } }

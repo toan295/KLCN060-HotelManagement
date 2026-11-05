@@ -23,6 +23,16 @@ public class AuthOptions
     /// <summary>Độ dài (phút) cửa sổ đếm của giới hạn theo IP ở trên.</summary>
     public int ForgotPasswordWindowMinutes { get; set; } = 15;
 
+    /// <summary>Số lần đăng nhập tối đa từ MỘT địa chỉ IP trong cửa sổ <see cref="LoginWindowMinutes"/> (chống dò mật khẩu hàng loạt và cố ý khóa tài khoản người khác).</summary>
+    public int LoginMaxPerIp { get; set; } = 60;
+
+    public int LoginWindowMinutes { get; set; } = 5;
+
+    /// <summary>Số lần đăng ký tài khoản tối đa từ MỘT địa chỉ IP trong cửa sổ <see cref="RegisterWindowMinutes"/> (chống tạo tài khoản rác hàng loạt).</summary>
+    public int RegisterMaxPerIp { get; set; } = 10;
+
+    public int RegisterWindowMinutes { get; set; } = 10;
+
     /// <summary>
     /// Địa chỉ IP của các máy chủ trung gian (Website/reverse proxy) được tin cậy khi đọc header X-Forwarded-For để biết IP thật của người dùng.
     /// Địa chỉ loopback (127.0.0.1, ::1) luôn được tin cậy (Website và API chạy cùng máy). Khi Website chạy máy khác, thêm IP của nó vào đây.

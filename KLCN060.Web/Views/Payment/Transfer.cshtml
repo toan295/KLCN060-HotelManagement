@@ -6,7 +6,7 @@
 
 <div class="row justify-content-center">
     <div class="col-lg-9">
-        <partial name="_BookingSteps" model="2" />
+        <partial name="_BookingSteps" model="@(Model.TrangThai == "THANH_CONG" ? 3 : 2)" />
         <h1 class="h3 mb-1">Thanh toán tiền cọc bằng chuyển khoản</h1>
         <p class="text-muted mb-3">Phiếu đặt phòng <strong class="mono">@Model.MaThamChieu</strong> · Mã giao dịch <strong class="mono">@Model.MaGiaoDich</strong></p>
 
@@ -135,6 +135,14 @@
                 return p(Math.floor(s / 60)) + ':' + p(s % 60);
             }
             function veTrangPhieu() { window.location.href = '@Html.Raw(xacNhanUrl)'; }
+            // Thanh toán xong: thanh bước chuyển sang "3 Hoàn tất" mà không cần tải lại trang.
+            function sangBuocHoanTat() {
+                const buoc = document.querySelectorAll('.steps .step');
+                if (buoc.length < 3) return;
+                [buoc[0], buoc[1]].forEach(b => { b.classList.remove('current'); b.classList.add('done'); b.querySelector('.n').textContent = '✓'; });
+                buoc[2].classList.add('current');
+                document.querySelectorAll('.steps .bar').forEach(b => b.classList.add('done'));
+            }
 
             document.querySelectorAll('.copy-btn').forEach(b => b.addEventListener('click', async () => {
                 try { await navigator.clipboard.writeText(b.dataset.copy); const t = b.textContent; b.textContent = 'Đã chép'; setTimeout(() => b.textContent = t, 1200); } catch (e) { }
@@ -157,7 +165,7 @@
                     if (!r.ok) return;
                     const d = await r.json();
                     conLai = d.soGiayConLai;
-                    if (d.trangThai === 'THANH_CONG') { clearInterval(hoi); clearInterval(dongHo); hienThi('success'); setTimeout(veTrangPhieu, 4000); }
+                    if (d.trangThai === 'THANH_CONG') { clearInterval(hoi); clearInterval(dongHo); hienThi('success'); sangBuocHoanTat(); setTimeout(veTrangPhieu, 4000); }
                     else if (d.trangThai !== 'CHO_THANH_TOAN') { clearInterval(hoi); clearInterval(dongHo); hienThi('expired'); }
                 } catch (e) { /* mất mạng tạm thời: lần hỏi sau sẽ thử lại */ }
             }, 2000);

@@ -101,7 +101,7 @@ public partial class StayService
         // Đơn giá phòng mới: theo bảng giá của ngày đổi (loại đặt phòng của phiếu gốc); nâng hạng luôn thu chênh lệch.
         var loaiDat = await _context.PhieuNhanPhongs.Where(x => x.MaPhieuNhan == maPhieuNhan)
             .Select(x => x.PhieuDatPhong == null ? LoaiDatPhong.CA_NHAN : x.PhieuDatPhong.LoaiDatPhong).FirstAsync();
-        var donGiaBangGia = await GiaPhongCalculator.DonGiaDemAsync(_context, phongMoi.LoaiPhong, homNay, loaiDat);
+        var donGiaBangGia = phongMoi.LoaiPhong.DonGia;
         var donGiaMoi = donGiaBangGia;
 
         var loaiDoi = donGiaMoi > luotCu.DonGia ? "NANG_HANG" : donGiaMoi < luotCu.DonGia ? "HA_HANG" : "NGANG_HANG";
@@ -365,14 +365,6 @@ public partial class StayService
         return s.Length > 255 ? s[..255] : s;
     }
 
-    /// <summary>Danh sách minibar buồng phòng đã ghi nhận mà lễ tân chưa tính phí/bỏ qua và đang chặn trả phòng này.</summary>
-    private async Task<List<string>> LayMinibarChanTraPhongAsync(string maPhieuNhan, string maPhong, bool phongKhacDangO)
-        => (await _context.ChiTietKiemPhongs
-            .Where(c => c.TrangThaiTinhPhi == TrangThaiTinhPhi.CHO_TINH_PHI && c.PhieuKiemPhong.MaPhieuNhan == maPhieuNhan
-                        && (!phongKhacDangO || c.PhieuKiemPhong.MaPhong == maPhong))
-            .Select(c => new { c.VatDung.TenVatDung, c.SoLuongTinhPhi }).ToListAsync())
-            .Select(x => $"{x.TenVatDung} x{x.SoLuongTinhPhi}").ToList();
-
     public async Task<CheckOutInfoDto> XemTruocTraPhongAsync(string maPhieuNhan, string maPhong, bool apDungPhuThuTreGio)
     {
         var bayGio = DateTime.Now;
@@ -448,8 +440,6 @@ public partial class StayService
         var dangO = luot.TrangThai == TrangThaiChiTietPhieuNhan.DANG_O;
         dk.Add(new CheckOutConditionDto { Ten = "Lượt ở đang hoạt động (chưa trả)", Dat = dangO, Chan = true, ChiTiet = dangO ? null : "Lượt lưu trú này đã trả phòng, không trả hai lần được." });
         dk.Add(new CheckOutConditionDto { Ten = "Chưa lập hóa đơn cho phiếu nhận", Dat = maHoaDon is null, Chan = true, ChiTiet = maHoaDon is null ? null : $"Đã có hóa đơn {maHoaDon}." });
-        var minibar = dangO ? await LayMinibarChanTraPhongAsync(maPhieuNhan, maPhong, phongKhacDangO) : new List<string>();
-        dk.Add(new CheckOutConditionDto { Ten = "Minibar buồng phòng đã được tính phí hoặc bỏ qua", Dat = minibar.Count == 0, Chan = true, ChiTiet = minibar.Count == 0 ? null : $"Còn {minibar.Count} khoản chờ xử lý: {string.Join(", ", minibar)} - xử lý ở Buồng phòng → Minibar chờ tính phí." });
         var phongKhop = luot.Phong.TinhTrang is TinhTrangPhong.OC or TinhTrangPhong.OD;
         dk.Add(new CheckOutConditionDto { Ten = "Tình trạng phòng khớp lượt ở (có khách)", Dat = !dangO || phongKhop, Chan = false, ChiTiet = !dangO || phongKhop ? null : $"Phòng đang ở trạng thái {luot.Phong.TinhTrang} nhưng lượt ở còn mở: kiểm tra Sơ đồ phòng." });
         dk.Add(new CheckOutConditionDto { Ten = "Folio được tính lại ngay lúc này", Dat = true, Chan = false, ChiTiet = $"Tính lúc {bayGio:HH:mm:ss}; nếu có thay đổi trước khi xác nhận hệ thống sẽ yêu cầu xem lại." });
@@ -488,13 +478,6 @@ public partial class StayService
             ?? throw new ApiException(StatusCodes.Status404NotFound, "KHONG_TIM_THAY_LUOT_LUU_TRU", "Không tìm thấy lượt lưu trú.");
         if (luot.TrangThai != TrangThaiChiTietPhieuNhan.DANG_O)
             throw new ApiException(StatusCodes.Status409Conflict, "LUOT_LUU_TRU_DA_KET_THUC", "Lượt lưu trú này đã trả phòng.");
-
-        // Kiểm tra minibar: khoản tiêu thụ buồng phòng đã ghi nhận mà lễ tân chưa tính phí / bỏ qua thì chưa được trả phòng (phòng cuối của phiếu thì tính cả các phòng đã đổi đi).
-        var phongKhacDangO = await _context.ChiTietPhieuNhans.AnyAsync(x => x.MaPhieuNhan == maPhieuNhan && x.MaPhong != maPhong && x.TrangThai == TrangThaiChiTietPhieuNhan.DANG_O);
-        var minibarChua = await LayMinibarChanTraPhongAsync(maPhieuNhan, maPhong, phongKhacDangO);
-        if (minibarChua.Count > 0)
-            throw new ApiException(StatusCodes.Status409Conflict, "CON_MINIBAR_CHUA_XU_LY",
-                $"Còn {minibarChua.Count} khoản minibar do buồng phòng ghi nhận chưa tính phí hoặc bỏ qua ({string.Join(", ", minibarChua)}). Hãy xử lý ở mục minibar chờ tính phí trước khi trả phòng.");
 
         luot.NgayTra = homNay;
         luot.TrangThai = TrangThaiChiTietPhieuNhan.DA_TRA_PHONG;
@@ -601,6 +584,7 @@ public partial class StayService
             TienDV = folio.TienDichVu,
             PhuThu = folio.PhuThu,
             TienDaCoc = cocDaDung,
+            TienKhuyenMai = folio.TongKhuyenMai,
             TongTien = folio.ConPhaiThu,
             HinhThucThanhToan = HinhThucThanhToan.TIEN_MAT,
             // Khách đã cọc đủ (hoặc hơn) thì không còn gì phải thu.

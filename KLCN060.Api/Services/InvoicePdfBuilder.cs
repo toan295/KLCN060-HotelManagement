@@ -26,7 +26,7 @@ public static class InvoicePdfBuilder
         _ => "Chưa thanh toán"
     };
 
-    public static byte[] Build(InvoiceDto hd, KLCN060.Domain.HoaDonDienTu? hddt = null)
+    public static byte[] Build(InvoiceDto hd)
     {
         return Document.Create(container =>
         {
@@ -42,10 +42,7 @@ public static class InvoicePdfBuilder
                     col.Item().Text("Hệ thống quản lý khách sạn").FontColor(Colors.Grey.Darken1);
                     col.Item().PaddingTop(8).Text("HÓA ĐƠN THANH TOÁN").Bold().FontSize(14);
                     // Bản này chỉ là chứng từ thanh toán nội bộ; hóa đơn có giá trị pháp lý là hóa đơn điện tử do cơ quan thuế cấp mã.
-                    if (hddt is { TrangThai: KLCN060.Domain.TrangThaiHoaDonDienTu.DA_PHAT_HANH })
-                        col.Item().Text($"Hóa đơn điện tử số {hddt.SoHoaDon} - Ký hiệu {hddt.MauSo}{hddt.KyHieu} - Mã CQT: {hddt.MaCQT} - Tra cứu: {hddt.LienKetTraCuu} (mã {hddt.MaTraCuu})").FontSize(9);
-                    else
-                        col.Item().Text("Phiếu thanh toán - KHÔNG phải hóa đơn giá trị gia tăng. Hóa đơn điện tử chưa được phát hành.").FontSize(9).FontColor(Colors.Red.Darken2);
+                    col.Item().Text("Phiếu thanh toán - KHÔNG phải hóa đơn giá trị gia tăng. Hóa đơn điện tử chưa được phát hành.").FontSize(9).FontColor(Colors.Red.Darken2);
                 });
 
                 page.Content().PaddingVertical(10).Column(col =>
@@ -88,6 +85,7 @@ public static class InvoicePdfBuilder
                         t.Item().Text($"Tiền phòng: {Vnd(hd.TienPhong)}");
                         t.Item().Text($"Dịch vụ: {Vnd(hd.TienDV)}");
                         t.Item().Text($"Phụ thu: {Vnd(hd.PhuThu)}");
+                        if (hd.TienKhuyenMai > 0) t.Item().Text($"Khuyến mãi: -{Vnd(hd.TienKhuyenMai)}");
                         t.Item().Text($"Đã đặt cọc: {Vnd(hd.TienDaCoc)}");
                         t.Item().Text($"Tổng phải thanh toán: {Vnd(hd.TongTien)}").Bold().FontSize(12);
                         t.Item().Text($"Đã thanh toán: {Vnd(hd.DaThanhToan)}");

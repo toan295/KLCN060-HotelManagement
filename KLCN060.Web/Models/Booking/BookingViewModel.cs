@@ -14,6 +14,16 @@ public class BookingViewModel
     public decimal TienCoc { get; set; }
     public decimal TongTienDuKien { get; set; }
     public decimal TongKhuyenMai { get; set; }
+    public int SoDem { get; set; }
+    /// <summary>Số khách khai khi đặt (null nếu không khai, VD đặt đoàn).</summary>
+    public int? SoKhach { get; set; }
+    public int SoKhachVuotTieuChuan { get; set; }
+    /// <summary>Phụ thu dự kiến do khách vượt tiêu chuẩn; chưa nằm trong tiền cọc, tính vào hóa đơn khi trả phòng.</summary>
+    public decimal PhuThuDuKien { get; set; }
+
+    /// <summary>Cọc đã hoàn / bị giữ lại khi đơn bị hủy (cả hai bằng 0 nghĩa là đơn hủy khi chưa đóng cọc).</summary>
+    public decimal SoTienHoanCoc { get; set; }
+    public decimal TienCocGiuLai { get; set; }
     public List<HeldRoomViewModel> PhongDaGiu { get; set; } = new();
 }
 

@@ -70,7 +70,6 @@ public partial class DichVuService : IDichVuService
         var (ten, donVi) = ChuanHoaDichVu(request);
         var dichVu = await TimDichVuAsync(maDV);
         await KiemTraTrungTenAsync(ten, maDV);
-        if (dichVu.GiaDV != request.GiaDV) await KiemTraGiaMoiVoiGoiAsync(maDV, request.GiaDV);
 
         // Nhật ký riêng cho đổi giá và đổi trạng thái phục vụ (mục 7 của Quản lý: giá dịch vụ, trạng thái dịch vụ).
         if (dichVu.GiaDV != request.GiaDV)

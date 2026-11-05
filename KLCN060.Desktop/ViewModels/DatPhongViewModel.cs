@@ -66,9 +66,25 @@ public partial class DatPhongViewModel : ObservableObject
         return tu >= DateOnly.FromDateTime(DateTime.Today) && den > tu && den.DayNumber - tu.DayNumber <= 90;
     }
 
+    // Số khách lễ tân nhập (để trống = không khai). Chuỗi không phải số nguyên >= 1 coi là không hợp lệ.
+    [ObservableProperty] private string soKhachNhap = "";
+    partial void OnSoKhachNhapChanged(string value) => CapNhatBaoGia();
+    private bool DocSoKhach(out int? soKhach)
+    {
+        soKhach = null;
+        var s = SoKhachNhap?.Trim();
+        if (string.IsNullOrEmpty(s)) return true;
+        if (!int.TryParse(s, out var n) || n < 1) return false;
+        soKhach = n;
+        return true;
+    }
+
     private YeuCauDatPhong TaoYeuCau(DateOnly tu, DateOnly den)
-        => new(DanhSachPhongDat.Sum(x => x.SoLuong) > 1 ? "DOAN" : "CA_NHAN", KhachDaChon?.MaKhach, tu, den,
-            DanhSachPhongDat.Select(x => new DongYeuCauDatPhong(x.MaLoai, x.SoLuong)).ToList(), null, MaKhuyenMaiDaChon());
+    {
+        DocSoKhach(out var soKhach);
+        return new(DanhSachPhongDat.Sum(x => x.SoLuong) > 1 ? "DOAN" : "CA_NHAN", KhachDaChon?.MaKhach, tu, den,
+            DanhSachPhongDat.Select(x => new DongYeuCauDatPhong(x.MaLoai, x.SoLuong)).ToList(), null, MaKhuyenMaiDaChon(), soKhach);
+    }
 
     private async void CapNhatBaoGia()
     {
@@ -202,6 +218,7 @@ public partial class DatPhongViewModel : ObservableObject
         var tu = DateOnly.FromDateTime(NgayNhan); var den = DateOnly.FromDateTime(NgayTra);
         if (tu < homNay) { ThongBao = "Ngày nhận không được ở quá khứ."; return; }
         if (den <= tu) { ThongBao = "Ngày trả phải sau ngày nhận (tối thiểu 1 đêm)."; return; }
+        if (!DocSoKhach(out _)) { ThongBao = "Số khách phải là số nguyên từ 1 trở lên (hoặc để trống nếu chưa hỏi)."; return; }
         BaoGiaDatPhongDto bg;
         try { bg = await _api.BaoGiaDatPhongAsync(TaoYeuCau(tu, den)); }
         catch (LoiYeuCauApi e) { ThongBao = e.Message; return; }
@@ -216,11 +233,13 @@ public partial class DatPhongViewModel : ObservableObject
             // Đặt từ 2 phòng trở lên (dù cùng hay khác loại) là đặt đoàn - chỉ đúng 1 phòng mới là cá nhân.
             var tongSoPhong = DanhSachPhongDat.Sum(x => x.SoLuong);
             var loaiDatPhong = tongSoPhong > 1 ? "DOAN" : "CA_NHAN";
+            DocSoKhach(out var soKhach);
             var r = new YeuCauDatPhong(loaiDatPhong, KhachDaChon.MaKhach, DateOnly.FromDateTime(NgayNhan), DateOnly.FromDateTime(NgayTra),
-                DanhSachPhongDat.Select(x => new DongYeuCauDatPhong(x.MaLoai, x.SoLuong)).ToList(), null, MaKhuyenMaiDaChon());
+                DanhSachPhongDat.Select(x => new DongYeuCauDatPhong(x.MaLoai, x.SoLuong)).ToList(), null, MaKhuyenMaiDaChon(), soKhach);
             var kq = await _api.TaoPhieuDatAsync(r);
             MaPhieuDatVuaTao = kq.MaPhieuDat;
             ThongBao = $"Đã tạo {kq.MaPhieuDat}. Tiền cọc: {kq.TienCoc:N0}đ. Thu cọc xong hãy bấm \"Xác nhận đã thu cọc\".";
+            SoKhachNhap = "";
             DanhSachPhongDat.Clear();   // tránh bấm Tạo lần nữa làm sinh phiếu trùng; muốn đặt thêm thì chọn phòng lại
         }
         catch (LoiYeuCauApi e) { ThongBao = e.Message; }

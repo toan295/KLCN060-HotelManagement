@@ -15,12 +15,10 @@ namespace KLCN060.Api.Controllers;
 public class StaysController : ControllerBase
 {
     private readonly IStayService _stayService;
-    private readonly IAuditLogService _auditLogService;
 
-    public StaysController(IStayService stayService, IAuditLogService auditLogService)
+    public StaysController(IStayService stayService)
     {
         _stayService = stayService;
-        _auditLogService = auditLogService;
     }
 
     [HttpPost("services")]
@@ -29,15 +27,6 @@ public class StaysController : ControllerBase
     {
         var result = await _stayService.AddServiceAsync(maPhieuNhan, maPhong, request);
         return StatusCode(StatusCodes.Status201Created, ApiResponse<StayServiceUsageDto>.Ok(result));
-    }
-
-    /// <summary>Ghi một gói dịch vụ cho khách đang ở (mỗi dịch vụ trong gói thành một dòng sử dụng, tổng đúng bằng giá gói).</summary>
-    [HttpPost("service-packages")]
-    [HasPermission(Permissions.ThaoTacLeTan)]
-    public async Task<IActionResult> AddServicePackage(string maPhieuNhan, string maPhong, [FromBody] AddStayServicePackageRequest request)
-    {
-        var result = await _stayService.AddServicePackageAsync(maPhieuNhan, maPhong, request);
-        return StatusCode(StatusCodes.Status201Created, ApiResponse<List<StayServiceUsageDto>>.Ok(result));
     }
 
     /// <summary>Hủy dòng dịch vụ ghi nhầm (chỉ khi chưa lập hóa đơn; bắt buộc lý do).</summary>
@@ -68,15 +57,6 @@ public class StaysController : ControllerBase
     [HasPermission(Permissions.ThaoTacLeTan)]
     public async Task<IActionResult> ExtendPreview(string maPhieuNhan, string maPhong, [FromQuery] DateOnly ngayTraMoi)
         => Ok(ApiResponse<ExtendPreviewDto>.Ok(await _stayService.XemTruocGiaHanAsync(maPhieuNhan, maPhong, ngayTraMoi)));
-
-    /// <summary>Lịch sử thao tác của lượt lưu trú (đổi phòng, gia hạn, ghi/hủy dịch vụ...): ai, lúc nào, trước → sau, lý do.</summary>
-    [HttpGet("history")]
-    [HasPermission(Permissions.XemLuuTru)]
-    public async Task<IActionResult> History(string maPhieuNhan, string maPhong)
-    {
-        await _stayService.KiemTraLuotTonTaiAsync(maPhieuNhan, maPhong);
-        return Ok(ApiResponse<List<KLCN060.Api.DTOs.Audit.AuditLogDto>>.Ok(await _auditLogService.GetForObjectAsync(maPhieuNhan)));
-    }
 
     [HttpPost("change-room")]
     [HasPermission(Permissions.ThaoTacLeTan)]

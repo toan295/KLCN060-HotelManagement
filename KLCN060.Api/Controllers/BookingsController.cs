@@ -2,7 +2,6 @@ using KLCN060.Api.Authorization;
 using KLCN060.Domain;
 using KLCN060.Api.DTOs.Bookings;
 using KLCN060.Api.DTOs.Common;
-using KLCN060.Api.DTOs.FrontDesk;
 using KLCN060.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,13 +15,11 @@ public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
     private readonly ICheckInService _checkInService;
-    private readonly IAuditLogService _auditLogService;
 
-    public BookingsController(IBookingService bookingService, ICheckInService checkInService, IAuditLogService auditLogService)
+    public BookingsController(IBookingService bookingService, ICheckInService checkInService)
     {
         _bookingService = bookingService;
         _checkInService = checkInService;
-        _auditLogService = auditLogService;
     }
 
     [HttpPost]
@@ -123,16 +120,6 @@ public class BookingsController : ControllerBase
     [HasPermission(Permissions.ThaoTacLeTan)]
     public async Task<IActionResult> Quote([FromBody] CreateBookingRequest request)
         => Ok(ApiResponse<BookingQuoteDto>.Ok(await _bookingService.QuoteAsync(request)));
-
-    /// <summary>Lịch sử thay đổi của phiếu đặt (tạo, xác nhận cọc, nhận phòng, hủy/không đến...).</summary>
-    [HttpGet("{maPhieuDat}/history")]
-    [HasPermission(Permissions.XemDatPhong)]
-    public async Task<IActionResult> History(string maPhieuDat)
-    {
-        // Phiếu không tồn tại phải báo 404 (trước đây trả 200 kèm cả dòng nhật ký thao tác thất bại do chính mã gõ vào).
-        await _bookingService.GetByIdAsync(maPhieuDat, CurrentUser.From(User));
-        return Ok(ApiResponse<List<KLCN060.Api.DTOs.Audit.AuditLogDto>>.Ok(await _auditLogService.GetForObjectAsync(maPhieuDat)));
-    }
 
     /// <summary>Người ở cùng đã khai báo trong phiếu (khách đại diện không nằm trong danh sách này).</summary>
     [HttpGet("{maPhieuDat}/guests")]

@@ -1,22 +1,15 @@
 @model KLCN060.Web.Models.Booking.BookingViewModel
 @{
     ViewData["Title"] = "Xác nhận đặt phòng";
-    var trangThaiHienThi = Model.TrangThai switch
-    {
-        "CHO_XAC_NHAN" => ("Chờ xác nhận đặt cọc", "warning"),
-        "DA_XAC_NHAN" => ("Đã xác nhận, chờ ngày nhận phòng", "primary"),
-        "DA_NHAN_PHONG" => ("Đã nhận phòng", "success"),
-        "DA_TRA_PHONG" => ("Đã trả phòng", "secondary"),
-        "DA_HUY" => ("Đã hủy", "secondary"),
-        "KHONG_DEN" => ("Không đến", "secondary"),
-        _ => (Model.TrangThai, "secondary")
-    };
+    var choCoc = Model.TrangThai == "CHO_XAC_NHAN";
+    var phongTrungLoai = Model.PhongDaGiu.GroupBy(x => x.LoaiHienThi).Select(g => new { Loai = g.Key, So = g.Count(), DonGia = g.First().DonGiaApDung, ThanhTien = g.Sum(x => x.ThanhTien) }).ToList();
+    var conLaiKhiTra = Math.Max(0, Model.TongTienDuKien - Model.TongKhuyenMai - Model.TienCoc) + Model.PhuThuDuKien;
 }
 
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-7">
-        <partial name="_BookingSteps" model="@(Model.TrangThai == "CHO_XAC_NHAN" ? 2 : 3)" />
-        <h1 class="h3 mb-1">Xác nhận đặt phòng</h1>
+        <partial name="_BookingSteps" model="@(choCoc ? 2 : 3)" />
+        <h1 class="h3 mb-1">@(choCoc ? "Đặt cọc để giữ phòng" : "Đặt phòng thành công")</h1>
         <p class="text-muted mb-4">Mã phiếu đặt: <strong class="mono">@Model.MaPhieuDat</strong></p>
 
         @if (TempData["SuccessMessage"] is string successMessage)
@@ -31,50 +24,91 @@
 
         <div class="d-flex align-items-center gap-2 mb-3">
             <span>Trạng thái:</span>
-            <span class="badge bg-@trangThaiHienThi.Item2">@trangThaiHienThi.Item1</span>
+            <span class="badge badge-st @TrangThaiPhieu.Lop(Model.TrangThai)">@TrangThaiPhieu.NhanDai(Model.TrangThai)</span>
         </div>
 
-        <h5>Danh sách phòng đã giữ</h5>
+        @if (choCoc)
+        {
+            <div class="alert alert-warning">
+                <strong>Phòng chưa được giữ.</strong> Phòng chỉ được giữ cho bạn sau khi hệ thống nhận được tiền cọc.
+                Nếu chưa thanh toán, khách khác vẫn có thể đặt phòng này, ai đặt cọc trước sẽ được giữ phòng.
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="mb-3">Thông tin đặt phòng</h5>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 fw-normal text-muted">Nhận phòng</dt>
+                    <dd class="col-sm-7"><strong>@Model.NgayDonDuKien.ToString("dd/MM/yyyy")</strong> (từ 14:00)</dd>
+                    <dt class="col-sm-5 fw-normal text-muted">Trả phòng</dt>
+                    <dd class="col-sm-7"><strong>@Model.NgayTraDuKien.ToString("dd/MM/yyyy")</strong> (trước 12:00)</dd>
+                    <dt class="col-sm-5 fw-normal text-muted">Số đêm</dt>
+                    <dd class="col-sm-7"><strong>@Model.SoDem</strong> đêm</dd>
+                    @if (Model.SoKhach is not null)
+                    {
+                        <dt class="col-sm-5 fw-normal text-muted">Số khách</dt>
+                        <dd class="col-sm-7"><strong>@Model.SoKhach</strong> khách@(Model.SoKhachVuotTieuChuan > 0 ? $" ({Model.SoKhachVuotTieuChuan} khách vượt tiêu chuẩn)" : "")</dd>
+                    }
+                    <dt class="col-sm-5 fw-normal text-muted">Hình thức</dt>
+                    <dd class="col-sm-7">@(Model.LoaiDatPhong == "DOAN" ? "Đặt theo đoàn" : "Đặt cá nhân")</dd>
+                    <dt class="col-sm-5 fw-normal text-muted">Người đặt</dt>
+                    <dd class="col-sm-7 mb-0">@Model.HoTenKhach</dd>
+                </dl>
+            </div>
+        </div>
+
+        <h5>@(choCoc ? "Phòng đã chọn" : "Danh sách phòng đã giữ")</h5>
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Phòng</th>
                     <th>Loại phòng</th>
-                    <th>Đơn giá áp dụng</th>
+                    <th>Số phòng</th>
+                    <th>Đơn giá / đêm</th>
                     <th>Thành tiền</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var phong in Model.PhongDaGiu)
+                @foreach (var dong in phongTrungLoai)
                 {
                     <tr>
-                        <td>@phong.MaPhong</td>
-                        <td>@phong.LoaiHienThi</td>
-                        <td>@phong.DonGiaApDung.ToVnd()</td>
-                        <td>@phong.ThanhTien.ToVnd()</td>
+                        <td>@dong.Loai</td>
+                        <td>@dong.So</td>
+                        <td>@dong.DonGia.ToVnd()</td>
+                        <td>@dong.ThanhTien.ToVnd()</td>
                     </tr>
                 }
             </tbody>
         </table>
+        @if (!choCoc)
+        {
+            <p class="small text-muted">Phòng được giữ: @string.Join(", ", Model.PhongDaGiu.Select(x => x.MaPhong))</p>
+        }
 
         <div class="card bg-light border-0 mb-4">
             <div class="card-body">
-                <p class="mb-1">Tổng tiền dự kiến: <strong>@Model.TongTienDuKien.ToVnd()</strong></p>
+                <p class="mb-1">Tiền phòng (@Model.SoDem đêm): <strong>@Model.TongTienDuKien.ToVnd()</strong></p>
                 @if (Model.TongKhuyenMai > 0)
                 {
                     <p class="mb-1 text-success">Khuyến mãi: -@Model.TongKhuyenMai.ToVnd()</p>
                 }
-                <p class="mb-0 fs-5">Tiền cọc cần thanh toán: <strong>@Model.TienCoc.ToVnd()</strong></p>
+                @if (Model.PhuThuDuKien > 0)
+                {
+                    <p class="mb-1">Phụ thu dự kiến (@Model.SoKhachVuotTieuChuan khách vượt tiêu chuẩn × @Model.SoDem đêm): <strong>@Model.PhuThuDuKien.ToVnd()</strong>
+                        <span class="d-block small text-muted">Chưa nằm trong tiền cọc, thanh toán khi trả phòng.</span></p>
+                }
+                <p class="mb-1 fs-5">@(choCoc ? "Tiền cọc cần thanh toán" : "Tiền cọc"): <strong>@Model.TienCoc.ToVnd()</strong> <span class="fs-6 text-muted">(50% tiền phòng)</span></p>
+                <p class="mb-0 small text-muted">Dự kiến thanh toán khi trả phòng (đã trừ cọc, chưa gồm dịch vụ phát sinh): <strong>@conLaiKhiTra.ToVnd()</strong></p>
             </div>
         </div>
 
-        @if (Model.TrangThai == "CHO_XAC_NHAN")
+        @if (choCoc)
         {
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-body">
                     <h5 class="mb-1">Thanh toán tiền cọc</h5>
                     <p class="text-muted small mb-3">
-                        Phòng được giữ cho bạn sau khi hệ thống nhận được tiền cọc.
+                        Quét mã QR chuyển khoản đúng số tiền cọc. Hệ thống tự xác nhận khi nhận được tiền và giữ phòng cho bạn.
                     </p>
                     <form asp-controller="Payment" asp-action="Start" method="post">
                         <input type="hidden" name="maPhieuDat" value="@Model.MaPhieuDat" />

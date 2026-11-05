@@ -1,9 +1,20 @@
-﻿<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
-
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
+﻿@model KLCN060.Web.Models.ErrorViewModel
+@{
+    ViewData["Title"] = Model.TieuDe;
 }
+
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6 text-center">
+        <p class="display-3 fw-bold text-muted mb-2">@Model.MaTrangThai</p>
+        <h1 class="h3 mb-3">@Model.TieuDe</h1>
+        <p class="text-muted mb-4">@Model.NoiDung</p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Về trang chủ</a>
+            <a class="btn btn-outline-primary" asp-controller="Home" asp-action="Search">Tìm phòng</a>
+        </div>
+        @if (Model.ShowRequestId && Model.MaTrangThai >= 500)
+        {
+            <p class="small text-muted mt-4">Mã yêu cầu (cung cấp khi liên hệ hỗ trợ): <code>@Model.RequestId</code></p>
+        }
+    </div>
+</div>

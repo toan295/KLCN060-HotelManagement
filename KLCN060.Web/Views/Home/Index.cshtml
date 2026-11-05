@@ -125,3 +125,42 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        // Ô tìm phòng ở đầu trang: bắt buộc chọn cả ngày nhận và ngày trả (không có ngày thì không thể biết phòng nào còn trống),
+        // ngày trả phải sau ngày nhận; chọn ngày nhận xong thì ngày trả chỉ chọn được từ ngày hôm sau.
+        (function () {
+            var form = document.querySelector('form.search-glass');
+            if (!form) return;
+            var nhan = form.querySelector('input[name="ngayNhan"]'), tra = form.querySelector('input[name="ngayTra"]');
+            var thongBao = document.createElement('div');
+            thongBao.className = 'search-error';
+            thongBao.setAttribute('role', 'alert');
+            thongBao.style.cssText = 'color:#fff;background:rgba(200,69,47,.92);border-radius:10px;padding:.5rem .8rem;margin-top:.6rem;display:none;font-size:.9rem;';
+            form.appendChild(thongBao);
+
+            if (nhan._flatpickr && tra._flatpickr) {
+                nhan._flatpickr.config.onChange.push(function (ngay) {
+                    if (!ngay[0]) return;
+                    var min = new Date(ngay[0]); min.setDate(min.getDate() + 1);
+                    tra._flatpickr.set('minDate', min);
+                    if (tra._flatpickr.selectedDates[0] && tra._flatpickr.selectedDates[0] < min) tra._flatpickr.clear();
+                });
+            }
+
+            form.addEventListener('submit', function (e) {
+                var loi = !nhan.value ? 'Vui lòng chọn ngày nhận phòng.' : !tra.value ? 'Vui lòng chọn ngày trả phòng.' : tra.value <= nhan.value ? 'Ngày trả phải sau ngày nhận.' : '';
+                if (loi) {
+                    e.preventDefault();
+                    thongBao.textContent = loi;
+                    thongBao.style.display = 'block';
+                    var o = !nhan.value ? nhan : tra;
+                    (o._flatpickr && o._flatpickr.altInput ? o._flatpickr.altInput : o).focus();
+                } else {
+                    thongBao.style.display = 'none';
+                }
+            });
+        })();
+    </script>
+}

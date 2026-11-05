@@ -40,12 +40,6 @@ public class RoomsController : ControllerBase
     public async Task<IActionResult> CreateBulk([FromBody] BulkRoomRequest request)
         => StatusCode(StatusCodes.Status201Created, ApiResponse<BulkRoomResultDto>.Ok(await _roomService.CreateBulkAsync(request)));
 
-    /// <summary>Lịch sử tình trạng của một phòng (ai đổi, từ gì sang gì, lúc nào, vì sao) - kể cả các lần đổi do nhận/trả/đổi phòng.</summary>
-    [HttpGet("{id}/history")]
-    [HasPermission(Permissions.XemPhong)]
-    public async Task<IActionResult> History(string id)
-        => Ok(ApiResponse<List<RoomStatusHistoryDto>>.Ok(await _roomService.GetHistoryAsync(id)));
-
     /// <summary>Chi tiết một phòng: tình trạng + lý do + ai đổi, khách đang ở, đặt phòng sắp tới, sự cố mở, người đang dọn, việc tiếp theo.</summary>
     [HttpGet("{id}/detail")]
     [HasPermission(Permissions.XemPhong)]

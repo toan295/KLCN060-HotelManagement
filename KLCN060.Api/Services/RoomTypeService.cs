@@ -21,14 +21,6 @@ public partial class RoomTypeService : IRoomTypeService
         _permissions = permissions;
     }
 
-    /// <summary>Đơn giá là quyết định giá: chỉ người có quyền QUAN_LY_GIA được đặt/đổi, dù có quyền QUAN_LY_PHONG (sửa các thông tin khác của loại phòng).</summary>
-    private async Task KiemTraQuyenDatGiaAsync()
-    {
-        var tenDN = _audit.TenDN;
-        if (string.IsNullOrEmpty(tenDN) || !await _permissions.CoQuyenAsync(tenDN, Permissions.QuanLyGia))
-            throw new ApiException(StatusCodes.Status403Forbidden, "KHONG_CO_QUYEN_DAT_GIA", "Chỉ người có quyền quản lý giá (QUAN_LY_GIA) được đặt hoặc đổi đơn giá loại phòng.", "donGia");
-    }
-
     public async Task<List<RoomTypeDto>> GetAllAsync()
     {
         return await _context.LoaiPhongs
@@ -45,7 +37,6 @@ public partial class RoomTypeService : IRoomTypeService
 
     public async Task<RoomTypeDto> CreateAsync(RoomTypeRequest request)
     {
-        await KiemTraQuyenDatGiaAsync();
         await ChuanHoaVaKiemTraAsync(request, null);
         await using var transaction = await _context.Database.BeginTransactionAsync();
         // [Khối 8 - P1-4] Transaction + khóa sinh mã theo tiền tố (xem MaCodeGenerator.GenerateNextAsync): 2 request tạo
@@ -89,8 +80,7 @@ public partial class RoomTypeService : IRoomTypeService
 
         if (request.DonGia != loaiPhong.DonGia)
         {
-            await KiemTraQuyenDatGiaAsync();
-            _audit.Ghi("DOI_GIA_LOAI_PHONG", maLoai, $"donGia={Math.Round(loaiPhong.DonGia, 0)} -> {Math.Round(request.DonGia, 0)}");
+                _audit.Ghi("DOI_GIA_LOAI_PHONG", maLoai, $"donGia={Math.Round(loaiPhong.DonGia, 0)} -> {Math.Round(request.DonGia, 0)}");
         }
 
         var thayDoi = new List<string>();
@@ -149,22 +139,22 @@ public partial class RoomTypeService : IRoomTypeService
         var maPhongKhongTrong = await RoomAvailability.GetOccupiedRoomIdsAsync(_context, checkin, checkout);
 
         var loaiPhongs = await _context.LoaiPhongs
-            .Where(lp => lp.SoNguoiTieuChuan >= guests)
+            .Where(lp => lp.SoNguoiTieuChuan + CheckInService.NguoiThemToiDa >= guests)
             .Include(lp => lp.Phongs)
             .OrderBy(lp => lp.MaLoai)
             .ToListAsync();
 
         // Giá hiển thị cho khách = đúng giá sẽ ghi vào phiếu đặt (theo bảng giá đang bật của Quản lý, cho đặt phòng cá nhân).
-        var quyTacGia = await GiaPhongCalculator.LayQuyTacDangBatAsync(_context);
 
         return loaiPhongs.Select(lp =>
         {
-            var gia = GiaPhongCalculator.Tinh(lp, checkin, checkout, LoaiDatPhong.CA_NHAN, quyTacGia);
+            var gia = GiaPhongCalculator.Tinh(lp, checkin, checkout);
             return new RoomTypeAvailabilityDto
             {
                 MaLoai = lp.MaLoai,
                 TenLoai = lp.TenLoai,
                 SoNguoiTieuChuan = lp.SoNguoiTieuChuan,
+                SucChuaToiDa = lp.SoNguoiTieuChuan + CheckInService.NguoiThemToiDa,
                 DonGia = gia.DonGiaBinhQuan,
                 DonGiaCoBan = lp.DonGia,
                 SoDem = gia.TheoDem.Count,

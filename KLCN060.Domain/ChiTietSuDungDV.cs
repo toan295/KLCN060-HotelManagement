@@ -13,9 +13,6 @@ public class ChiTietSuDungDV
     public string? TenDichVu { get; set; }
     public string? DonViTinh { get; set; }
 
-    /// <summary>Gói dịch vụ mà dòng này thuộc về (null = dịch vụ lẻ).</summary>
-    public string? MaGoi { get; set; }
-
     /// <summary>Phòng (lượt ở) mà dịch vụ được ghi cho: phiếu nhiều phòng phải biết dòng này của phòng nào (null = dữ liệu cũ trước khi có cột này).</summary>
     public string? MaPhong { get; set; }
 
@@ -24,5 +21,4 @@ public class ChiTietSuDungDV
 
     public PhieuNhanPhong PhieuNhanPhong { get; set; } = null!;
     public DichVu DichVu { get; set; } = null!;
-    public GoiDichVu? Goi { get; set; }
 }

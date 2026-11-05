@@ -243,6 +243,11 @@ public partial class PaymentService
         if (phieu.TrangThai != TrangThaiPhieuDat.CHO_XAC_NHAN)
             return $"Phiếu đặt phòng không còn chờ đặt cọc (hiện tại: {phieu.TrangThai}); tiền về cần được xử lý/hoàn thủ công.";
 
+        // Phiếu chưa cọc không giữ phòng: ai chuyển khoản trước thì được giữ. Hết phòng (khách khác cọc trước) thì không xác nhận, tiền về vào hàng chờ xử lý/hoàn tiền.
+        var khongGiuDuoc = await RoomAvailability.GiuPhongKhiDatCocAsync(_context, phieu);
+        if (khongGiuDuoc is not null)
+            return khongGiuDuoc + " Tiền cọc đã về tài khoản, cần hoàn lại cho khách.";
+
         phieu.TrangThai = TrangThaiPhieuDat.DA_XAC_NHAN;
         phieu.NgayNhanCoc = DateTime.Now;
         phieu.HinhThucCoc = HinhThucThanhToan.CHUYEN_KHOAN;

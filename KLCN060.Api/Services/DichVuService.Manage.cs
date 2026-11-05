@@ -25,8 +25,6 @@ public partial class DichVuService
             .ToDictionaryAsync(x => x.MaDV);
         var chiTiet = await _context.ChiTietDichVus.AsNoTracking().GroupBy(x => x.MaDV)
             .Select(g => new { MaDV = g.Key, Tong = g.Count(), HienThi = g.Count(x => x.ConHienThi) }).ToDictionaryAsync(x => x.MaDV);
-        var goi = await _context.GoiDichVus.AsNoTracking().Include(x => x.ChiTietGois).ThenInclude(c => c.DichVu).ToListAsync();
-        var minibar = (await _context.VatDungs.AsNoTracking().Where(x => x.MaDV != null).Select(x => x.MaDV!).Distinct().ToListAsync()).ToHashSet();
 
         // Người/lúc sửa gần nhất: lấy từ nhật ký (một truy vấn cho cả danh mục).
         var nhatKy = await _context.NhatKyThaoTacs.AsNoTracking()
@@ -38,20 +36,18 @@ public partial class DichVuService
         {
             dung.TryGetValue(d.MaDV, out var u);
             chiTiet.TryGetValue(d.MaDV, out var ct);
-            var cacGoi = goi.Where(g => g.ChiTietGois.Any(c => c.MaDV == d.MaDV)).Select(g => g.TenGoi).OrderBy(x => x).ToList();
-            var (xoaDuoc, lyDo) = LyDoKhongXoa(u?.Luot ?? 0, cacGoi.Count, minibar.Contains(d.MaDV));
+            var (xoaDuoc, lyDo) = LyDoKhongXoa(u?.Luot ?? 0);
             suaCuoi.TryGetValue(d.MaDV, out var s);
             return new ServiceCatalogItemDto
             {
                 MaDV = d.MaDV, TenDV = d.TenDV, GiaDV = d.GiaDV, DonViTinh = d.DonViTinh, HoatDong = d.HoatDong, LoaiDoanhThu = d.LoaiDoanhThu.ToString(),
                 SoLuotDung = u?.Luot ?? 0, TongSoLuong = u?.SoLuong ?? 0, DoanhThu = u?.DoanhThu ?? 0, LanDungCuoi = u?.Cuoi,
-                SoMucChiTiet = ct?.Tong ?? 0, SoMucChiTietHienThi = ct?.HienThi ?? 0, CacGoiChua = cacGoi, DangGanMinibar = minibar.Contains(d.MaDV),
+                SoMucChiTiet = ct?.Tong ?? 0, SoMucChiTietHienThi = ct?.HienThi ?? 0,
                 CoTheXoa = xoaDuoc, LyDoKhongXoa = lyDo,
                 NguoiSuaCuoi = s is null ? null : s.MaTaiKhoan, ThoiGianSuaCuoi = s?.ThoiGian
             };
         }).ToList();
 
-        var goiKhongBan = goi.Count(g => g.HoatDong && g.ChiTietGois.Any(c => !c.DichVu.HoatDong));
         return new ServiceCatalogDto
         {
             CapNhatLuc = DateTime.Now,
@@ -60,7 +56,6 @@ public partial class DichVuService
             {
                 TongDichVu = items.Count, DangPhucVu = items.Count(x => x.HoatDong), NgungPhucVu = items.Count(x => !x.HoatDong),
                 DichVuChuaCoChiTiet = items.Count(x => x.SoMucChiTietHienThi == 0), DichVuChuaTungDung = items.Count(x => x.SoLuotDung == 0),
-                TongGoi = goi.Count, GoiDangBan = goi.Count(g => g.HoatDong), GoiKhongBanDuoc = goiKhongBan,
                 DoanhThuDichVu = items.Sum(x => x.DoanhThu)
             }
         };
@@ -77,33 +72,15 @@ public partial class DichVuService
         return rows.Select(x => new ServiceHistoryEntryDto
         {
             ThoiGian = x.ThoiGian, NguoiThucHien = x.MaTaiKhoan, HanhDong = x.HanhDong,
-            MoTaHanhDong = AuditLogService.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
+            MoTaHanhDong = NhatKyMoTa.MoTaHanhDong(x.HanhDong), ChiTiet = x.ChiTiet
         }).ToList();
     }
 
-    private static (bool Duoc, string? LyDo) LyDoKhongXoa(int soLuot, int soGoi, bool minibar)
+    private static (bool Duoc, string? LyDo) LyDoKhongXoa(int soLuot)
     {
         var ly = new List<string>();
         if (soLuot > 0) ly.Add($"đã được ghi cho khách {soLuot} lần (hóa đơn cũ còn dùng)");
-        if (soGoi > 0) ly.Add($"đang nằm trong {soGoi} gói dịch vụ");
-        if (minibar) ly.Add("đang gắn với vật dụng minibar tính phí");
         return ly.Count == 0 ? (true, null) : (false, "Không xóa được vì dịch vụ " + string.Join(", ", ly) + ". Hãy chuyển sang \"Ngừng phục vụ\" để giữ nguyên lịch sử.");
-    }
-
-    /// <summary>Giá mới của dịch vụ không được làm tổng giá lẻ của một gói thấp hơn giá gói (gói sẽ thành vô lý).</summary>
-    private async Task KiemTraGiaMoiVoiGoiAsync(string maDV, decimal giaMoi)
-    {
-        var goi = await _context.GoiDichVus.AsNoTracking().Include(x => x.ChiTietGois).ThenInclude(c => c.DichVu)
-            .Where(x => x.ChiTietGois.Any(c => c.MaDV == maDV)).ToListAsync();
-        var loi = new List<string>();
-        foreach (var g in goi)
-        {
-            var giaLe = g.ChiTietGois.Sum(c => (c.MaDV == maDV ? giaMoi : c.DichVu.GiaDV) * c.SoLuong);
-            if (giaLe < g.GiaGoi) loi.Add($"\"{g.TenGoi}\" (giá gói {DichVuService.Vnd(g.GiaGoi)} > tổng giá lẻ mới {DichVuService.Vnd(giaLe)})");
-        }
-        if (loi.Count > 0)
-            throw new ApiException(StatusCodes.Status409Conflict, "GIA_MOI_LAM_SAI_GOI_DICH_VU",
-                "Giá mới làm giá gói cao hơn tổng giá lẻ ở: " + string.Join("; ", loi) + ". Hãy giảm giá các gói này trước rồi mới đổi giá dịch vụ.", "giaDV");
     }
 
     private static (string Ten, string DonVi) ChuanHoaDichVu(ServiceRequest r)

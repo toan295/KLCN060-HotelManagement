@@ -87,44 +87,30 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     /// <summary>Lý do bắt buộc khi khóa bảo trì (OOO) và khi đưa phòng sạch trở lại bẩn (kiểm tra không đạt / phát hiện chưa sạch) để truy vết.</summary>
     public bool CanLyDo => TrangThaiMoi == "OOO" || (TrangThaiMoi == "VD" && PhongDaChon?.TinhTrang is "VC" or "VI");
     public string NhacLyDo => TrangThaiMoi == "OOO" ? "Bắt buộc nhập lý do khi đưa phòng vào bảo trì / khóa phòng (có ghi nhật ký)."
-        : "Bắt buộc nhập lý do khi đưa phòng đã dọn trở lại bẩn (VD: còn tóc trong phòng tắm) - có ghi nhật ký.";
+        : "Bắt buộc nhập lý do khi đưa phòng đã dọn trở lại bẩn - có ghi nhật ký.";
     public bool CoThaoTacDuocPhep => TrangThaiDuocPhep.Count > 0;
     partial void OnTrangThaiMoiChanged(string value) { OnPropertyChanged(nameof(CanLyDo)); OnPropertyChanged(nameof(NhacLyDo)); }
 
-    /// <summary>Quản lý điều hành, không tự dọn phòng: phòng bẩn do buồng phòng xác nhận đã dọn (API chặn Quản lý các bước này).</summary>
     public bool LaQuanLy => AppSession.Current.CoQuyen(QuyenHeThong.DuyetNghiepVu);
 
     public string ThongTinTinhTrang => PhongDaChon is null ? "" :
         $"{PhongDaChon.TinhTrangHienThi} {PhongDaChon.TuLucHienThi}" + (string.IsNullOrWhiteSpace(PhongDaChon.LyDoTinhTrang) ? "" : $" - {PhongDaChon.LyDoTinhTrang}");
 
-    // Chỉ vai trò có quyền DOI_TINH_TRANG_PHONG đổi được tình trạng phòng; vai trò khác chỉ xem tổng quan,
-    // nên ẩn khung "Đổi trạng thái" thay vì để bấm rồi mới báo lỗi.
-    // Lễ tân (thao tác quầy, không phải Quản lý) CHỈ XEM sơ đồ phòng: không đổi tình trạng phòng. Dọn/kiểm tra là việc của Buồng phòng; khóa/mở bảo trì là của Quản lý.
-    public bool LaLeTan => AppSession.Current.CoQuyen(QuyenHeThong.ThaoTacLeTan) && !LaQuanLy;
-    public bool CoTheDoiTrangThai => AppSession.Current.CoQuyen(QuyenHeThong.DoiTinhTrangPhong) && !LaLeTan;
+    // Lễ tân và Quản lý (quyền DOI_TINH_TRANG_PHONG) đổi được tình trạng phòng (đã dọn, chưa dọn, có khách...); vai trò khác chỉ xem.
+    // Riêng khóa phòng bảo trì / mở lại phòng bảo trì (OOO) cần quyền KHOA_MO_PHONG (chỉ Quản lý).
+    private static bool LaKhoaMo(string? cu, string moi) => cu == "OOO" || moi == "OOO";
+    public bool CoTheKhoaMo => AppSession.Current.CoQuyen(QuyenHeThong.KhoaMoPhong);
+    public bool CoQuyenMoDatPhong => AppSession.Current.CoQuyen(QuyenHeThong.XemDatPhong);
+    public bool CoTheDoiTrangThai => AppSession.Current.CoQuyen(QuyenHeThong.DoiTinhTrangPhong);
     public bool CheDoChiXem => !CoTheDoiTrangThai;
     public string MoTaManHinh => CoTheDoiTrangThai
         ? "Tình trạng từng phòng theo tầng - bấm vào một ô phòng để xem lý do tình trạng, khách / đặt phòng liên quan, lịch sử và đổi trạng thái (nếu được phép)."
-        : "Chỉ xem: tình trạng từng phòng theo tầng - bấm vào một ô phòng để xem lý do tình trạng, khách / đặt phòng liên quan và lịch sử. Lễ tân không đổi tình trạng phòng ở đây.";
-    public string GhiChuChiXem => LaLeTan
-        ? "Chế độ chỉ xem: lễ tân không đổi tình trạng phòng. Phòng bẩn do Buồng phòng dọn và kiểm tra; khóa / mở phòng bảo trì do Quản lý quyết định. Cần xử lý khách thì dùng nút \"Xử lý nhanh\" bên trên."
-        : "Tài khoản này chỉ được xem tình trạng phòng (đổi tình trạng cần quyền riêng).";
-
-    // Xác nhận "đã dọn / đã kiểm tra" (VD→VC, VC→VI, OD→OC) là việc của buồng phòng/quản lý (XAC_NHAN_DON_PHONG); lễ tân không đổi tình trạng phòng.
-    private static bool LaXacNhanDon(string? cu, string moi) => moi is "VC" or "VI" || (cu == "OD" && moi == "OC");
-    public bool CoTheXacNhanDon => AppSession.Current.CoQuyen(QuyenHeThong.XacNhanDonPhong);
-
-    // Khóa phòng bảo trì / mở lại phòng bảo trì (OOO) cần quyền KHOA_MO_PHONG (chỉ quản lý): buồng phòng phát hiện hỏng hóc thì báo sự cố ở mục Buồng phòng.
-    private static bool LaKhoaMo(string? cu, string moi) => cu == "OOO" || moi == "OOO";
-    public bool CoTheKhoaMo => AppSession.Current.CoQuyen(QuyenHeThong.KhoaMoPhong);
-    public bool CoQuyenMoBuongPhong => AppSession.Current.CoQuyen(QuyenHeThong.XemPhong) && (AppSession.Current.CoQuyen(QuyenHeThong.GhiNhanBuongPhong) || AppSession.Current.CoQuyen(QuyenHeThong.XemBaoCao));
-    public bool CoQuyenMoDatPhong => AppSession.Current.CoQuyen(QuyenHeThong.XemDatPhong);
+        : "Chỉ xem: tình trạng từng phòng theo tầng - bấm vào một ô phòng để xem lý do tình trạng, khách / đặt phòng liên quan và lịch sử.";
+    public string GhiChuChiXem => "Tài khoản này chỉ được xem tình trạng phòng (đổi tình trạng cần quyền riêng).";
 
     public string GoiYXacNhanDon =>
-        CoTheDoiTrangThai && LaQuanLy && PhongDaChon?.TinhTrang is "VD" or "OD" ? "Phòng đang chờ dọn: quản lý không tự xác nhận dọn xong. Hãy giao việc cho nhân viên buồng phòng ở mục Buồng phòng, sau đó kiểm tra chất lượng."
-        : CoTheDoiTrangThai && !CoTheXacNhanDon && PhongDaChon?.TinhTrang is "VD" or "OD" ? "Chỉ buồng phòng xác nhận phòng đã dọn xong. Phòng bảo trì do quản lý quyết định."
-        : CoTheDoiTrangThai && !CoTheKhoaMo && PhongDaChon?.TinhTrang == "OOO" ? "Phòng đang bảo trì: chỉ quản lý mở lại. Buồng phòng phát hiện hỏng hóc hãy báo sự cố ở mục Buồng phòng."
-        : CoTheDoiTrangThai && !CoTheKhoaMo && PhongDaChon is not null ? "Muốn khóa phòng vì hỏng hóc? Hãy báo sự cố ở mục Buồng phòng - quản lý sẽ quyết định khóa phòng."
+        CoTheDoiTrangThai && !CoTheKhoaMo && PhongDaChon?.TinhTrang == "OOO" ? "Phòng đang bảo trì: chỉ Quản lý mở lại phòng."
+        : CoTheDoiTrangThai && !CoTheKhoaMo && PhongDaChon is not null ? "Muốn khóa phòng để bảo trì? Báo Quản lý quyết định."
         : "";
     public bool CoGoiYXacNhanDon => !string.IsNullOrEmpty(GoiYXacNhanDon);
 
@@ -133,7 +119,6 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(CoTheDoiTrangThai));
         OnPropertyChanged(nameof(CheDoChiXem));
-        OnPropertyChanged(nameof(CoTheXacNhanDon));
         OnPropertyChanged(nameof(CoTheKhoaMo));
         OnPropertyChanged(nameof(GoiYXacNhanDon));
         OnPropertyChanged(nameof(CoGoiYXacNhanDon));
@@ -143,8 +128,6 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     public bool CoCanhBaoPhong => !string.IsNullOrEmpty(ChiTiet?.CanhBao);
     public bool CoKhachDangO => ChiTiet?.KhachDangO is not null;
     public bool CoDatPhongSapToi => ChiTiet?.DatPhongSapToi.Count > 0;
-    public bool CoSuCo => ChiTiet?.SuCo.Count > 0;
-    public bool CoNguoiDangDon => !string.IsNullOrEmpty(ChiTiet?.NguoiDangDon);
 
     public DashboardViewModel(ApiClient api, string? maPhongMoSan = null)
     {
@@ -184,8 +167,6 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(CoCanhBaoPhong));
         OnPropertyChanged(nameof(CoKhachDangO));
         OnPropertyChanged(nameof(CoDatPhongSapToi));
-        OnPropertyChanged(nameof(CoSuCo));
-        OnPropertyChanged(nameof(CoNguoiDangDon));
     }
 
     private string? _maDaNap;
@@ -213,8 +194,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         {
             "OC" => new[] { "OD" }, "OD" => string.IsNullOrEmpty(value.KhachHienTai) ? new[] { "OC", "VD" } : new[] { "OC" }, "VD" => new[] { "VC", "OOO" },
             "VC" => new[] { "VI", "VD", "OOO" }, "VI" => new[] { "VD", "OOO" }, "OOO" => new[] { "VD", "VC" }, _ => []
-        }) if ((CoTheXacNhanDon || !LaXacNhanDon(value?.TinhTrang, trangThai)) && (CoTheKhoaMo || !LaKhoaMo(value?.TinhTrang, trangThai))
-                && !(LaQuanLy && value?.TinhTrang is "VD" or "OD" && trangThai is "VC" or "VI" or "OC")) TrangThaiDuocPhep.Add(trangThai);
+        }) if (CoTheKhoaMo || !LaKhoaMo(value?.TinhTrang, trangThai)) TrangThaiDuocPhep.Add(trangThai);
         TrangThaiMoi = TrangThaiDuocPhep.FirstOrDefault() ?? "";
         OnPropertyChanged(nameof(CoThaoTacDuocPhep));
         OnPropertyChanged(nameof(GoiYXacNhanDon));
@@ -265,7 +245,7 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         ChiSo.Add(new("CÔNG SUẤT", $"{congSuat:0}%", $"{oc + od}/{banDuoc} phòng bán được đang có khách", ""));
         var daGiu = _tatCa.Count(x => x.DaGiuChoKhachDen);
         ChiSo.Add(new("TRỐNG, SẠCH", $"{vc + vi}", $"{vc} đã dọn · {vi} đã kiểm tra · {daGiu} đã giữ cho khách đến hôm nay → {vc + vi - daGiu} bán được cho khách vãng lai", "SAN_SANG", "TOT"));
-        ChiSo.Add(new("TRỐNG, BẨN", $"{vd}", "chờ buồng phòng dọn", "VD", vd > 0 ? "CANH_BAO" : ""));
+        ChiSo.Add(new("TRỐNG, BẨN", $"{vd}", "chờ dọn phòng", "VD", vd > 0 ? "CANH_BAO" : ""));
         ChiSo.Add(new("CÓ KHÁCH", $"{oc + od}", $"{od} phòng cần dọn", "CO_KHACH"));
         ChiSo.Add(new("BẢO TRÌ", $"{ooo}", ooo > 0 ? "đang khóa, không bán được" : "không có", "OOO", ooo > 0 ? "CANH_BAO" : ""));
         ChiSo.Add(new("CẦN XỬ LÝ", $"{canXuLy}", nguyHiem > 0 ? $"{nguyHiem} phòng ảnh hưởng khách sắp đến" : "phòng có cảnh báo", "CAN_XU_LY", nguyHiem > 0 ? "NGUY_HIEM" : canXuLy > 0 ? "CANH_BAO" : "TOT"));
@@ -314,8 +294,8 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         if (!string.IsNullOrWhiteSpace(TuKhoa))
         {
             // Không phân biệt hoa thường và không cần gõ dấu (gõ "nguyen" vẫn ra "Nguyễn").
-            var k = CaTrucViewModel.BoDau(TuKhoa.Trim());
-            bool Khop(string? t) => !string.IsNullOrEmpty(t) && CaTrucViewModel.BoDau(t).Contains(k, StringComparison.OrdinalIgnoreCase);
+            var k = VanBan.BoDau(TuKhoa.Trim());
+            bool Khop(string? t) => !string.IsNullOrEmpty(t) && VanBan.BoDau(t).Contains(k, StringComparison.OrdinalIgnoreCase);
             q = q.Where(x => Khop(x.TenPhong) || Khop(x.KhachHienTai) || Khop(x.KhachSapDen) || Khop(x.TenLoaiPhong) || Khop(x.MaPhieuDatSapDen));
         }
         var ma = PhongDaChon?.MaPhong;
@@ -349,8 +329,14 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
     [RelayCommand] private void ChonPhong(PhongDto phong) => PhongDaChon = phong;
     [RelayCommand] private void LocNhanh(string loc) => LocTinhTrang = LocTinhTrang == loc ? "" : loc;
     [RelayCommand] private void XoaBoLoc() { LocTinhTrang = ""; TuKhoa = ""; LocTang = ""; LocLoaiPhong = ""; LocBan = ""; LocKhach = ""; }
-    [RelayCommand] private void MoBuongPhong() => MoManHinh?.Invoke("BUONG_PHONG");
-    [RelayCommand] private void MoDatPhong() => MoManHinh?.Invoke("DAT_PHONG");
+    /// <summary>"Mở Phiếu đặt phòng": mở đúng phiếu của phòng đang chọn (phiếu khách đang ở, hoặc phiếu sắp đến gần nhất); phòng không có phiếu thì mở danh sách.</summary>
+    [RelayCommand]
+    private void MoDatPhong()
+    {
+        var ma = ChiTiet?.KhachDangO?.MaPhieuDat ?? ChiTiet?.DatPhongSapToi.FirstOrDefault()?.MaPhieuDat;
+        if (ma is not null && MoXuLy is not null) MoXuLy(new YeuCauMoManHinh("DAT_PHONG", MaPhieuDat: ma));
+        else MoManHinh?.Invoke("DAT_PHONG");
+    }
 
     [RelayCommand]
     private async Task CapNhatTrangThaiAsync()
@@ -371,8 +357,6 @@ public partial class DashboardViewModel : ObservableObject, IDisposable
         else if (moi == "OOO") canhBao.Add("Phòng sẽ ngừng bán cho tới khi được mở lại.");
         if (moi is "VD" && cu is "VC" or "VI" && !string.IsNullOrEmpty(phong.KhachSapDen))
             canhBao.Add($"Phòng đã sẵn sàng đón khách {phong.KhachSapDen} (đón {phong.NgayDonSapDen:dd/MM}) - chuyển lại thành bẩn sẽ làm trễ việc nhận phòng.");
-        if (cu == "OOO" && ChiTiet?.SuCo.Count > 0)
-            canhBao.Add($"Phòng còn {ChiTiet.SuCo.Count} sự cố chưa xử lý xong.");
         if (canhBao.Count > 0 && !HopThoai.XacNhan("Xác nhận đổi trạng thái", $"Đổi phòng {phong.TenPhong}: {TrangThaiPhongConverterMoTa(cu)} → {TrangThaiPhongConverterMoTa(moi)}\n\n{string.Join("\n\n", canhBao)}\n\nTiếp tục?"))
             return;
 

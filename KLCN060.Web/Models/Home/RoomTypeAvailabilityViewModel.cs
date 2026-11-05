@@ -6,6 +6,9 @@ public class RoomTypeAvailabilityViewModel
     public string MaLoai { get; set; } = null!;
     public string TenLoai { get; set; } = null!;
     public int SoNguoiTieuChuan { get; set; }
+
+    /// <summary>0 = chưa biết (danh mục chưa lọc theo ngày).</summary>
+    public int SucChuaToiDa { get; set; }
     public decimal DonGia { get; set; }
     public decimal PhuThu { get; set; }
     public int SoPhongTrong { get; set; }

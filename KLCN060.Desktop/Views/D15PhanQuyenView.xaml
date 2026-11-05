@@ -33,7 +33,7 @@
                 <ctl:PageHeader.Actions>
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding CapNhatLuc}" Style="{StaticResource HintTextStyle}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <Button Content="Tải lại" Command="{Binding TaiCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
+                        <Button Content="Tải lại" ToolTip="Lấy lại dữ liệu mới nhất từ máy chủ (để thấy thay đổi do người khác vừa làm). Không sửa hay xóa dữ liệu." Command="{Binding TaiCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0" />
                     </StackPanel>
                 </ctl:PageHeader.Actions>
             </ctl:PageHeader>

@@ -6,22 +6,8 @@ using CommunityToolkit.Mvvm.Input;
 using KLCN060.Desktop.Services;
 namespace KLCN060.Desktop.ViewModels;
 
-/// <summary>Một dòng dịch vụ (kèm số lượng) trong form soạn gói dịch vụ.</summary>
-public partial class DongGoiChonViewModel : ObservableObject
-{
-    public string MaDV { get; }
-    public string TenDV { get; }
-    public string DonViTinh { get; }
-    public decimal GiaDV { get; }
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(GiaLeDong))] private int soLuong;
-    /// <summary>Phần giá gói phân bổ cho dòng này (tính lại mỗi khi đổi số lượng / giá gói).</summary>
-    [ObservableProperty] private decimal phanBo;
-    public decimal GiaLeDong => GiaDV * SoLuong;
-    public DongGoiChonViewModel(string maDV, string tenDV, string donViTinh, decimal giaDV, int soLuong) { MaDV = maDV; TenDV = tenDV; DonViTinh = donViTinh; GiaDV = giaDV; this.soLuong = soLuong; }
-}
-
 /// <summary>
-/// D13 - Quản lý dịch vụ: danh mục dịch vụ (giá, đơn vị, nhóm doanh thu, trạng thái phục vụ), chi tiết hiển thị cho khách và GÓI dịch vụ.
+/// D13 - Quản lý dịch vụ: danh mục dịch vụ (giá, đơn vị, nhóm doanh thu, trạng thái phục vụ), chi tiết hiển thị cho khách.
 /// Kèm tìm/lọc/sắp xếp, thống kê sử dụng, các ràng buộc (dịch vụ đã dùng không xóa được - chỉ ngừng phục vụ), xác nhận khi đổi giá / ngừng / xóa
 /// và lịch sử thay đổi (ai, lúc nào, trước → sau). Hóa đơn cũ giữ nguyên tên/giá đã chốt lúc bán.
 /// </summary>
@@ -33,8 +19,6 @@ public partial class QuanLyDichVuViewModel : ObservableObject
     private (string Ten, string Gia, string DonVi, bool PhucVu, string Nhom) _goc = ("", "", "", true, "DICH_VU");
 
     public ObservableCollection<DichVuQuanLyDto> Services { get; } = [];
-    /// <summary>Dịch vụ đang phục vụ, không phụ thuộc bộ lọc - để chọn đưa vào gói.</summary>
-    public ObservableCollection<DichVuQuanLyDto> DichVuChoGoi { get; } = [];
     public static IReadOnlyList<LuaChon> NhomDoanhThuTuyChon { get; } = [new("DICH_VU", "Dịch vụ"), new("MINIBAR", "Minibar"), new("GIAT_LA", "Giặt là"), new("KHAC", "Khác")];
     public static IReadOnlyList<LuaChon> SapXepTuyChon { get; } = [new("TEN", "Tên A → Z"), new("GIA", "Giá cao → thấp"), new("DOANH_THU", "Doanh thu cao → thấp"), new("LUOT", "Dùng nhiều → ít"), new("MA", "Mã dịch vụ")];
     public static IReadOnlyList<LuaChon> LocTrangThaiTuyChon { get; } = [new("", "Tất cả"), new("HOAT_DONG", "Đang phục vụ"), new("NGUNG", "Ngừng phục vụ"), new("CHUA_DUNG", "Chưa từng dùng"), new("THIEU_CHI_TIET", "Chưa có chi tiết")];
@@ -91,7 +75,7 @@ public partial class QuanLyDichVuViewModel : ObservableObject
     public string ThongTinSuDung => SelectedService is null || DangThem ? "" : SelectedService.DungHienThi + "\n" + SelectedService.GoiHienThi + "\n" + SelectedService.ChiTietHienThi
         + (SelectedService.DangGanMinibar ? "\nĐang gắn với vật dụng minibar (tính phí khi kiểm phòng)." : "")
         + (string.IsNullOrEmpty(SelectedService.SuaCuoiHienThi) ? "" : "\n" + SelectedService.SuaCuoiHienThi);
-    public string NhacLichSu => "Quy tắc: tên và đơn giá được chốt vào hóa đơn lúc ghi cho khách - đổi giá/tên sau này chỉ áp dụng cho lần ghi MỚI. Dịch vụ đã dùng hoặc nằm trong gói không xóa được, chỉ ngừng phục vụ.";
+    public string NhacLichSu => "Quy tắc: tên và đơn giá được chốt vào hóa đơn lúc ghi cho khách - đổi giá/tên sau này chỉ áp dụng cho lần ghi MỚI. Dịch vụ đã dùng không xóa được, chỉ ngừng phục vụ.";
 
     // ---- chi tiết dịch vụ
     public ObservableCollection<ChiTietDichVuDto> Details { get; } = [];
@@ -112,11 +96,9 @@ public partial class QuanLyDichVuViewModel : ObservableObject
         {
             var cat = await _api.GetDichVuCatalogAsync();
             _tatCa = cat.DichVus;
-            DichVuChoGoi.Clear();
-            foreach (var x in _tatCa.Where(x => x.HoatDong).OrderBy(x => x.TenDV)) DichVuChoGoi.Add(x);
             var t = cat.TongHop;
             ThongKe = $"{t.TongDichVu} dịch vụ: {t.DangPhucVu} đang phục vụ · {t.NgungPhucVu} ngừng · {t.DichVuChuaCoChiTiet} chưa có chi tiết · {t.DichVuChuaTungDung} chưa từng dùng. "
-                + $"{t.TongGoi} gói ({t.GoiDangBan} đang bán" + (t.GoiKhongBanDuoc > 0 ? $", {t.GoiKhongBanDuoc} tạm không bán được vì có dịch vụ ngừng" : "") + $"). Doanh thu dịch vụ đã ghi: {t.DoanhThuDichVu:N0}đ.";
+                + $"Doanh thu dịch vụ đã ghi: {t.DoanhThuDichVu:N0}đ.";
             CapNhatLuc = $"Cập nhật {cat.CapNhatLuc:HH:mm:ss}";
             var maChon = SelectedService?.MaDV;
             ApDungLoc();
@@ -125,7 +107,6 @@ public partial class QuanLyDichVuViewModel : ObservableObject
                 _dangHoanTac = true; SelectedService = _tatCa.FirstOrDefault(x => x.MaDV == maChon); _dangHoanTac = false;
                 CapNhatTrangThai();
             }
-            await LoadPackagesAsync();
         }
         catch (Exception e) when (e is LoiYeuCauApi or HttpRequestException)
         {
@@ -240,18 +221,6 @@ public partial class QuanLyDichVuViewModel : ObservableObject
         return true;
     }
 
-    /// <summary>Các gói bị ảnh hưởng nếu dịch vụ đổi sang giá mới (tổng giá lẻ mới thấp hơn giá gói) - máy chủ cũng chặn, đây là cảnh báo sớm.</summary>
-    private string CanhBaoGiaMoi(string maDV, decimal giaMoi)
-    {
-        var loi = new List<string>();
-        foreach (var g in Goi.Where(x => x.DichVus.Any(d => d.MaDV == maDV)))
-        {
-            var giaLe = g.DichVus.Sum(d => (d.MaDV == maDV ? giaMoi : d.GiaDV) * d.SoLuong);
-            if (giaLe < g.GiaGoi) loi.Add($"{g.TenGoi} (giá gói {g.GiaGoi:N0}đ > giá lẻ mới {giaLe:N0}đ)");
-        }
-        return loi.Count == 0 ? "" : "Giá mới làm các gói sau vô lý, hãy sửa gói trước: " + string.Join("; ", loi) + ".";
-    }
-
     [RelayCommand]
     private async Task SaveAsync()
     {
@@ -266,16 +235,12 @@ public partial class QuanLyDichVuViewModel : ObservableObject
             var ngung = cu.HoatDong && !DangPhucVu;
             if (doiGia)
             {
-                var canhBao = CanhBaoGiaMoi(cu.MaDV, gia);
-                if (canhBao != "") { DatThongBao(canhBao, true); return; }
-                var ghi = $"Đổi giá \"{cu.TenDV}\" từ {cu.GiaDV:N0}đ thành {gia:N0}đ?\n\nGiá mới chỉ áp dụng cho lần ghi MỚI; hóa đơn và lịch sử đã ghi giữ nguyên giá cũ."
-                    + (cu.CacGoiChua.Count > 0 ? $"\nTổng giá lẻ (phần \"tiết kiệm\") của các gói {string.Join(", ", cu.CacGoiChua)} sẽ thay đổi theo." : "");
+                var ghi = $"Đổi giá \"{cu.TenDV}\" từ {cu.GiaDV:N0}đ thành {gia:N0}đ?\n\nGiá mới chỉ áp dụng cho lần ghi MỚI; hóa đơn và lịch sử đã ghi giữ nguyên giá cũ.";
                 if (!HopThoai.XacNhan("Đổi giá dịch vụ", ghi)) return;
             }
             if (ngung)
             {
-                var ghi = $"Ngừng phục vụ \"{cu.TenDV}\"? Lễ tân không ghi thêm cho khách được nữa và dịch vụ ẩn khỏi danh sách công khai; lượt đã ghi giữ nguyên."
-                    + (cu.CacGoiChua.Count > 0 ? $"\nCác gói chứa dịch vụ này sẽ tạm không bán được: {string.Join(", ", cu.CacGoiChua)}." : "");
+                var ghi = $"Ngừng phục vụ \"{cu.TenDV}\"? Lễ tân không ghi thêm cho khách được nữa và dịch vụ ẩn khỏi danh sách công khai; lượt đã ghi giữ nguyên.";
                 if (!HopThoai.XacNhan("Ngừng phục vụ", ghi)) return;
             }
         }
@@ -413,181 +378,5 @@ public partial class QuanLyDichVuViewModel : ObservableObject
     {
         SelectedDetail = null; DetailTitle = ""; DetailContent = "";
         DetailOrder = Details.Count == 0 ? 1 : Details.Max(x => x.ThuTu) + 1; DetailVisible = true;
-    }
-
-    // ======================= Gói dịch vụ (package) =======================
-    private List<GoiDichVuDto> _tatCaGoi = [];
-    private (string Ten, string MoTa, decimal Gia, bool Ban, string Dong) _gocGoi = ("", "", 0, true, "");
-    public ObservableCollection<GoiDichVuDto> Goi { get; } = [];
-    public ObservableCollection<DongGoiChonViewModel> DongGoi { get; } = [];
-    [ObservableProperty] private string tuKhoaGoi = "";
-    partial void OnTuKhoaGoiChanged(string value) => ApDungLocGoi();
-    [ObservableProperty, NotifyPropertyChangedFor(nameof(TieuDeGoi), nameof(CoGoiDaChon), nameof(CoTheXoaGoi), nameof(CoLyDoKhongXoaGoi), nameof(LyDoKhongXoaGoi), nameof(ThongTinGoi))] private GoiDichVuDto? goiDaChon;
-    [ObservableProperty] private string tenGoi = ""; [ObservableProperty] private string moTaGoi = ""; [ObservableProperty] private decimal giaGoi;
-    [ObservableProperty] private bool goiDangBan = true;
-    [ObservableProperty] private DichVuQuanLyDto? dichVuThemVaoGoi; [ObservableProperty] private int soLuongThemVaoGoi = 1;
-    [ObservableProperty] private string goiMessage = ""; [ObservableProperty] private bool goiMessageLaLoi = true;
-    public bool CoGoiDaChon => GoiDaChon is not null;
-    public string TieuDeGoi => GoiDaChon is null ? "Thêm gói dịch vụ" : $"Sửa gói {GoiDaChon.MaGoi}";
-    public bool CoTheXoaGoi => GoiDaChon is { CoTheXoa: true } && CoTheQuanLy;
-    public bool CoLyDoKhongXoaGoi => GoiDaChon is { CoTheXoa: false };
-    public string LyDoKhongXoaGoi => GoiDaChon is { CoTheXoa: false } g ? $"Không xóa được vì gói đã được bán {g.SoLanDaBan} lần (hóa đơn cũ còn dùng). Hãy bỏ chọn \"Đang bán\" để ngừng bán." : "";
-    public string ThongTinGoi => GoiDaChon is null ? "" : GoiDaChon.BanHienThi + (string.IsNullOrEmpty(GoiDaChon.SuaCuoiHienThi) ? "" : " · " + GoiDaChon.SuaCuoiHienThi);
-    public bool CoThayDoiGoi => (TenGoi, MoTaGoi, GiaGoi, GoiDangBan, ChuoiDong()) != _gocGoi && (GoiDaChon is not null || TenGoi != "" || DongGoi.Count > 0 || GiaGoi != 0);
-    private string ChuoiDong() => string.Join("|", DongGoi.OrderBy(x => x.MaDV, StringComparer.Ordinal).Select(x => $"{x.MaDV}x{x.SoLuong}"));
-
-    public decimal GiaLeDangSoan => DongGoi.Sum(x => x.GiaLeDong);
-    public string GhiChuGia => DongGoi.Count == 0 ? "Chọn dịch vụ để đưa vào gói." : $"Giá lẻ các dịch vụ: {GiaLeDangSoan:N0}đ" + (GiaGoi > 0 && GiaGoi <= GiaLeDangSoan ? $" · khách tiết kiệm {GiaLeDangSoan - GiaGoi:N0}đ ({(GiaLeDangSoan == 0 ? 0 : (GiaLeDangSoan - GiaGoi) * 100 / GiaLeDangSoan):0.#}%)" : GiaGoi > GiaLeDangSoan ? " · GIÁ GÓI PHẢI THẤP HƠN HOẶC BẰNG giá lẻ" : "");
-
-    partial void OnGiaGoiChanged(decimal value) { OnPropertyChanged(nameof(GhiChuGia)); OnPropertyChanged(nameof(CoThayDoiGoi)); CapNhatGiaLe(); }
-    partial void OnTenGoiChanged(string value) => OnPropertyChanged(nameof(CoThayDoiGoi));
-    partial void OnMoTaGoiChanged(string value) => OnPropertyChanged(nameof(CoThayDoiGoi));
-    partial void OnGoiDangBanChanged(bool value) => OnPropertyChanged(nameof(CoThayDoiGoi));
-
-    partial void OnGoiDaChonChanged(GoiDichVuDto? oldValue, GoiDichVuDto? newValue)
-    {
-        if (_dangHoanTac) return;
-        if (CoThayDoiGoi && oldValue is not null && !HopThoai.XacNhan("Thay đổi chưa lưu", "Gói đang sửa chưa được lưu. Chuyển sang gói khác và bỏ các thay đổi này?"))
-        {
-            _dangHoanTac = true; GoiDaChon = oldValue; _dangHoanTac = false;
-            return;
-        }
-        if (newValue is null) return;
-        NapFormGoi(newValue);
-    }
-
-    private void NapFormGoi(GoiDichVuDto g)
-    {
-        TenGoi = g.TenGoi; MoTaGoi = g.MoTa ?? ""; GiaGoi = g.GiaGoi; GoiDangBan = g.HoatDong;
-        DongGoi.Clear();
-        foreach (var d in g.DichVus) ThemDongVaoForm(new DongGoiChonViewModel(d.MaDV, d.TenDV, d.DonViTinh, d.GiaDV, d.SoLuong));
-        CapNhatGiaLe();
-        _gocGoi = (TenGoi, MoTaGoi, GiaGoi, GoiDangBan, ChuoiDong());
-        OnPropertyChanged(nameof(CoThayDoiGoi));
-    }
-
-    private void ThemDongVaoForm(DongGoiChonViewModel dong)
-    {
-        dong.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(DongGoiChonViewModel.SoLuong)) CapNhatGiaLe(); };
-        DongGoi.Add(dong);
-    }
-
-    /// <summary>Tính lại giá lẻ và phân bổ giá gói cho từng dịch vụ (cùng thuật toán với máy chủ: theo tỷ lệ giá lẻ, dòng cuối nhận phần dư).</summary>
-    private void CapNhatGiaLe()
-    {
-        var giaLe = GiaLeDangSoan;
-        decimal daChia = 0;
-        var dong = DongGoi.OrderBy(x => x.MaDV, StringComparer.Ordinal).ToList();
-        for (var i = 0; i < dong.Count; i++)
-        {
-            var phan = i == dong.Count - 1 ? GiaGoi - daChia : Math.Round(giaLe > 0 ? GiaGoi * dong[i].GiaLeDong / giaLe : GiaGoi / dong.Count, 0, MidpointRounding.AwayFromZero);
-            dong[i].PhanBo = Math.Max(0, phan); daChia += phan;
-        }
-        OnPropertyChanged(nameof(GiaLeDangSoan)); OnPropertyChanged(nameof(GhiChuGia)); OnPropertyChanged(nameof(CoThayDoiGoi));
-    }
-    private void DatThongBaoGoi(string noiDung, bool laLoi) { GoiMessage = noiDung; GoiMessageLaLoi = laLoi; }
-
-    private async Task LoadPackagesAsync()
-    {
-        var giu = GoiDaChon?.MaGoi;
-        _tatCaGoi = await _api.GetGoiDichVuAsync(tatCa: true);
-        ApDungLocGoi();
-        if (giu is not null) { _dangHoanTac = true; GoiDaChon = _tatCaGoi.FirstOrDefault(x => x.MaGoi == giu); _dangHoanTac = false; OnPropertyChanged(nameof(CoTheXoaGoi)); OnPropertyChanged(nameof(CoLyDoKhongXoaGoi)); OnPropertyChanged(nameof(LyDoKhongXoaGoi)); OnPropertyChanged(nameof(ThongTinGoi)); }
-    }
-
-    private void ApDungLocGoi()
-    {
-        IEnumerable<GoiDichVuDto> q = _tatCaGoi;
-        if (!string.IsNullOrWhiteSpace(TuKhoaGoi))
-            foreach (var t in TuKhoaGoi.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-            {
-                var k = BoDau(t);
-                q = q.Where(x => BoDau(x.TenGoi).Contains(k, StringComparison.OrdinalIgnoreCase) || x.MaGoi.Contains(k, StringComparison.OrdinalIgnoreCase) || BoDau(x.NoiDungTomTat).Contains(k, StringComparison.OrdinalIgnoreCase));
-            }
-        var ds = q.ToList();
-        Goi.Clear();
-        foreach (var g in ds) Goi.Add(g);
-    }
-
-    [RelayCommand]
-    private void GoiMoi()
-    {
-        if (CoThayDoiGoi && !HopThoai.XacNhan("Thay đổi chưa lưu", "Bỏ các thay đổi chưa lưu và soạn gói mới?")) return;
-        _dangHoanTac = true; GoiDaChon = null; _dangHoanTac = false;
-        TenGoi = ""; MoTaGoi = ""; GiaGoi = 0; GoiDangBan = true; DongGoi.Clear(); DichVuThemVaoGoi = null; SoLuongThemVaoGoi = 1;
-        CapNhatGiaLe(); _gocGoi = ("", "", 0, true, ""); DatThongBaoGoi("", false);
-        foreach (var p in new[] { nameof(TieuDeGoi), nameof(CoGoiDaChon), nameof(CoTheXoaGoi), nameof(CoLyDoKhongXoaGoi), nameof(ThongTinGoi), nameof(CoThayDoiGoi) }) OnPropertyChanged(p);
-    }
-
-    [RelayCommand]
-    private void ThemDichVuVaoGoi()
-    {
-        if (DichVuThemVaoGoi is null) { DatThongBaoGoi("Chọn một dịch vụ để đưa vào gói.", true); return; }
-        if (SoLuongThemVaoGoi < 1) { DatThongBaoGoi("Số lượng phải lớn hơn 0.", true); return; }
-        if (!DichVuThemVaoGoi.HoatDong) { DatThongBaoGoi($"\"{DichVuThemVaoGoi.TenDV}\" đang ngừng phục vụ nên không đưa vào gói được.", true); return; }
-        var co = DongGoi.FirstOrDefault(x => x.MaDV == DichVuThemVaoGoi.MaDV);
-        if (co is not null) co.SoLuong += SoLuongThemVaoGoi;
-        else ThemDongVaoForm(new DongGoiChonViewModel(DichVuThemVaoGoi.MaDV, DichVuThemVaoGoi.TenDV, DichVuThemVaoGoi.DonViTinh, DichVuThemVaoGoi.GiaDV, SoLuongThemVaoGoi));
-        SoLuongThemVaoGoi = 1; DatThongBaoGoi("", false); CapNhatGiaLe();
-    }
-
-    [RelayCommand]
-    private void BoDichVuKhoiGoi(DongGoiChonViewModel? dong)
-    {
-        if (dong is null) return;
-        DongGoi.Remove(dong); CapNhatGiaLe();
-    }
-
-    [RelayCommand]
-    private void HoanTacGoi()
-    {
-        if (GoiDaChon is not null) NapFormGoi(GoiDaChon);
-        else { TenGoi = ""; MoTaGoi = ""; GiaGoi = 0; GoiDangBan = true; DongGoi.Clear(); CapNhatGiaLe(); _gocGoi = ("", "", 0, true, ""); }
-        DatThongBaoGoi("", false);
-    }
-
-    [RelayCommand]
-    private async Task LuuGoiAsync()
-    {
-        if (!CoTheQuanLy) { DatThongBaoGoi("Tài khoản của bạn không có quyền quản lý dịch vụ.", true); return; }
-        if (string.IsNullOrWhiteSpace(TenGoi)) { DatThongBaoGoi("Nhập tên gói.", true); return; }
-        if (DongGoi.Count == 0) { DatThongBaoGoi("Gói cần có ít nhất một dịch vụ.", true); return; }
-        if (GiaGoi <= 0) { DatThongBaoGoi("Nhập giá gói lớn hơn 0.", true); return; }
-        if (GiaGoi > GiaLeDangSoan) { DatThongBaoGoi($"Giá gói ({GiaGoi:N0}đ) không được cao hơn tổng giá lẻ ({GiaLeDangSoan:N0}đ).", true); return; }
-        if (GoiDaChon is { } cu)
-        {
-            if (!CoThayDoiGoi) { DatThongBaoGoi("Chưa có thay đổi nào để lưu.", false); return; }
-            if (cu.GiaGoi != GiaGoi && !HopThoai.XacNhan("Đổi giá gói", $"Đổi giá gói \"{cu.TenGoi}\" từ {cu.GiaGoi:N0}đ thành {GiaGoi:N0}đ? Chỉ áp dụng cho lần bán MỚI; gói đã bán giữ nguyên giá cũ.")) return;
-            if (cu.HoatDong && !GoiDangBan && !HopThoai.XacNhan("Ngừng bán gói", $"Ngừng bán gói \"{cu.TenGoi}\"? Lễ tân sẽ không ghi gói này cho khách được nữa; lịch sử đã bán giữ nguyên.")) return;
-        }
-        var yeuCau = new YeuCauGoiDichVu(TenGoi.Trim(), string.IsNullOrWhiteSpace(MoTaGoi) ? null : MoTaGoi.Trim(), GiaGoi, GoiDangBan, DongGoi.Select(x => new YeuCauGoiDong(x.MaDV, x.SoLuong)).ToList());
-        try
-        {
-            var luu = GoiDaChon is null ? await _api.TaoGoiDichVuAsync(yeuCau) : await _api.SuaGoiDichVuAsync(GoiDaChon.MaGoi, yeuCau);
-            _dangHoanTac = true; GoiDaChon = null; _dangHoanTac = false;
-            await LoadAsync();
-            _dangHoanTac = true; GoiDaChon = _tatCaGoi.FirstOrDefault(x => x.MaGoi == luu.MaGoi); _dangHoanTac = false;
-            if (GoiDaChon is not null) NapFormGoi(GoiDaChon);
-            DatThongBaoGoi($"Đã lưu gói {luu.MaGoi} - {luu.TenGoi} ({luu.TrangThaiHienThi.ToLower()}).", false);
-        }
-        catch (LoiYeuCauApi e) { DatThongBaoGoi("Chưa lưu được: " + e.Message, true); }
-    }
-
-    [RelayCommand]
-    private async Task XoaGoiAsync()
-    {
-        if (GoiDaChon is null) { DatThongBaoGoi("Chọn một gói trong bảng để xóa.", true); return; }
-        if (!GoiDaChon.CoTheXoa) { DatThongBaoGoi(LyDoKhongXoaGoi, true); return; }
-        var g = GoiDaChon;
-        if (!HopThoai.XacNhan("Xóa gói dịch vụ", $"Xóa gói \"{g.TenGoi}\" ({g.MaGoi})? Gói chưa từng được bán nên xóa được, nhưng thao tác không hoàn tác.")) return;
-        try
-        {
-            await _api.XoaGoiDichVuAsync(g.MaGoi);
-            _dangHoanTac = true; GoiDaChon = null; _dangHoanTac = false;
-            TenGoi = ""; MoTaGoi = ""; GiaGoi = 0; GoiDangBan = true; DongGoi.Clear(); CapNhatGiaLe(); _gocGoi = ("", "", 0, true, "");
-            await LoadAsync();
-            DatThongBaoGoi($"Đã xóa gói {g.MaGoi}.", false);
-        }
-        catch (LoiYeuCauApi e) { DatThongBaoGoi("Chưa xóa được: " + e.Message, true); }
     }
 }
